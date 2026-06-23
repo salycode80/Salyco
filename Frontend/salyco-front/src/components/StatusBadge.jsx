@@ -1,21 +1,21 @@
-import React from 'react';
-
 const StatusBadge = ({ isRegistered }) => {
   return (
     <div className="ml-auto">
       <span
-        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold border ${
+        className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold ${
           isRegistered
-            ? 'bg-[#DCF0E8] text-[#115D46] border-[#8BC4B0]'
-            : 'bg-[#FFF0E0] text-[#A84E2A] border-[#F3C9AA]'
+            ? "border-emerald-300/60 bg-emerald-50 text-emerald-700"
+            : "border-amber-300/60 bg-amber-50 text-amber-700"
         }`}
       >
         <span
-          className={`w-3 h-3 rounded-full ${
-            isRegistered ? 'bg-[#1F6E5A]' : 'bg-[#B1562B]'
+          className={`h-3 w-3 rounded-full ${
+            isRegistered ? "bg-emerald-500" : "bg-amber-500"
           }`}
         />
-        {isRegistered ? 'فعال' : 'غیر فعال'}
+        <span className="font-persian">
+          {isRegistered ? "فعال" : "غیرفعال"}
+        </span>
       </span>
     </div>
   );

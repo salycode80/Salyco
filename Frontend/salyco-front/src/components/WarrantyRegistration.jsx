@@ -1,27 +1,26 @@
-import React, { useState } from 'react';
-import ProductHeader from './ProductHeader';
-import GuaranteeDisk from './GuaranteeDisk';
-import StatusBadge from './StatusBadge';
-import ActionButton from './ActionButton';
-import RegistrationForm from './RegistrationForm';
-import MessageToast from './MessageToast';
+import { useState } from "react";
+import ProductHeader from "./ProductHeader";
+import GuaranteeDisk from "./GuaranteeDisk";
+import StatusBadge from "./StatusBadge";
+import ActionButton from "./ActionButton";
+import RegistrationForm from "./RegistrationForm";
+import MessageToast from "./MessageToast";
 
 const WarrantyRegistration = () => {
-  // Product data (simulates QR/scan result)
   const product = {
-    name: 'Salyco · LuxeRest Hybrid',
-    serial: 'SAL-MTR-8274-9X2P',
+    name: "Salyco · LuxeRest Hybrid",
+    serial: "SAL-MTR-8274-9X2P",
     totalWarrantyMonths: 36,
     remainingMonths: 29,
   };
 
   const [isRegistered, setIsRegistered] = useState(false);
   const [showForm, setShowForm] = useState(true);
-  const [message, setMessage] = useState({ type: null, text: '' });
+  const [message, setMessage] = useState({ type: null, text: "" });
   const [formData, setFormData] = useState({
-    customerName: 'Olivia Chen',
-    purchaseDate: '2025-12-01',
-    retailer: 'SleepWell Emporium',
+    customerName: "Olivia Chen",
+    purchaseDate: "2025-12-01",
+    retailer: "SleepWell Emporium",
     serialVerification: product.serial,
   });
 
@@ -29,35 +28,36 @@ const WarrantyRegistration = () => {
     setIsRegistered(true);
     setShowForm(false);
     setMessage({
-      type: 'success',
-      text: `✅ Warranty activated for ${formData.customerName} · ${product.serial}`,
+      type: "success",
+      text: `گارانتی برای ${formData.customerName} · ${product.serial} فعال شد`,
     });
   };
 
   const handleShowWarrantyInfo = () => {
     setMessage({
-      type: 'success',
-      text: `📋 Warranty valid until ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString()} · coverage: ${product.totalWarrantyMonths} months`,
+      type: "success",
+      text: `گارانتی تا ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString("fa-IR")} معتبر است · پوشش: ${product.totalWarrantyMonths} ماه`,
     });
-    setTimeout(() => setMessage({ type: null, text: '' }), 4000);
+    setTimeout(() => setMessage({ type: null, text: "" }), 4000);
   };
 
-  const clearMessage = () => setMessage({ type: null, text: '' });
+  const clearMessage = () => setMessage({ type: null, text: "" });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/70 flex items-center justify-center p-4 sm:p-6 font-sans">
-      <div className="w-full max-w-2xl bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-slate-200/70 p-6 sm:p-8 transition-all">
-        
+    <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white shadow-sm transition-all duration-300 hover:border-blue-400/25 hover:shadow-lg hover:shadow-blue-900/10">
+      <div className="p-6 sm:p-8">
         <ProductHeader product={product} onCopy={clearMessage} />
 
-        <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 sm:p-5 mb-6 flex flex-wrap items-center gap-4 shadow-sm">
+        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-blue-400/10 bg-[#F5F7FA]/80 p-4 sm:p-5">
           <GuaranteeDisk product={product} />
           <StatusBadge isRegistered={isRegistered} />
         </div>
 
         <ActionButton
           isRegistered={isRegistered}
-          onClick={isRegistered ? handleShowWarrantyInfo : () => setShowForm(true)}
+          onClick={
+            isRegistered ? handleShowWarrantyInfo : () => setShowForm(true)
+          }
         />
 
         {message.type && (
@@ -74,8 +74,8 @@ const WarrantyRegistration = () => {
           />
         )}
 
-        <div className="mt-6 text-xs text-[#4B6D82] text-center border-t border-[#DCE8F0] pt-4 flex items-center justify-center gap-2">
-          <span className="inline-block w-3.5 h-3.5">📱</span> Scan QR or enter serial · Salyco warranty portal
+        <div className="mt-6 flex items-center justify-center gap-2 border-t border-blue-400/10 pt-4 text-center text-xs text-[#000c3e]/50">
+          <span>اسکن QR یا وارد کردن سریال · پورتال گارانتی سالیکو</span>
         </div>
       </div>
     </div>

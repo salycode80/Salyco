@@ -1,15 +1,14 @@
-import React from 'react';
-
 const MessageToast = ({ type, text }) => {
   return (
     <div
-      className={`mt-4 px-5 py-3 rounded-xl text-sm font-medium border ${
-        type === 'success'
-          ? 'bg-[#DCF0E8] text-[#115D46] border-[#8BC4B0]'
-          : 'bg-[#FFE5D9] text-[#983F1F] border-[#E8B49A]'
+      className={`mt-4 rounded-xl border px-5 py-3 text-sm font-medium ${
+        type === "success"
+          ? "border-emerald-300/60 bg-emerald-50 text-emerald-700"
+          : "border-red-300/60 bg-red-50 text-red-700"
       }`}
+      dir="rtl"
     >
-      {text}
+      <span className="font-persian">{text}</span>
     </div>
   );
 };

@@ -1,31 +1,25 @@
-import React from 'react';
+import { CheckCircle2, PenLine } from "lucide-react";
 
 const ActionButton = ({ isRegistered, onClick }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`w-full flex items-center justify-center gap-3 text-white font-semibold text-lg py-3.5 px-6 rounded-full shadow-lg transition-all duration-200 border ${
+      className={`flex w-full items-center justify-center gap-3 rounded-full border py-3.5 px-6 text-lg font-semibold text-white shadow-lg transition-all duration-200 ${
         isRegistered
-          ? 'bg-[#00994d] hover:bg-[#004d26] border-[#3A7B68]'
-          : 'bg-[#000099] hover:bg-[#000080] border-[#3C7A94]'
+          ? "border-emerald-600/30 bg-emerald-600 hover:bg-emerald-700"
+          : "border-blue-400/20 bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] hover:brightness-110"
       }`}
     >
       {isRegistered ? (
         <>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          مشاهده گارانتی
+          <CheckCircle2 size={20} strokeWidth={2} />
+          <span className="font-persian text-base">مشاهده گارانتی</span>
         </>
       ) : (
         <>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-          <div className="text-sm font-medium">
-          ثبت گارانتی
-          </div>
-          
+          <PenLine size={20} strokeWidth={2} />
+          <span className="font-persian text-base">ثبت گارانتی</span>
         </>
       )}
     </button>

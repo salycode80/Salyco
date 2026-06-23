@@ -1,6 +1,18 @@
-import React from 'react';
+import { ClipboardCheck, User, CalendarDays, Store, Hash, X, CheckCircle2 } from "lucide-react";
 
-const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, productSerial }) => {
+const inputClass =
+  "w-full rounded-full border border-blue-400/20 bg-white px-5 py-3 text-sm text-[#000c3e] outline-none transition focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/20";
+
+const labelClass =
+  "mb-1.5 flex items-center gap-2 text-sm font-medium text-[#000c3e]";
+
+const RegistrationForm = ({
+  formData,
+  setFormData,
+  onCancel,
+  onSubmit,
+  productSerial,
+}) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -9,88 +21,79 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, productSe
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.serialVerification.trim() !== productSerial) {
-      alert('❌ Serial number does not match the product. Please verify.');
+      alert("شماره سریال با محصول مطابقت ندارد. لطفاً بررسی کنید.");
       return;
     }
     onSubmit();
   };
 
   return (
-    <div className="mt-6 bg-[#F4F9FE] border border-[#D3E2EE] rounded-2xl p-5 sm:p-6 shadow-inner">
-      <h4 className="flex items-center gap-2 text-[#10415A] font-semibold text-lg mb-4">
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-        </svg>
-        Complete registration
+    <div className="mt-6 rounded-2xl border border-blue-400/10 bg-[#F5F7FA]/80 p-5 sm:p-6">
+      <h4 className="mb-4 flex items-center gap-2 font-persian text-lg font-semibold text-[#000c3e]" dir="rtl">
+        <ClipboardCheck size={20} className="text-blue-400" strokeWidth={2} />
+        تکمیل ثبت‌نام
       </h4>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-[#1E3F53] mb-1.5">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            نام کامل
+        <div dir="rtl">
+          <label className={labelClass}>
+            <User size={16} className="text-blue-400" strokeWidth={2} />
+            <span className="font-persian">نام کامل</span>
           </label>
           <input
             type="text"
             name="customerName"
             value={formData.customerName}
             onChange={handleChange}
-            className="w-full bg-white border border-[#CBD9E5] rounded-full px-5 py-3 text-sm focus:ring-2 focus:ring-[#6EAAC9] focus:border-[#1D6B8A] outline-none transition"
-            placeholder="e.g. Olivia Chen"
+            className={inputClass}
+            placeholder="نام و نام خانوادگی"
             required
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-[#1E3F53] mb-1.5">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              تاریخ خرید 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div dir="rtl">
+            <label className={labelClass}>
+              <CalendarDays size={16} className="text-blue-400" strokeWidth={2} />
+              <span className="font-persian">تاریخ خرید</span>
             </label>
             <input
               type="date"
               name="purchaseDate"
               value={formData.purchaseDate}
               onChange={handleChange}
-              className="w-full bg-white border border-[#CBD9E5] rounded-full px-5 py-3 text-sm focus:ring-2 focus:ring-[#6EAAC9] focus:border-[#1D6B8A] outline-none transition"
+              className={inputClass}
               required
             />
           </div>
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-[#1E3F53] mb-1.5">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              فروشنده
+          <div dir="rtl">
+            <label className={labelClass}>
+              <Store size={16} className="text-blue-400" strokeWidth={2} />
+              <span className="font-persian">فروشنده</span>
             </label>
             <input
               type="text"
               name="retailer"
               value={formData.retailer}
               onChange={handleChange}
-              className="w-full bg-white border border-[#CBD9E5] rounded-full px-5 py-3 text-sm focus:ring-2 focus:ring-[#6EAAC9] focus:border-[#1D6B8A] outline-none transition"
-              placeholder="Store name"
+              className={inputClass}
+              placeholder="نام فروشگاه"
             />
           </div>
         </div>
 
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-[#1E3F53] mb-1.5">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-            </svg>
-            شماره سریال 
+        <div dir="rtl">
+          <label className={labelClass}>
+            <Hash size={16} className="text-blue-400" strokeWidth={2} />
+            <span className="font-persian">شماره سریال</span>
           </label>
           <input
             type="text"
             name="serialVerification"
             value={formData.serialVerification}
             onChange={handleChange}
-            className="w-full bg-white border border-[#CBD9E5] rounded-full px-5 py-3 text-sm focus:ring-2 focus:ring-[#6EAAC9] focus:border-[#1D6B8A] outline-none transition font-mono"
-            placeholder="Enter product serial"
+            className={`${inputClass} font-mono`}
+            placeholder="شماره سریال محصول"
+            dir="ltr"
             required
           />
         </div>
@@ -99,21 +102,17 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, productSe
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 flex items-center justify-center gap-2 bg-white border border-[#B8CDDD] text-[#1A4057] font-medium px-5 py-3 rounded-full hover:bg-slate-100 transition"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-blue-400/20 bg-white px-5 py-3 font-persian font-medium text-[#000c3e] transition hover:bg-[#F5F7FA]"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X size={16} strokeWidth={2} />
             لغو
           </button>
           <button
             type="submit"
-            className="flex-[2] flex items-center justify-center gap-2 bg-[#1F6E5A] hover:bg-[#15584A] text-white font-semibold px-5 py-3 rounded-full shadow-md transition border border-[#3A8770]"
+            className="flex flex-[2] items-center justify-center gap-2 rounded-full border border-blue-400/20 bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-5 py-3 font-persian font-semibold text-white shadow-md transition hover:brightness-110"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            فعال سازی گارانتی
+            <CheckCircle2 size={20} strokeWidth={2} />
+            فعال‌سازی گارانتی
           </button>
         </div>
       </form>
