@@ -1,12 +1,11 @@
 from __future__ import annotations
-
 import calendar
 from datetime import date
 from typing import Optional
-
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
+from users.models import Customer
 
 User = get_user_model()
 
@@ -19,26 +18,6 @@ def add_months(source_date: date, months: int) -> date:
     day = min(source_date.day, calendar.monthrange(year, month)[1])
     return date(year, month, day)
 
-
-class Customer(models.Model):
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="customer",
-    )
-    first_name = models.CharField(max_length=150, verbose_name="first name")
-    last_name = models.CharField(max_length=150, verbose_name="last name")
-    address = models.TextField(verbose_name="address")
-    phone_number = models.CharField(max_length=20, verbose_name="phone number")
-    postal_code = models.CharField(max_length=20, verbose_name="postal code")
-
-    class Meta:
-        verbose_name = "customer"
-        verbose_name_plural = "customers"
-        ordering = ["last_name", "first_name"]
-
-    def __str__(self) -> str:
-        return f"{self.first_name} {self.last_name}"
 
 
 class Mattress(models.Model):

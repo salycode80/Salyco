@@ -1,8 +1,22 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from .models import Customer
 # from .models import Note
 
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "address",
+            "phone_number",
+            "postal_code",
+        ]
+        read_only_fields = ["id"]
 
+        
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

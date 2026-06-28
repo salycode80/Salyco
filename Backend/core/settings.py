@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "mattress",
     "articles",
+    "users"
 ]
 
 MIDDLEWARE = [

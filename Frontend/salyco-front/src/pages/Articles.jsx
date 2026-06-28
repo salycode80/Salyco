@@ -1,11 +1,218 @@
 import { useEffect, useState } from "react";
 import api from "../api";
-import ArticleCard from "../components/ArticleCard";
 
-export default function Articles() {
+// ─── Utility ────────────────────────────────────────────────────────────────
+
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("fa-IR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function truncate(text, max = 100) {
+  if (!text) return "";
+  return text.length > max ? text.slice(0, max) + "…" : text;
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+/**
+ * HeroCard  – large featured card (used on the right column of the hero)
+ */
+function HeroCard({ article }) {
+  if (!article) return null;
+  return (
+    <a
+      href={`/articles/${article.slug}`}
+      className="group relative flex h-full min-h-[340px] flex-col justify-end overflow-hidden rounded-2xl"
+    >
+      {/* background image */}
+      {article.image ? (
+        <img
+          src={article.image}
+          alt={article.title}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#000c3e] to-[#1a3a8f]" />
+      )}
+
+      {/* dark overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+      {/* logo badge */}
+      <span className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#000c3e]/80 text-white">
+        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+          <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
+        </svg>
+      </span>
+
+      {/* content */}
+      <div className="relative z-10 p-5" dir="rtl">
+        <h2 className="font-persian text-lg font-bold leading-snug text-white drop-shadow">
+          {article.title}
+        </h2>
+        <p className="mt-1 font-persian text-sm text-white/70 line-clamp-2">
+          {article.excerpt || article.summary}
+        </p>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2563eb] px-3 py-1 text-xs font-medium text-white">
+            مطالعه بیشتر
+          </span>
+          <span className="text-xs text-white/50">{formatDate(article.published_at || article.created_at)}</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+/**
+ * SmallHeroCard – compact card for the left column of the hero
+ */
+function SmallHeroCard({ article }) {
+  if (!article) return null;
+  return (
+    <a
+      href={`/articles/${article.slug}`}
+      className="group relative flex flex-row overflow-hidden rounded-xl bg-[#000c3e] transition hover:brightness-110"
+    >
+      {/* thumbnail */}
+      <div className="relative h-full w-32 shrink-0 overflow-hidden">
+        {article.image ? (
+          <img
+            src={article.image}
+            alt={article.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-[#1a3a8f] to-[#000c3e]" />
+        )}
+        <div className="absolute inset-0 bg-black/30" />
+        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#000c3e]/80 text-white">
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+            <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
+          </svg>
+        </span>
+      </div>
+
+      {/* text */}
+      <div className="flex flex-1 flex-col justify-between p-3" dir="rtl">
+        <p className="font-persian text-sm font-bold leading-snug text-white line-clamp-2">
+          {article.title}
+        </p>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-xs font-medium text-[#2563eb]">مطالعه بیشتر</span>
+          <span className="text-xs text-white/40">{formatDate(article.published_at || article.created_at)}</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+/**
+ * ArticleCard – standard grid card for the "latest articles" section
+ */
+function ArticleCard({ article }) {
+  return (
+    <a
+      href={`/articles/${article.slug}`}
+      className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#e2e8f0] transition hover:shadow-md hover:-translate-y-0.5"
+    >
+      {/* thumbnail */}
+      <div className="relative h-48 overflow-hidden bg-[#e8edf8]">
+        {article.image ? (
+          <img
+            src={article.image}
+            alt={article.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#dde6f7] to-[#c3d3ef]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7b9fd4" strokeWidth="1.5" className="h-12 w-12 opacity-50">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18a.75.75 0 00.75-.75V6a.75.75 0 00-.75-.75H3a.75.75 0 00-.75.75v13.5c0 .414.336.75.75.75z" />
+            </svg>
+          </div>
+        )}
+
+        {/* logo badge */}
+        <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-[#000c3e]/80 text-white">
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+            <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
+          </svg>
+        </span>
+
+        {article.category && (
+          <span className="absolute left-3 top-3 rounded-full bg-[#2563eb] px-2.5 py-0.5 text-xs text-white">
+            {article.category}
+          </span>
+        )}
+      </div>
+
+      {/* body */}
+      <div className="flex flex-1 flex-col p-4" dir="rtl">
+        <h3 className="font-persian text-sm font-bold leading-snug text-[#000c3e] line-clamp-2 group-hover:text-[#2563eb] transition-colors">
+          {article.title}
+        </h3>
+        <p className="mt-2 font-persian text-xs leading-relaxed text-[#4b5a78] line-clamp-3">
+          {article.excerpt || article.summary}
+        </p>
+        <div className="mt-auto pt-4 flex items-center justify-between border-t border-[#e8edf8]">
+          <span className="text-xs font-medium text-[#2563eb]">مطالعه بیشتر</span>
+          <span className="text-xs text-[#8a9ab8]">{formatDate(article.published_at || article.created_at)}</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+/**
+ * FeaturedSidebarItem – compact row used in the "مقالات برگزیده" sidebar
+ */
+function FeaturedSidebarItem({ article, index }) {
+  const colors = ["bg-[#2563eb]", "bg-[#000c3e]", "bg-[#1a3a8f]"];
+  return (
+    <a
+      href={`/articles/${article.slug}`}
+      className="group flex items-start gap-3 rounded-xl p-3 transition hover:bg-[#f0f4ff]"
+      dir="rtl"
+    >
+      <span
+        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${colors[index % colors.length]} text-xs font-bold text-white`}
+      >
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="font-persian text-sm font-bold leading-snug text-[#000c3e] line-clamp-2 group-hover:text-[#2563eb] transition-colors">
+          {article.title}
+        </p>
+        <div className="mt-1.5 flex items-center justify-between">
+          <span className="text-xs font-medium text-[#2563eb]">مطالعه بیشتر</span>
+          <span className="text-xs text-[#8a9ab8]">{formatDate(article.published_at || article.created_at)}</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+// ─── Skeleton loader ──────────────────────────────────────────────────────────
+
+function Skeleton({ className }) {
+  return (
+    <div className={`animate-pulse rounded-lg bg-[#e2e8f0] ${className}`} />
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+export default function ArticlesPage() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("همه");
 
   useEffect(() => {
     api
@@ -15,61 +222,183 @@ export default function Articles() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Derive slices
+  const heroMain = articles[0] || null;
+  const heroSmall = articles.slice(1, 3);
+  const latestArticles = articles.slice(3, 9);
+  const featuredSidebar = articles.slice(0, 4);
+
+  // Unique categories from data
+  const categories = [
+    "همه",
+    ...Array.from(new Set(articles.map((a) => a.category).filter(Boolean))),
+  ];
+
+  const filteredLatest =
+    activeCategory === "همه"
+      ? latestArticles
+      : latestArticles.filter((a) => a.category === activeCategory);
+
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[72px]">
+    <section
+      className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[72px]"
+      dir="rtl"
+    >
+      {/* subtle grid */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(100,160,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(100,160,255,0.06) 1px, transparent 1px)",
+            "linear-gradient(rgba(100,160,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(100,160,255,0.05) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
         }}
       />
 
-      <div
-        className="pointer-events-none absolute top-0 right-0 h-96 w-1/2"
-        style={{
-          background:
-            "linear-gradient(to left, rgba(0,50,180,0.12) 0%, transparent 100%)",
-        }}
-      />
+      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
 
-      <div className="relative mx-auto max-w-7xl px-6 py-16">
-        <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-blue-400/80">
-            Articles
+        {/* ── Page header ── */}
+        <header className="mb-8">
+          <p className="font-sans text-xs uppercase tracking-widest text-blue-400/70">
+            Blog & Articles
           </p>
-          <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
-            مقالات
+          <h1 className="mt-1 font-persian text-3xl font-extrabold text-[#000c3e] md:text-4xl">
+            وبلاگ و مقالات
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#000c3e]" />
-          <p className="mt-4 max-w-xl font-sans text-base text-[#000c3e]/60">
-            آخرین مطالب و راهنماهای خواب سالم
-          </p>
+          <div className="mt-3 h-1 w-16 rounded-full bg-[#2563eb]" />
         </header>
 
-        {loading && (
-          <p className="font-persian text-center text-[#000c3e]/60">
-            در حال بارگذاری...
-          </p>
-        )}
-
-        {error && (
-          <p className="font-persian text-center text-red-600/80">{error}</p>
-        )}
-
-        {!loading && !error && articles.length === 0 && (
-          <p className="font-persian text-center text-[#000c3e]/60">
-            مقاله‌ای یافت نشد.
-          </p>
-        )}
-
-        {!loading && articles.length > 0 && (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article) => (
-              <ArticleCard key={article.slug} article={article} />
+        {/* ── Category filter bar ── */}
+        {!loading && categories.length > 1 && (
+          <div className="mb-8 flex flex-wrap items-center gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`rounded-full px-4 py-1.5 font-persian text-sm font-medium transition ${
+                  activeCategory === cat
+                    ? "bg-[#000c3e] text-white shadow"
+                    : "bg-white text-[#4b5a78] ring-1 ring-[#d1d9eb] hover:bg-[#f0f4ff] hover:text-[#000c3e]"
+                }`}
+              >
+                {cat}
+              </button>
             ))}
           </div>
+        )}
+
+        {/* ── Error ── */}
+        {error && (
+          <div className="mb-8 rounded-xl bg-red-50 p-4 text-center font-persian text-red-600">
+            {error}
+          </div>
+        )}
+
+        {/* ── Loading skeletons ── */}
+        {loading && (
+          <>
+            {/* hero skeleton */}
+            <div className="mb-12 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_2fr]">
+              <div className="flex flex-col gap-4">
+                <Skeleton className="h-40" />
+                <Skeleton className="h-40" />
+              </div>
+              <Skeleton className="min-h-[340px]" />
+            </div>
+            {/* cards skeleton */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#e2e8f0]">
+                  <Skeleton className="h-48 rounded-none" />
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* ── Hero section ── */}
+            {articles.length > 0 && (
+              <div className="mb-12 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_2fr]">
+                {/* left: two small cards */}
+                <div className="flex flex-col gap-4">
+                  {heroSmall.map((a) => (
+                    <SmallHeroCard key={a.slug} article={a} />
+                  ))}
+                  {heroSmall.length === 0 && (
+                    <div className="rounded-xl bg-[#e8edf8] h-full min-h-[160px]" />
+                  )}
+                </div>
+                {/* right: big card */}
+                <HeroCard article={heroMain} />
+              </div>
+            )}
+
+            {/* ── Divider ── */}
+            <div className="mb-8 flex items-center gap-4">
+              <h2 className="font-persian text-xl font-bold text-[#000c3e] whitespace-nowrap">
+                آخرین مقالات
+              </h2>
+              <div className="h-px flex-1 bg-[#d1d9eb]" />
+            </div>
+
+            {/* ── Articles grid + sidebar ── */}
+            {articles.length === 0 ? (
+              <p className="font-persian text-center text-[#4b5a78]">
+                مقاله‌ای یافت نشد.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
+                {/* main grid */}
+                <div>
+                  {filteredLatest.length === 0 ? (
+                    <p className="font-persian text-[#4b5a78]">مقاله‌ای در این دسته‌بندی یافت نشد.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                      {filteredLatest.map((article) => (
+                        <ArticleCard key={article.slug} article={article} />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* load-more / see all */}
+                  {articles.length > 9 && (
+                    <div className="mt-8 flex justify-center">
+                      <a
+                        href="/articles/archive"
+                        className="rounded-full border border-[#000c3e] px-6 py-2 font-persian text-sm font-medium text-[#000c3e] transition hover:bg-[#000c3e] hover:text-white"
+                      >
+                        مشاهده همه مقالات
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* sidebar */}
+                <aside>
+                  <div className="sticky top-24 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#e2e8f0]">
+                    <h3 className="font-persian mb-4 text-base font-bold text-[#000c3e]">
+                      مقالات برگزیده
+                    </h3>
+                    <div className="flex flex-col gap-1">
+                      {featuredSidebar.map((article, i) => (
+                        <FeaturedSidebarItem
+                          key={article.slug}
+                          article={article}
+                          index={i}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
