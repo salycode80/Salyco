@@ -1,5 +1,6 @@
-import WarrantyRegistration from "../components/WarrantyRegistration";
-import { Info, CheckCircle2, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Info, CheckCircle2, MessageCircle, Search } from "lucide-react";
 
 const steps = [
   "کد QR روی تشک را اسکن کنید یا شماره سریال را وارد کنید",
@@ -14,6 +15,17 @@ const benefits = [
 ];
 
 export default function ProductRegistration() {
+  const [serial, setSerial] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = serial.trim();
+    if (trimmed) {
+      navigate(`/warranty/mattress/${trimmed}`);
+    }
+  };
+
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[72px]">
       <div
@@ -112,7 +124,47 @@ export default function ProductRegistration() {
           </div>
 
           <div className="lg:col-span-2">
-            <WarrantyRegistration />
+            <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-6 shadow-sm sm:p-8">
+              <div className="mb-6 text-center" dir="rtl">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#000c2e] via-[#001a5c] to-[#00256b]">
+                  <Search size={28} className="text-blue-200" strokeWidth={1.5} />
+                </div>
+                <h2 className="font-persian text-xl font-semibold text-[#000c3e]">
+                  جستجوی گارانتی
+                </h2>
+                <p className="mt-2 font-persian text-sm text-[#000c3e]/60">
+                  شماره سریال محصول خود را وارد کنید تا وضعیت گارانتی را مشاهده کنید
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div dir="rtl">
+                  <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[#000c3e]">
+                    <span className="font-persian">شماره سریال محصول</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={serial}
+                    onChange={(e) => setSerial(e.target.value)}
+                    className="w-full rounded-full border border-blue-400/20 bg-white px-5 py-3 text-sm text-[#000c3e] outline-none transition focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/20 font-mono"
+                    placeholder="SAL-XXXXXXXX"
+                    dir="ltr"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-6 py-3 font-persian font-semibold text-white shadow-md transition hover:brightness-110"
+                >
+                  <Search size={18} strokeWidth={2} />
+                  بررسی گارانتی
+                </button>
+              </form>
+
+              <div className="mt-6 flex items-center justify-center gap-2 border-t border-blue-400/10 pt-4 text-center text-xs text-[#000c3e]/50">
+                <span>اسکن QR یا وارد کردن سریال · پورتال گارانتی سالیکو</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

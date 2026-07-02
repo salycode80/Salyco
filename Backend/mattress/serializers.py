@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Customer, Mattress, MattressInstance
+from .utils import generate_qr_code_base64, generate_serial_number, get_warranty_public_url
 
 User = get_user_model()
 
@@ -121,6 +122,7 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
 
 class WarrantyCheckSerializer(serializers.ModelSerializer):
     mattress_name = serializers.CharField(source="mattress.name", read_only=True)
+    warranty_months = serializers.IntegerField(source="mattress.warranty_months", read_only=True)
     warranty_expiration_date = serializers.DateField(read_only=True)
     warranty_remaining_days = serializers.IntegerField(read_only=True)
     is_under_warranty = serializers.BooleanField(read_only=True)
@@ -130,9 +132,60 @@ class WarrantyCheckSerializer(serializers.ModelSerializer):
         fields = [
             "serial_number",
             "mattress_name",
+            "warranty_months",
             "is_warranty_active",
             "activation_date",
             "warranty_expiration_date",
             "warranty_remaining_days",
             "is_under_warranty",
         ]
+
+
+class MattressInstanceCreateSerializer(serializers.ModelSerializer):
+    mattress_id = serializers.PrimaryKeyRelatedField(
+        queryset=Mattress.objects.all(),
+        source="mattress",
+        write_only=True,
+    )
+    serial_number = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    warranty_url = serializers.SerializerMethodField(read_only=True)
+    qr_code = serializers.SerializerMethodField(read_only=True)
+    mattress = MattressSerializer(read_only=True)
+
+    class Meta:
+        model = MattressInstance
+        fields = [
+            "serial_number",
+            "mattress_id",
+            "mattress",
+            "manufacture_date",
+            "warranty_url",
+            "qr_code",
+        ]
+        read_only_fields = ["serial_number", "mattress", "warranty_url", "qr_code"]
+
+    def validate_serial_number(self, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            return normalized
+        if MattressInstance.objects.filter(serial_number=normalized).exists():
+            raise serializers.ValidationError("This serial number already exists.")
+        return normalized
+
+    def create(self, validated_data) -> MattressInstance:
+        serial_number = validated_data.get("serial_number", "").strip()
+        if not serial_number:
+            serial_number = generate_serial_number()
+            while MattressInstance.objects.filter(serial_number=serial_number).exists():
+                serial_number = generate_serial_number()
+            validated_data["serial_number"] = serial_number
+        else:
+            validated_data["serial_number"] = serial_number
+
+        return super().create(validated_data)
+
+    def get_warranty_url(self, obj: MattressInstance) -> str:
+        return get_warranty_public_url(obj.serial_number)
+
+    def get_qr_code(self, obj: MattressInstance) -> str:
+        return generate_qr_code_base64(get_warranty_public_url(obj.serial_number))

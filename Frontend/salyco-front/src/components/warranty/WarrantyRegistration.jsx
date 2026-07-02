@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { registerWarranty } from "../../api/warranty";
 import ProductHeader from "./ProductHeader";
 import GuaranteeDisk from "./GuaranteeDisk";
 import StatusBadge from "./StatusBadge";
@@ -6,37 +7,55 @@ import ActionButton from "./ActionButton";
 import RegistrationForm from "./RegistrationForm";
 import MessageToast from "./MessageToast";
 
-const WarrantyRegistration = () => {
+const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSuccess }) => {
+  const isRegistered = warrantyData.is_warranty_active;
+
   const product = {
-    name: "Salyco · LuxeRest Hybrid",
-    serial: "SAL-MTR-8274-9X2P",
-    totalWarrantyMonths: 36,
-    remainingMonths: 29,
+    name: warrantyData.mattress_name,
+    serial: serialNumber,
+    totalWarrantyMonths: warrantyData.warranty_months,
+    remainingMonths: Math.max(0, Math.round((warrantyData.warranty_remaining_days || 0) / 30)),
   };
 
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [showForm, setShowForm] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState({ type: null, text: "" });
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    customerName: "Olivia Chen",
-    purchaseDate: "2025-12-01",
-    retailer: "SleepWell Emporium",
-    serialVerification: product.serial,
+    first_name: "",
+    last_name: "",
+    phone_number: "",
+    address: "",
+    postal_code: "",
   });
 
-  const handleRegister = () => {
-    setIsRegistered(true);
-    setShowForm(false);
-    setMessage({
-      type: "success",
-      text: `گارانتی برای ${formData.customerName} · ${product.serial} فعال شد`,
-    });
+  const handleRegister = async () => {
+    setLoading(true);
+    setMessage({ type: null, text: "" });
+    try {
+      await registerWarranty({
+        serial_number: serialNumber,
+        ...formData,
+      });
+      setShowForm(false);
+      setMessage({
+        type: "success",
+        text: `گارانتی برای ${formData.first_name} ${formData.last_name} · ${serialNumber} فعال شد`,
+      });
+      onRegistrationSuccess?.();
+    } catch (err) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleShowWarrantyInfo = () => {
+    const expDate = warrantyData.warranty_expiration_date
+      ? new Date(warrantyData.warranty_expiration_date).toLocaleDateString("fa-IR")
+      : "—";
     setMessage({
       type: "success",
-      text: `گارانتی تا ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString("fa-IR")} معتبر است · پوشش: ${product.totalWarrantyMonths} ماه`,
+      text: `گارانتی تا ${expDate} معتبر است · پوشش: ${warrantyData.warranty_months} ماه`,
     });
     setTimeout(() => setMessage({ type: null, text: "" }), 4000);
   };
@@ -70,7 +89,7 @@ const WarrantyRegistration = () => {
             setFormData={setFormData}
             onCancel={() => setShowForm(false)}
             onSubmit={handleRegister}
-            productSerial={product.serial}
+            loading={loading}
           />
         )}
 

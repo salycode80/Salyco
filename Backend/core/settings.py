@@ -149,3 +149,5 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWS_CREDENTIALS = True
+
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "https://salyco.ir")

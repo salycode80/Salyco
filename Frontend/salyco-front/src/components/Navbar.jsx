@@ -1,30 +1,49 @@
-import { Link, NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/UseAuth";
+import api from "../api";
 import {
   Phone,
   Search,
   UserCircle,
   BedDouble,
-  Wind,
-  Layers,
   ShoppingBag,
   ShieldCheck,
   BookOpen,
   Image,
   Info,
+  LogOut,
+  ClipboardList,
+  Settings,
 } from "lucide-react";
 
 const categories = [
-  { label: "تشک",           icon: BedDouble,   to: "/products/mattress"   },
-  { label: "بالشت",         icon: Wind,        to: "/products/pillow"     },
-  { label: "روتختی",        icon: Layers,      to: "/products/bedcover"   },
-  { label: "کالای خواب",    icon: ShoppingBag, to: "/products/sleepware"  },
-  { label: "گارانتی",       icon: ShieldCheck, to: "/productregistration" },
-  { label: "مقالات",        icon: BookOpen,    to: "/articles"            },
-  { label: "گالری",         icon: Image,       to: "/gallery"             },
-  { label: "درباره سالیکو", icon: Info,        to: "/about"               },
+  { label: "تشک",           icon: BedDouble,     to: "/products/mattress"   },
+  { label: "کالای خواب",    icon: ShoppingBag,   to: "/products/sleepware"  },
+  { label: "گارانتی",       icon: ShieldCheck,   to: "/productregistration" },
+  { label: "مقالات",        icon: BookOpen,      to: "/articles"            },
+  { label: "گالری",         icon: Image,         to: "/gallery"             },
+  { label: "درباره سالیکو", icon: Info,          to: "/about"               },
 ];
 
 export default function Navbar() {
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUser(null);
+      return;
+    }
+    api.get("/api/user/me/").then((res) => setUser(res.data)).catch(() => {});
+  }, [isAuthenticated]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <div className="fixed top-0 w-full z-50 h-[120px] shadow-lg">
 
@@ -48,7 +67,7 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Search — square with slight rounding */}
+          {/* Search */}
           <div className="w-[420px] shrink-0" dir="ltr">
             <div className="relative w-full">
               <Search
@@ -72,7 +91,7 @@ export default function Navbar() {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* تماس با ما + Login */}
+          {/* Right side actions */}
           <div className="flex items-center gap-4 flex-shrink-0" dir="rtl">
             <a
               href="#contact"
@@ -83,14 +102,59 @@ export default function Navbar() {
               <span>تماس با ما</span>
             </a>
             <div className="h-5 w-px bg-blue-400/25" />
-            <a
-              href="/login"
-              className="flex items-center gap-1.5 text-sm font-medium
-                         text-blue-200/80 hover:text-white tracking-wide transition-colors"
-            >
-              <UserCircle size={18} className="text-blue-300" />
-              <span>ورود / ثبت‌نام</span>
-            </a>
+
+            {isAuthenticated ? (
+              <>
+                {/* My Warranties */}
+                <Link
+                  to="/warranty/my"
+                  className="flex items-center gap-1.5 text-sm font-medium
+                             text-blue-200/80 hover:text-white tracking-wide transition-colors"
+                >
+                  <ClipboardList size={16} className="text-blue-300" />
+                  <span>گارانتی‌های من</span>
+                </Link>
+
+                {/* Admin panel link */}
+                {user?.is_staff && (
+                  <>
+                    <div className="h-5 w-px bg-blue-400/25" />
+                    <Link
+                      to="/admin/instances"
+                      className="flex items-center gap-1.5 text-sm font-medium
+                                 text-blue-200/80 hover:text-white tracking-wide transition-colors"
+                    >
+                      <Settings size={16} className="text-blue-300" />
+                      <span>پنل مدیریت</span>
+                    </Link>
+                  </>
+                )}
+
+                <div className="h-5 w-px bg-blue-400/25" />
+
+                {/* Username + Logout */}
+                <span className="text-sm font-medium text-blue-200/80">
+                  {user?.username || ""}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-sm font-medium
+                             text-blue-200/80 hover:text-white tracking-wide transition-colors"
+                >
+                  <LogOut size={16} className="text-blue-300" />
+                  <span>خروج</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                className="flex items-center gap-1.5 text-sm font-medium
+                           text-blue-200/80 hover:text-white tracking-wide transition-colors"
+              >
+                <UserCircle size={18} className="text-blue-300" />
+                <span>ورود / ثبت‌نام</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

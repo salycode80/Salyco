@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import api from "../api";
-import ProductCard from "../components/ProductCard";
+import MattressCard from "../components/product/MattressCard";
+
 
 export default function Gallery() {
-  const [products, setProducts] = useState([]);
+  const [mattresses, setMattresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     api
       .get("/api/mattress/")
-      .then((res) => setProducts(res.data))
+      .then((res) => setMattresses(res.data))
       .catch(() => setError("بارگذاری محصولات با خطا مواجه شد."))
       .finally(() => setLoading(false));
   }, []);
@@ -58,16 +59,16 @@ export default function Gallery() {
           <p className="font-persian text-center text-red-600/80">{error}</p>
         )}
 
-        {!loading && !error && products.length === 0 && (
+        {!loading && !error && mattresses.length === 0 && (
           <p className="font-persian text-center text-[#000c3e]/60">
             محصولی یافت نشد.
           </p>
         )}
 
-        {!loading && products.length > 0 && (
+        {!loading && mattresses.length > 0 && (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => (
-              <ProductCard key={product.slug} product={product} />
+            {mattresses.map((mattress) => (
+              <MattressCard key={mattress.slug} mattress={mattress} />
             ))}
           </div>
         )}

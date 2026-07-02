@@ -4,7 +4,7 @@ const Hero = () => {
 
       {/* Hero image */}
       <img
-        src="/banner2.png"
+        src="/heroimage2.png"
         alt="Salyco Mattress"
         className="absolute inset-0 w-full h-full object-cover object-contain"
       />

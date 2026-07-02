@@ -29,6 +29,13 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class CurrentUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "first_name", "last_name", "is_staff"]
+        read_only_fields = fields
+
+
 # class NoteSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Note
