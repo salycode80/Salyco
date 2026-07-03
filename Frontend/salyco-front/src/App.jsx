@@ -4,6 +4,7 @@ import AboutFooter from "./components/AboutFooter";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Mattress from "./pages/Mattress";
+import MattressDetail from "./pages/MattressDetail";
 import ProductRegistration from "./pages/ProductRegistration";
 import Articles from "./pages/Articles";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -19,6 +20,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/products/mattress" element={<Mattress />} />
+        <Route path="/products/mattress/:slug" element={<MattressDetail />} />
         <Route path="/productregistration" element={<ProductRegistration />} />
         <Route path="/articles" element={<Articles />} />
         <Route path="/articles/:slug" element={<ArticleDetail />} />

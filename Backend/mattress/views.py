@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from .models import Mattress, MattressInstance
 from .permissions import IsAdminUser
 from .serializers import (
+    MattressDetailSerializer,
     MattressInstanceCreateSerializer,
     MattressInstanceSerializer,
     MattressSerializer,
@@ -20,8 +21,21 @@ from .utils import generate_qr_code_base64, get_warranty_public_url
 
 class MattressViewSet(viewsets.ModelViewSet):
     queryset = Mattress.objects.all()
-    serializer_class = MattressSerializer
     lookup_field = "slug"
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return MattressDetailSerializer
+        return MattressSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.action == "retrieve":
+            qs = qs.prefetch_related(
+                "images", "sizes", "specifications", "features",
+                "faqs", "pros_cons", "reviews__customer",
+            )
+        return qs
 
     def get_permissions(self):
         if self.action in ("list", "retrieve"):

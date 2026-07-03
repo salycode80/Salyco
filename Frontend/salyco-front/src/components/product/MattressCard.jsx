@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ShieldCheck, Moon } from "lucide-react";
 import { getProductImageUrl } from "../../utils/productImage";
 
@@ -18,6 +19,7 @@ export default function MattressCard({ mattress }) {
   const [imageSrc, setImageSrc] = useState(getProductImageUrl(mattress.image));
 
   return (
+    <Link to={`/products/mattress/${mattress.slug}`}>
     <article
       dir="rtl"
       className="group flex flex-col overflow-hidden rounded-[28px] border border-[#0a1f4d]/10 bg-white shadow-[0_2px_20px_-4px_rgba(10,31,77,0.08)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_12px_40px_-8px_rgba(10,31,77,0.18)]"
@@ -79,5 +81,6 @@ export default function MattressCard({ mattress }) {
         </div>
       </div>
     </article>
+    </Link>
   );
 }

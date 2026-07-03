@@ -66,3 +66,13 @@ export async function listMattresses() {
     throw new Error("خطا در دریافت لیست محصولات");
   }
 }
+
+export async function getMattressDetail(slug) {
+  try {
+    const res = await api.get(`/api/mattresses/${slug}/`);
+    return res.data;
+  } catch (err) {
+    const msg = err.response?.data?.detail || "محصول یافت نشد";
+    throw new Error(msg);
+  }
+}

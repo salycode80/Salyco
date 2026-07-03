@@ -4,7 +4,18 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Customer, Mattress, MattressInstance
+from .models import (
+    Customer,
+    Mattress,
+    MattressFAQ,
+    MattressFeature,
+    MattressImage,
+    MattressInstance,
+    MattressProCon,
+    MattressSize,
+    MattressSpecification,
+    Review,
+)
 from .utils import generate_qr_code_base64, generate_serial_number, get_warranty_public_url
 
 User = get_user_model()
@@ -30,14 +41,109 @@ class MattressSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "brand",
+            "subtitle",
             "description",
             "slug",
             "warranty_months",
             "price",
             "width",
             "length",
+            "height",
             "image",
+            "is_available",
+            "average_rating",
+            "review_count",
         ]
+
+
+class MattressImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MattressImage
+        fields = ["id", "image", "alt_text", "is_primary", "display_order"]
+
+
+class MattressSizeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MattressSize
+        fields = ["id", "label", "width", "length", "price", "in_stock"]
+
+
+class MattressSpecificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MattressSpecification
+        fields = ["id", "key", "value", "display_order"]
+
+
+class MattressFeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MattressFeature
+        fields = ["id", "title", "icon_name", "display_order"]
+
+
+class MattressFAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MattressFAQ
+        fields = ["id", "question", "answer", "display_order"]
+
+
+class MattressProConSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MattressProCon
+        fields = ["id", "text", "type", "display_order"]
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    customer_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = ["id", "customer_name", "rating", "title", "body", "pros", "cons", "created_at"]
+
+    def get_customer_name(self, obj):
+        return f"{obj.customer.first_name} {obj.customer.last_name}".strip() or "کاربر"
+
+
+class MattressDetailSerializer(serializers.ModelSerializer):
+    images = MattressImageSerializer(many=True, read_only=True)
+    sizes = MattressSizeSerializer(many=True, read_only=True)
+    specifications = MattressSpecificationSerializer(many=True, read_only=True)
+    features = MattressFeatureSerializer(many=True, read_only=True)
+    faqs = MattressFAQSerializer(many=True, read_only=True)
+    pros_cons = MattressProConSerializer(many=True, read_only=True)
+    reviews = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Mattress
+        fields = [
+            "id",
+            "name",
+            "brand",
+            "subtitle",
+            "description",
+            "long_description",
+            "slug",
+            "warranty_months",
+            "price",
+            "width",
+            "length",
+            "height",
+            "image",
+            "is_available",
+            "average_rating",
+            "review_count",
+            "images",
+            "sizes",
+            "specifications",
+            "features",
+            "faqs",
+            "pros_cons",
+            "reviews",
+        ]
+
+    def get_reviews(self, obj):
+        approved = obj.reviews.filter(is_approved=True)
+        return ReviewSerializer(approved, many=True).data
 
 
 class MattressInstanceSerializer(serializers.ModelSerializer):
