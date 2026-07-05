@@ -26,7 +26,7 @@ export default function ArticleDetail() {
   }, [slug]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[72px]">
+    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -36,7 +36,7 @@ export default function ArticleDetail() {
         }}
       />
 
-      <div className="relative mx-auto max-w-4xl px-6 py-16">
+      <div className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
         <Link
           to="/articles"
           className="mb-8 inline-flex items-center gap-2 font-persian text-sm text-[#001a5c] transition-colors hover:text-blue-500"

@@ -23,7 +23,7 @@ export default function MyWarrantiesPage() {
   }, []);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[72px]">
+    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -39,7 +39,7 @@ export default function MyWarrantiesPage() {
         }}
       />
 
-      <div className="relative mx-auto max-w-6xl px-6 py-16">
+      <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
         <header className="mb-12" dir="rtl">
           <p className="font-sans text-sm uppercase tracking-[0.3em] text-blue-400/80">
             My Warranties

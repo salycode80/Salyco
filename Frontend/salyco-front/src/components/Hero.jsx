@@ -1,12 +1,12 @@
 const Hero = () => {
   return (
-    <section className="relative h-screen overflow-hidden">
+    <section className="relative h-[70vh] min-h-[420px] overflow-hidden sm:h-screen">
 
       {/* Hero image */}
       <img
         src="/heroimage2.png"
         alt="Salyco Mattress"
-        className="absolute inset-0 w-full h-full object-cover object-contain"
+        className="absolute inset-0 h-full w-full object-cover"
       />
 
       {/* Blue overlay */}

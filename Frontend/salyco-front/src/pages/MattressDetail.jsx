@@ -92,8 +92,8 @@ export default function MattressDetail() {
 
   if (loading) {
     return (
-      <section className="min-h-screen bg-[#F5F7FA] pt-[72px]">
-        <div className="mx-auto max-w-7xl px-6 py-16">
+      <section className="min-h-screen bg-[#F5F7FA] pt-[var(--navbar-height)]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
           <p className="font-persian text-center text-[#000c3e]/60">
             در حال بارگذاری...
           </p>
@@ -104,8 +104,8 @@ export default function MattressDetail() {
 
   if (error || !mattress) {
     return (
-      <section className="min-h-screen bg-[#F5F7FA] pt-[72px]">
-        <div className="mx-auto max-w-7xl px-6 py-16">
+      <section className="min-h-screen bg-[#F5F7FA] pt-[var(--navbar-height)]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
           <p className="font-persian text-center text-red-600/80">
             {error || "محصول یافت نشد."}
           </p>
@@ -122,7 +122,7 @@ export default function MattressDetail() {
   const cons = mattress.pros_cons?.filter((p) => p.type === "CON") || [];
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[72px]">
+    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -132,7 +132,7 @@ export default function MattressDetail() {
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-6 py-10">
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <Link
           to="/products/mattress"
           className="mb-8 inline-flex items-center gap-2 font-persian text-sm text-[#001a5c] transition-colors hover:text-blue-500"

@@ -12,6 +12,7 @@ import AuthPage from "./pages/AuthPage";
 import WarrantyStatusPage from "./pages/WarrantyStatusPage";
 import MyWarrantiesPage from "./pages/MyWarrantiesPage";
 import AdminCreateInstancePage from "./pages/AdminCreateInstancePage";
+import UserInfo from "./pages/UserInfo";
 
 function App() {
   return (
@@ -25,7 +26,11 @@ function App() {
         <Route path="/articles" element={<Articles />} />
         <Route path="/articles/:slug" element={<ArticleDetail />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/warranty/mattress/:serialNumber" element={<WarrantyStatusPage />} />
+        <Route
+          path="/warranty/mattress/:serialNumber"
+          element={<WarrantyStatusPage />}
+        />
+        <Route path="/user-info" element={<UserInfo />} />
         <Route
           path="/warranty/my"
           element={

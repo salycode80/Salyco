@@ -241,7 +241,7 @@ export default function ArticlesPage() {
 
   return (
     <section
-      className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[72px]"
+      className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]"
       dir="rtl"
     >
       {/* subtle grid */}

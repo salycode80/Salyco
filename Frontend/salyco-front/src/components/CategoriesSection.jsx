@@ -3,9 +3,10 @@ import { BedDouble, Layers, Shield, Sparkles, ArrowLeft } from "lucide-react";
 
 const categories = [
   {
-    title: "تشک",
+    title: "تشک های سالیکو",
     subtitle: "Mattresses",
-    description: "تشک‌های فنر متصل، فنر پاکتی و فوم با کیفیت بالا برای خوابی عمیق.",
+    description:
+      "تشک‌های فنر متصل، فنر پاکتی و فوم با کیفیت بالا برای خوابی عمیق.",
     icon: BedDouble,
     href: "/gallery",
   },
@@ -68,41 +69,43 @@ export default function CategoriesSection() {
         </header>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map(({ title, subtitle, description, icon: Icon, href }) => (
-            <Link
-              key={title}
-              to={href}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-blue-400/15 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/30 hover:shadow-lg hover:shadow-blue-900/10"
-            >
-              <div className="relative flex h-36 items-center justify-center bg-gradient-to-br from-[#000c2e] via-[#001a5c] to-[#00256b]">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(100,160,255,0.25),transparent_60%)]" />
-                <Icon
-                  size={40}
-                  strokeWidth={1.5}
-                  className="relative text-blue-200/90 transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-
-              <div className="flex flex-1 flex-col p-5" dir="rtl">
-                <p className="font-sans text-xs uppercase tracking-[0.2em] text-blue-400/70">
-                  {subtitle}
-                </p>
-                <h3 className="mt-1 font-persian text-xl font-bold text-[#000c3e]">
-                  {title}
-                </h3>
-                <p className="mt-2 flex-1 font-persian text-sm leading-relaxed text-[#000c3e]/65">
-                  {description}
-                </p>
-                <span className="mt-4 inline-flex items-center gap-1.5 font-sans text-xs font-medium uppercase tracking-widest text-[#001a5c] transition-colors group-hover:text-blue-500">
-                  مشاهده
-                  <ArrowLeft
-                    size={14}
-                    className="transition-transform group-hover:-translate-x-1"
+          {categories.map(
+            ({ title, subtitle, description, icon: Icon, href }) => (
+              <Link
+                key={title}
+                to={href}
+                className="group flex flex-col overflow-hidden rounded-2xl border border-blue-400/15 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/30 hover:shadow-lg hover:shadow-blue-900/10"
+              >
+                <div className="relative flex h-36 items-center justify-center bg-gradient-to-br from-[#000c2e] via-[#001a5c] to-[#00256b]">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(100,160,255,0.25),transparent_60%)]" />
+                  <Icon
+                    size={40}
+                    strokeWidth={1.5}
+                    className="relative text-blue-200/90 transition-transform duration-300 group-hover:scale-110"
                   />
-                </span>
-              </div>
-            </Link>
-          ))}
+                </div>
+
+                <div className="flex flex-1 flex-col p-5" dir="rtl">
+                  <p className="font-sans text-xs uppercase tracking-[0.2em] text-blue-400/70">
+                    {subtitle}
+                  </p>
+                  <h3 className="mt-1 font-persian text-xl font-bold text-[#000c3e]">
+                    {title}
+                  </h3>
+                  <p className="mt-2 flex-1 font-persian text-sm leading-relaxed text-[#000c3e]/65">
+                    {description}
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-1.5 font-sans text-xs font-medium uppercase tracking-widest text-[#001a5c] transition-colors group-hover:text-blue-500">
+                    مشاهده
+                    <ArrowLeft
+                      size={14}
+                      className="transition-transform group-hover:-translate-x-1"
+                    />
+                  </span>
+                </div>
+              </Link>
+            ),
+          )}
         </div>
       </div>
     </section>

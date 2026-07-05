@@ -3,3 +3,33 @@
 @theme {
   --font-persian: "Vazirmatn", sans-serif;
 }
+
+/* Height reserved by the fixed navbar. Pages offset their top padding by this
+   value so content never sits behind the bar. It grows on desktop where the
+   navbar switches to its two-row layout. */
+:root {
+  --navbar-height: 112px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --navbar-height: 120px;
+  }
+}
+
+/* Hide the scrollbar on the horizontally-scrollable category row while keeping
+   it scrollable (Tailwind has no built-in utility for this). */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Guard against accidental horizontal scroll from full-bleed sections on
+   narrow viewports. */
+html,
+body {
+  overflow-x: hidden;
+}
