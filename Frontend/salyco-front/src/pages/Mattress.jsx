@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import MattressCard from "../components/product/MattressCard";
-
+import PageBackground from "../components/PageBackground";
 
 export default function Gallery() {
   const [mattresses, setMattresses] = useState([]);
@@ -17,36 +17,21 @@ export default function Gallery() {
   }, []);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(100,160,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(100,160,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
-
-      <div
-        className="pointer-events-none absolute top-0 right-0 h-96 w-1/2"
-        style={{
-          background:
-            "linear-gradient(to left, rgba(0,50,180,0.12) 0%, transparent 100%)",
-        }}
-      />
+    <section className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)]">
+      <PageBackground />
 
       <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
         <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-blue-400/80">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
             Gallery
           </p>
           <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
-            گالری محصولات
+            تشک های سالیکو
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#000c3e]" />
-          <p className="mt-4 max-w-xl font-sans text-base text-[#000c3e]/60">
+          <hr className="mt-4 w-24 border-t-2 border-wood-400" />
+          {/* <p className="mt-4 max-w-xl font-sans text-base text-[#000c3e]/60">
             مجموعه محصولات ما را کاوش کنید
-          </p>
+          </p> */}
         </header>
 
         {loading && (
@@ -66,7 +51,7 @@ export default function Gallery() {
         )}
 
         {!loading && mattresses.length > 0 && (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {mattresses.map((mattress) => (
               <MattressCard key={mattress.slug} mattress={mattress} />
             ))}

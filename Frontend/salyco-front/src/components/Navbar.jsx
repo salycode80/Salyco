@@ -17,13 +17,15 @@ import {
   ChevronDown,
   Menu,
   X,
+  MapPin,
 } from "lucide-react";
 
 const categories = [
   { label: "تشک", icon: BedDouble, to: "/products/mattress" },
   { label: "مقالات", icon: BookOpen, to: "/articles" },
-  { label: "گالری", icon: Image, to: "/gallery" },
-  { label: "درباره سالیکو", icon: Info, to: "/about" },
+  { label: "نمایندگی", icon: MapPin, to: "/dealers" },
+  { label: "تماس با ما", icon: Phone, href: "#contact" },
+  { label: "درباره ما", icon: Info, to: "/about" },
 ];
 
 export default function Navbar() {
@@ -174,16 +176,6 @@ export default function Navbar() {
 
           {/* Desktop actions */}
           <div className="hidden items-center gap-4 lg:flex" dir="rtl">
-            <a
-              href="#contact"
-              className="flex items-center gap-1.5 text-sm font-medium
-                         text-blue-200/80 hover:text-white tracking-wide transition-colors"
-            >
-              <Phone size={15} className="text-blue-300" />
-              <span>تماس با ما</span>
-            </a>
-            <div className="h-5 w-px bg-blue-400/25" />
-
             {isAuthenticated ? (
               <>
                 <Link
@@ -267,12 +259,27 @@ export default function Navbar() {
                    overflow-x-auto scrollbar-none border-t border-blue-100
                    bg-white px-3 shadow-sm sm:px-6 lg:px-16"
       >
-        {categories.map(({ label, icon: Icon, to }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4
+        {categories.map(({ label, icon: Icon, to, href }) => {
+          const classes = `flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4
+               text-sm font-semibold tracking-wide whitespace-nowrap
+               transition-all duration-200
+               text-[#000c3e] hover:text-[#2563eb] hover:bg-blue-50`;
+
+          if (href) {
+            return (
+              <a key={href} href={href} className={classes}>
+                <Icon size={15} strokeWidth={2} />
+                <span>{label}</span>
+              </a>
+            );
+          }
+
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4
                text-sm font-semibold tracking-wide whitespace-nowrap
                transition-all duration-200
                ${
@@ -280,12 +287,13 @@ export default function Navbar() {
                    ? "bg-blue-50 text-[#2563eb]"
                    : "text-[#000c3e] hover:text-[#2563eb] hover:bg-blue-50"
                }`
-            }
-          >
-            <Icon size={15} strokeWidth={2} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+              }
+            >
+              <Icon size={15} strokeWidth={2} />
+              <span>{label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* ── MOBILE MENU ── */}
@@ -297,14 +305,6 @@ export default function Navbar() {
           <div className="mb-3 md:hidden">{searchField}</div>
 
           <div className="flex flex-col divide-y divide-blue-400/15">
-            <a
-              href="#contact"
-              onClick={closeMenu}
-              className="flex items-center gap-2 py-3 text-sm font-medium text-blue-100"
-            >
-              <Phone size={16} className="text-blue-300" />
-              <span>تماس با ما</span>
-            </a>
             {isAuthenticated ? (
               <>
                 <Link

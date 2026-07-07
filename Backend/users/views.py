@@ -1,8 +1,14 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializer import CurrentUserSerializer, UserSerializer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializer import (
+    ChangePasswordSerializer,
+    CurrentUserSerializer,
+    UserSerializer,
+)
 # from .models import Note
 
 
@@ -36,9 +42,24 @@ class CreateUserView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
 
-class CurrentUserView(generics.RetrieveAPIView):
+class CurrentUserView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CurrentUserSerializer
 
     def get_object(self):
         return self.request.user
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"detail": "رمز عبور با موفقیت تغییر کرد."},
+            status=status.HTTP_200_OK,
+        )

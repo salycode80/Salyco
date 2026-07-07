@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { getMattressDetail } from "../api/warranty";
 import { getProductImageUrl } from "../utils/productImage";
+import PageBackground from "../components/PageBackground";
 
 const toPersianNumber = (num) => {
   const persianDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
@@ -56,9 +57,7 @@ function FAQItem({ faq }) {
         )}
       </button>
       {open && (
-        <p className="pb-4 text-sm leading-7 text-[#0a1f4d]/60">
-          {faq.answer}
-        </p>
+        <p className="pb-4 text-sm leading-7 text-[#0a1f4d]/60">{faq.answer}</p>
       )}
     </div>
   );
@@ -82,7 +81,7 @@ export default function MattressDetail() {
         setSelectedImage(
           primary
             ? getProductImageUrl(primary.image)
-            : getProductImageUrl(data.image)
+            : getProductImageUrl(data.image),
         );
         if (data.sizes?.length > 0) setSelectedSize(data.sizes[0]);
       })
@@ -115,22 +114,13 @@ export default function MattressDetail() {
   }
 
   const warrantyYears = Math.round(mattress.warranty_months / 12);
-  const displayPrice = selectedSize
-    ? selectedSize.price
-    : mattress.price;
+  const displayPrice = selectedSize ? selectedSize.price : mattress.price;
   const pros = mattress.pros_cons?.filter((p) => p.type === "PRO") || [];
   const cons = mattress.pros_cons?.filter((p) => p.type === "CON") || [];
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(100,160,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(100,160,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
+    <section className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)]">
+      <PageBackground />
 
       <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <Link
@@ -139,14 +129,11 @@ export default function MattressDetail() {
           dir="rtl"
         >
           <ArrowRight size={16} />
-          بازگشت به محصولات
+          بازگشت
         </Link>
 
         {/* Hero: Image + Info */}
-        <div
-          className="grid gap-10 lg:grid-cols-2"
-          dir="rtl"
-        >
+        <div className="grid gap-10 lg:grid-cols-2" dir="rtl">
           {/* Image gallery */}
           <div className="space-y-4">
             <div className="overflow-hidden rounded-[20px] border border-[#0a1f4d]/10 bg-white shadow-sm">
@@ -187,14 +174,17 @@ export default function MattressDetail() {
 
           {/* Product info */}
           <div className="flex flex-col gap-5">
-            {mattress.brand && (
-              <p className="text-sm font-medium uppercase tracking-[0.15em] text-blue-500/80">
-                {mattress.brand}
-              </p>
-            )}
-            <h1 className="font-persian text-3xl font-bold text-[#0a1f4d] md:text-4xl">
-              {mattress.name}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="order-1 font-persian text-3xl font-bold text-[#0a1f4d] md:text-4xl">
+                {mattress.name}
+              </h1>
+              <div className="order-2 flex items-center gap-1 rounded-xl bg-blue-50 px-2 py-1">
+                <ShieldCheck size={14} className="text-blue-500" />
+                <span className="text-xs font-medium text-blue-700">
+                  {toPersianNumber(warrantyYears)} سال
+                </span>
+              </div>
+            </div>
             {mattress.subtitle && (
               <p className="text-base text-[#0a1f4d]/60">{mattress.subtitle}</p>
             )}
@@ -203,33 +193,18 @@ export default function MattressDetail() {
             {mattress.review_count > 0 && (
               <div className="flex items-center gap-3">
                 <StarRating rating={mattress.average_rating} />
-                <span className="text-sm text-[#0a1f4d]/50">
-                  ({toPersianNumber(mattress.review_count)} نظر)
-                </span>
+                <span>امتیاز این محصول</span>
               </div>
             )}
 
-            {/* Warranty + Dimensions */}
+            {/* Dimensions */}
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-2">
-                <ShieldCheck size={16} className="text-blue-500" />
-                <span className="text-sm font-medium text-blue-700">
-                  {toPersianNumber(warrantyYears)} سال گارانتی
-                </span>
-              </div>
-              {(mattress.width > 0 || mattress.length > 0) && (
-                <div className="flex items-center gap-2 rounded-2xl bg-[#0a1f4d]/5 px-4 py-2">
-                  <Ruler size={16} className="text-[#0a1f4d]/50" />
-                  <span className="text-sm text-[#0a1f4d]/60">
-                    {toPersianNumber(mattress.width)} × {toPersianNumber(mattress.length)}
-                    {mattress.height > 0 && ` × ${toPersianNumber(mattress.height)}`} سانتی‌متر
-                  </span>
-                </div>
-              )}
               {!mattress.is_available && (
                 <div className="flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-2">
                   <Package size={16} className="text-red-500" />
-                  <span className="text-sm font-medium text-red-600">ناموجود</span>
+                  <span className="text-sm font-medium text-red-600">
+                    ناموجود
+                  </span>
                 </div>
               )}
             </div>
@@ -237,25 +212,41 @@ export default function MattressDetail() {
             {/* Size selector */}
             {mattress.sizes?.length > 0 && (
               <div className="space-y-3">
-                <p className="text-sm font-medium text-[#0a1f4d]/70">انتخاب سایز:</p>
-                <div className="flex flex-wrap gap-2">
+                <label
+                  htmlFor="size-select"
+                  className="block text-sm font-medium text-[#0a1f4d]/70"
+                >
+                  سایز های موجود :
+                </label>
+
+                <select
+                  id="size-select"
+                  value={selectedSize?.id ?? ""}
+                  onChange={(e) => {
+                    const size = mattress.sizes.find(
+                      (s) => s.id === Number(e.target.value),
+                    );
+                    if (size) {
+                      setSelectedSize(size);
+                    }
+                  }}
+                  className="w-full rounded-xl border border-[#0a1f4d]/15 bg-white px-4 py-3 text-sm text-[#0a1f4d] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="" disabled>
+                    لطفاً سایز را انتخاب کنید
+                  </option>
+
                   {mattress.sizes.map((size) => (
-                    <button
+                    <option
                       key={size.id}
-                      onClick={() => setSelectedSize(size)}
+                      value={size.id}
                       disabled={!size.in_stock}
-                      className={`rounded-xl border px-4 py-2.5 text-sm transition-all ${
-                        selectedSize?.id === size.id
-                          ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : size.in_stock
-                          ? "border-[#0a1f4d]/15 bg-white text-[#0a1f4d]/70 hover:border-blue-300"
-                          : "border-[#0a1f4d]/10 bg-gray-100 text-[#0a1f4d]/30 line-through"
-                      }`}
                     >
                       {size.label}
-                    </button>
+                      {!size.in_stock ? " (ناموجود)" : ""}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
             )}
 
@@ -273,7 +264,9 @@ export default function MattressDetail() {
             </div>
 
             {/* Description */}
-            <p className="leading-8 text-[#0a1f4d]/65">{mattress.description}</p>
+            <p className="leading-8 text-[#0a1f4d]/65">
+              {mattress.description}
+            </p>
 
             {/* Features */}
             {mattress.features?.length > 0 && (
@@ -323,7 +316,9 @@ export default function MattressDetail() {
                     <span className="text-sm font-medium text-[#0a1f4d]/70">
                       {spec.key}
                     </span>
-                    <span className="text-sm text-[#0a1f4d]/55">{spec.value}</span>
+                    <span className="text-sm text-[#0a1f4d]/55">
+                      {spec.value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -397,7 +392,10 @@ export default function MattressDetail() {
                 <div className="flex items-center gap-2">
                   <StarRating rating={mattress.average_rating} size={18} />
                   <span className="text-sm text-[#0a1f4d]/50">
-                    {toPersianNumber(Number(mattress.average_rating).toFixed(1))} از ۵
+                    {toPersianNumber(
+                      Number(mattress.average_rating).toFixed(1),
+                    )}{" "}
+                    از ۵
                   </span>
                 </div>
               </div>

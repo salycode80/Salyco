@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Lock,
 } from "lucide-react";
+import PageBackground from "../components/PageBackground";
 
 export default function AdminCreateInstancePage() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function AdminCreateInstancePage() {
 
   if (isAdmin === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F5F7FA] pt-[var(--navbar-height)]">
+      <div className="flex min-h-screen items-center justify-center bg-wheat-50 pt-[var(--navbar-height)]">
         <svg className="animate-spin h-10 w-10 text-[#001a5c]" viewBox="0 0 24 24" fill="none">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
@@ -82,7 +83,7 @@ export default function AdminCreateInstancePage() {
 
   if (!isAdmin) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F5F7FA] pt-[var(--navbar-height)]">
+      <div className="flex min-h-screen items-center justify-center bg-wheat-50 pt-[var(--navbar-height)]">
         <div className="overflow-hidden rounded-2xl border border-red-200 bg-white p-12 text-center shadow-sm">
           <Lock size={56} className="mx-auto mb-4 text-red-400" strokeWidth={1.5} />
           <h2 className="font-persian text-xl font-semibold text-[#000c3e]" dir="rtl">
@@ -103,31 +104,18 @@ export default function AdminCreateInstancePage() {
   }
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(100,160,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(100,160,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute top-0 right-0 h-96 w-1/2"
-        style={{
-          background: "linear-gradient(to left, rgba(0,50,180,0.12) 0%, transparent 100%)",
-        }}
-      />
+    <section className="relative min-h-screen overflow-hidden bg-wheat-50 pt-[var(--navbar-height)]">
+      <PageBackground />
 
       <div className="relative mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-16">
         <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-blue-400/80">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
             Admin Panel
           </p>
           <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
             ساخت نمونه محصول
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#000c3e]" />
+          <hr className="mt-4 w-24 border-t-2 border-wood-400" />
           <p className="mt-4 max-w-xl font-persian text-base text-[#000c3e]/60">
             نوع تشک و تاریخ تولید را انتخاب کنید تا شماره سریال و QR کد تولید شود.
           </p>

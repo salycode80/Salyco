@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import api from "../api";
 import { formatArticleDate, getArticleImageUrl } from "../utils/articleImage";
+import PageBackground from "../components/PageBackground";
 
 export default function ArticleDetail() {
   const { slug } = useParams();
@@ -26,15 +27,8 @@ export default function ArticleDetail() {
   }, [slug]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(100,160,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(100,160,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
+    <section className="relative min-h-screen overflow-hidden bg-wheat-50 pt-[var(--navbar-height)]">
+      <PageBackground />
 
       <div className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
         <Link

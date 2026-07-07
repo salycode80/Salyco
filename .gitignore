@@ -1,0 +1,16 @@
+# Secrets — never commit real environment files
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+Backend/env/
+Backend/venv/
+Backend/staticfiles/
+
+# Node
+Frontend/salyco-front/node_modules/
+Frontend/salyco-front/dist/
+
+# Local DB (only used in dev; production uses Postgres)
+*.sqlite3

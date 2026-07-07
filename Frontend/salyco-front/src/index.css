@@ -2,6 +2,16 @@
 
 @theme {
   --font-persian: "Vazirmatn", sans-serif;
+
+  /* Warm wheat / wood palette — paired with the brand navy to break the
+     cold, monotonous all-blue look across pages. */
+  --color-wheat-50: #faf6ee;
+  --color-wheat-100: #f3ebda;
+  --color-wheat-200: #e8d9bd;
+  --color-wood-300: #d2b48c; /* wheat / light wood */
+  --color-wood-400: #c19a6b; /* camel */
+  --color-wood-500: #a97e50; /* wood */
+  --color-wood-600: #8a6440; /* deep walnut */
 }
 
 /* Height reserved by the fixed navbar. Pages offset their top padding by this
