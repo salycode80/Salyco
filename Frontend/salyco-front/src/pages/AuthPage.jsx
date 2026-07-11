@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { AuthTabs } from "../components/Auth/AuthTabs";
-import { LoginForm } from "../components/Auth/LoginForm";
-import { RegisterForm } from "../components/Auth/RegisterForm";
+import { AuthTabs } from "../components/auth/AuthTabs";
+import { LoginForm } from "../components/auth/LoginForm";
+import { RegisterForm } from "../components/auth/RegisterForm";
 
 export default function AuthPage() {
   const [tab, setTab] = useState("login");
@@ -37,7 +37,10 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <p className="mt-5 text-center text-[12px] text-[#000c3e]/30" dir="rtl">
+          <p
+            className="mt-5 text-center text-[12px] text-[#000c3e]/30"
+            dir="rtl"
+          >
             © {new Date().getFullYear()} سالیکو — تمامی حقوق محفوظ است
           </p>
         </div>

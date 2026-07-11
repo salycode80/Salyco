@@ -11,7 +11,7 @@ ENV VITE_API_URL=$VITE_API_URL
 
 # Install deps from the lockfile for reproducible builds.
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
 # Build the static site.
 COPY . .
