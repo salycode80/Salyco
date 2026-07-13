@@ -64,12 +64,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "corsheaders",  # ✅ Moved to top of installed apps
+    "corsheaders",  
     "rest_framework",
     "core",
     "mattress",
     "articles",
-    "users"
+    "users",
+    "contact",
+    "search",
 ]
 
 MIDDLEWARE = [

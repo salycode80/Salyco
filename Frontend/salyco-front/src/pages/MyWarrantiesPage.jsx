@@ -24,7 +24,7 @@ export default function MyWarrantiesPage() {
   }, []);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-wheat-50 pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
@@ -40,28 +40,61 @@ export default function MyWarrantiesPage() {
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
-            <svg className="animate-spin h-10 w-10 text-[#001a5c]" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            <svg
+              className="animate-spin h-10 w-10 text-[#001a5c]"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8z"
+              />
             </svg>
-            <p className="mt-4 font-persian text-sm text-[#000c3e]/60">در حال بارگذاری...</p>
+            <p className="mt-4 font-persian text-sm text-[#000c3e]/60">
+              در حال بارگذاری...
+            </p>
           </div>
         )}
 
         {error && (
           <div className="overflow-hidden rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
-            <AlertTriangle size={48} className="mx-auto mb-4 text-red-400" strokeWidth={1.5} />
-            <p className="font-persian text-sm text-[#000c3e]/60" dir="rtl">{error}</p>
+            <AlertTriangle
+              size={48}
+              className="mx-auto mb-4 text-red-400"
+              strokeWidth={1.5}
+            />
+            <p className="font-persian text-sm text-[#000c3e]/60" dir="rtl">
+              {error}
+            </p>
           </div>
         )}
 
         {!loading && !error && warranties.length === 0 && (
           <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-12 text-center shadow-sm">
-            <ShieldOff size={56} className="mx-auto mb-4 text-blue-300" strokeWidth={1.5} />
-            <h2 className="font-persian text-xl font-semibold text-[#000c3e]" dir="rtl">
+            <ShieldOff
+              size={56}
+              className="mx-auto mb-4 text-blue-300"
+              strokeWidth={1.5}
+            />
+            <h2
+              className="font-persian text-xl font-semibold text-[#000c3e]"
+              dir="rtl"
+            >
               هیچ گارانتی ثبت‌شده‌ای وجود ندارد
             </h2>
-            <p className="mt-2 font-persian text-sm text-[#000c3e]/60" dir="rtl">
+            <p
+              className="mt-2 font-persian text-sm text-[#000c3e]/60"
+              dir="rtl"
+            >
               شماره سریال محصول خود را وارد کنید تا گارانتی را فعال کنید.
             </p>
             <Link
@@ -81,7 +114,10 @@ export default function MyWarrantiesPage() {
                 name: item.mattress?.name || "—",
                 serial: item.serial_number,
                 totalWarrantyMonths: item.mattress?.warranty_months || 0,
-                remainingMonths: Math.max(0, Math.round((item.warranty_remaining_days || 0) / 30)),
+                remainingMonths: Math.max(
+                  0,
+                  Math.round((item.warranty_remaining_days || 0) / 30),
+                ),
               };
               const isActive = item.is_under_warranty;
 
@@ -91,7 +127,10 @@ export default function MyWarrantiesPage() {
                   to={`/warranty/mattress/${item.serial_number}`}
                   className="group overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-400/25 hover:shadow-lg hover:shadow-blue-900/10"
                 >
-                  <div className="mb-4 flex items-center justify-between" dir="rtl">
+                  <div
+                    className="mb-4 flex items-center justify-between"
+                    dir="rtl"
+                  >
                     <h3 className="font-persian text-lg font-semibold text-[#000c3e]">
                       {product.name}
                     </h3>
@@ -107,7 +146,10 @@ export default function MyWarrantiesPage() {
                     </span>
                   </div>
 
-                  <p className="mb-4 font-mono text-xs text-[#000c3e]/40" dir="ltr">
+                  <p
+                    className="mb-4 font-mono text-xs text-[#000c3e]/40"
+                    dir="ltr"
+                  >
                     {item.serial_number}
                   </p>
 
@@ -116,12 +158,18 @@ export default function MyWarrantiesPage() {
                     <div dir="rtl" className="text-sm">
                       {item.activation_date && (
                         <p className="font-persian text-[#000c3e]/60">
-                          فعال‌سازی: {new Date(item.activation_date).toLocaleDateString("fa-IR")}
+                          فعال‌سازی:{" "}
+                          {new Date(item.activation_date).toLocaleDateString(
+                            "fa-IR",
+                          )}
                         </p>
                       )}
                       {item.warranty_expiration_date && (
                         <p className="font-persian text-[#000c3e]/60">
-                          انقضا: {new Date(item.warranty_expiration_date).toLocaleDateString("fa-IR")}
+                          انقضا:{" "}
+                          {new Date(
+                            item.warranty_expiration_date,
+                          ).toLocaleDateString("fa-IR")}
                         </p>
                       )}
                     </div>

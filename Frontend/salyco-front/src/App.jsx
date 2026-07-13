@@ -8,11 +8,17 @@ import MattressDetail from "./pages/MattressDetail";
 import ProductRegistration from "./pages/ProductRegistration";
 import Articles from "./pages/Articles";
 import ArticleDetail from "./pages/ArticleDetail";
+import Dealers from "./pages/Dealers";
+import Contact from "./pages/Contact";
+import About from "./pages/About";
 import AuthPage from "./pages/AuthPage";
 import WarrantyStatusPage from "./pages/WarrantyStatusPage";
 import MyWarrantiesPage from "./pages/MyWarrantiesPage";
-import AdminCreateInstancePage from "./pages/AdminCreateInstancePage";
+import AdminWorkspace from "./pages/admin/AdminWorkspace";
+import DashboardPanel from "./pages/admin/DashboardPanel";
+import CreateInstancePanel from "./pages/admin/CreateInstancePanel";
 import UserInfo from "./pages/UserInfo";
+import SearchResults from "./pages/SearchResults";
 
 function App() {
   return (
@@ -25,12 +31,16 @@ function App() {
         <Route path="/productregistration" element={<ProductRegistration />} />
         <Route path="/articles" element={<Articles />} />
         <Route path="/articles/:slug" element={<ArticleDetail />} />
+        <Route path="/dealers" element={<Dealers />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route
           path="/warranty/mattress/:serialNumber"
           element={<WarrantyStatusPage />}
         />
         <Route path="/user-info" element={<UserInfo />} />
+        <Route path="/search" element={<SearchResults />} />
         <Route
           path="/warranty/my"
           element={
@@ -40,13 +50,16 @@ function App() {
           }
         />
         <Route
-          path="/admin/instances"
+          path="/admin"
           element={
             <ProtectedRoute>
-              <AdminCreateInstancePage />
+              <AdminWorkspace />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<DashboardPanel />} />
+          <Route path="create" element={<CreateInstancePanel />} />
+        </Route>
       </Routes>
       <AboutFooter />
     </div>

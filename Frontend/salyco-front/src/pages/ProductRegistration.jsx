@@ -28,7 +28,7 @@ export default function ProductRegistration() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-wheat-50 pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
@@ -71,7 +71,10 @@ export default function ProductRegistration() {
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 font-persian text-lg font-semibold text-[#000c3e]" dir="rtl">
+              <h3
+                className="mb-4 font-persian text-lg font-semibold text-[#000c3e]"
+                dir="rtl"
+              >
                 مزایای گارانتی
               </h3>
               <div className="space-y-2.5" dir="rtl">
@@ -113,13 +116,18 @@ export default function ProductRegistration() {
             <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-6 shadow-sm sm:p-8">
               <div className="mb-6 text-center" dir="rtl">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#000c2e] via-[#001a5c] to-[#00256b]">
-                  <Search size={28} className="text-blue-200" strokeWidth={1.5} />
+                  <Search
+                    size={28}
+                    className="text-blue-200"
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <h2 className="font-persian text-xl font-semibold text-[#000c3e]">
                   جستجوی گارانتی
                 </h2>
                 <p className="mt-2 font-persian text-sm text-[#000c3e]/60">
-                  شماره سریال محصول خود را وارد کنید تا وضعیت گارانتی را مشاهده کنید
+                  شماره سریال محصول خود را وارد کنید تا وضعیت گارانتی را مشاهده
+                  کنید
                 </p>
               </div>
 

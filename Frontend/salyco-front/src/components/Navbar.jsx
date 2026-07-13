@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/UseAuth";
 import api from "../api";
+import SearchBar from "./SearchBar";
 import {
   Phone,
-  Search,
   UserCircle,
   User,
   BedDouble,
@@ -13,7 +13,7 @@ import {
   Info,
   LogOut,
   ClipboardList,
-  Settings,
+  LayoutDashboard,
   ChevronDown,
   Menu,
   X,
@@ -24,7 +24,7 @@ const categories = [
   { label: "تشک", icon: BedDouble, to: "/products/mattress" },
   { label: "مقالات", icon: BookOpen, to: "/articles" },
   { label: "نمایندگی", icon: MapPin, to: "/dealers" },
-  { label: "تماس با ما", icon: Phone, href: "#contact" },
+  { label: "تماس با ما", icon: Phone, to: "/contact" },
   { label: "درباره ما", icon: Info, to: "/about" },
 ];
 
@@ -73,26 +73,6 @@ export default function Navbar() {
     if (!username) return "?";
     return username.charAt(0).toUpperCase();
   };
-
-  const searchField = (
-    <div className="relative w-full" dir="ltr">
-      <Search
-        size={16}
-        className="absolute right-3 top-1/2 -translate-y-1/2
-                   text-blue-400/70 pointer-events-none"
-      />
-      <input
-        type="text"
-        placeholder="جست و جو ..."
-        dir="rtl"
-        className="w-full pl-4 pr-9 py-[10px] rounded-lg text-sm
-                   bg-white/8 border border-blue-400/25 text-blue-100
-                   placeholder-blue-400/50
-                   focus:outline-none focus:border-blue-400/60
-                   focus:bg-white/12 transition-all"
-      />
-    </div>
-  );
 
   // Shared dropdown menu content (used by both desktop + mobile avatar buttons)
   const userDropdown = (
@@ -168,7 +148,7 @@ export default function Navbar() {
             </Link>
 
             <div className="hidden md:block md:w-64 md:shrink-0 lg:w-[420px]">
-              {searchField}
+              <SearchBar variant="navbar" />
             </div>
           </div>
 
@@ -191,11 +171,11 @@ export default function Navbar() {
                   <>
                     <div className="h-5 w-px bg-blue-400/25" />
                     <Link
-                      to="/admin/instances"
+                      to="/admin"
                       className="flex items-center gap-1.5 text-sm font-medium
                                  text-blue-200/80 hover:text-white tracking-wide transition-colors"
                     >
-                      <Settings size={16} className="text-blue-300" />
+                      <LayoutDashboard size={16} className="text-blue-300" />
                       <span>پنل مدیریت</span>
                     </Link>
                   </>
@@ -302,7 +282,9 @@ export default function Navbar() {
           className="bg-gradient-to-b from-[#001a5c] to-[#00256b] px-4 pb-4 pt-3 lg:hidden"
           dir="rtl"
         >
-          <div className="mb-3 md:hidden">{searchField}</div>
+          <div className="mb-3 md:hidden">
+            <SearchBar variant="navbar" onNavigate={closeMenu} />
+          </div>
 
           <div className="flex flex-col divide-y divide-blue-400/15">
             {isAuthenticated ? (
@@ -318,11 +300,11 @@ export default function Navbar() {
 
                 {user?.is_staff && (
                   <Link
-                    to="/admin/instances"
+                    to="/admin"
                     onClick={closeMenu}
                     className="flex items-center gap-2 py-3 text-sm font-medium text-blue-100"
                   >
-                    <Settings size={16} className="text-blue-300" />
+                    <LayoutDashboard size={16} className="text-blue-300" />
                     <span>پنل مدیریت</span>
                   </Link>
                 )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api";
+import PageBackground from "../components/PageBackground";
 
 // ─── Utility ────────────────────────────────────────────────────────────────
 
@@ -63,7 +64,9 @@ function HeroCard({ article }) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2563eb] px-3 py-1 text-xs font-medium text-white">
             مطالعه بیشتر
           </span>
-          <span className="text-xs text-white/50">{formatDate(article.published_at || article.created_at)}</span>
+          <span className="text-xs text-white/50">
+            {formatDate(article.published_at || article.created_at)}
+          </span>
         </div>
       </div>
     </a>
@@ -105,8 +108,12 @@ function SmallHeroCard({ article }) {
           {article.title}
         </p>
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-xs font-medium text-[#2563eb]">مطالعه بیشتر</span>
-          <span className="text-xs text-white/40">{formatDate(article.published_at || article.created_at)}</span>
+          <span className="text-xs font-medium text-[#2563eb]">
+            مطالعه بیشتر
+          </span>
+          <span className="text-xs text-white/40">
+            {formatDate(article.published_at || article.created_at)}
+          </span>
         </div>
       </div>
     </a>
@@ -132,8 +139,18 @@ function ArticleCard({ article }) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#dde6f7] to-[#c3d3ef]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#7b9fd4" strokeWidth="1.5" className="h-12 w-12 opacity-50">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18a.75.75 0 00.75-.75V6a.75.75 0 00-.75-.75H3a.75.75 0 00-.75.75v13.5c0 .414.336.75.75.75z" />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#7b9fd4"
+              strokeWidth="1.5"
+              className="h-12 w-12 opacity-50"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18a.75.75 0 00.75-.75V6a.75.75 0 00-.75-.75H3a.75.75 0 00-.75.75v13.5c0 .414.336.75.75.75z"
+              />
             </svg>
           </div>
         )}
@@ -161,8 +178,12 @@ function ArticleCard({ article }) {
           {article.excerpt || article.summary}
         </p>
         <div className="mt-auto pt-4 flex items-center justify-between border-t border-[#e8edf8]">
-          <span className="text-xs font-medium text-[#2563eb]">مطالعه بیشتر</span>
-          <span className="text-xs text-[#8a9ab8]">{formatDate(article.published_at || article.created_at)}</span>
+          <span className="text-xs font-medium text-[#2563eb]">
+            مطالعه بیشتر
+          </span>
+          <span className="text-xs text-[#8a9ab8]">
+            {formatDate(article.published_at || article.created_at)}
+          </span>
         </div>
       </div>
     </a>
@@ -190,8 +211,12 @@ function FeaturedSidebarItem({ article, index }) {
           {article.title}
         </p>
         <div className="mt-1.5 flex items-center justify-between">
-          <span className="text-xs font-medium text-[#2563eb]">مطالعه بیشتر</span>
-          <span className="text-xs text-[#8a9ab8]">{formatDate(article.published_at || article.created_at)}</span>
+          <span className="text-xs font-medium text-[#2563eb]">
+            مطالعه بیشتر
+          </span>
+          <span className="text-xs text-[#8a9ab8]">
+            {formatDate(article.published_at || article.created_at)}
+          </span>
         </div>
       </div>
     </a>
@@ -241,30 +266,33 @@ export default function ArticlesPage() {
 
   return (
     <section
-      className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]"
+      className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)] "
       dir="rtl"
     >
+      <PageBackground />
       {/* subtle grid */}
-      <div
+      {/* <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
             "linear-gradient(rgba(100,160,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(100,160,255,0.05) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
         }}
-      />
+      /> */}
 
       <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-
         {/* ── Page header ── */}
-        <header className="mb-8">
-          <p className="font-sans text-xs uppercase tracking-widest text-blue-400/70">
+        <header className="mb-12" dir="rtl">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
             Blog & Articles
           </p>
-          <h1 className="mt-1 font-persian text-3xl font-extrabold text-[#000c3e] md:text-4xl">
+          <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
             وبلاگ و مقالات
           </h1>
-          <div className="mt-3 h-1 w-16 rounded-full bg-[#2563eb]" />
+          <hr className="mt-4 w-24 border-t-2 border-wood-400" />
+          {/* <p className="mt-4 max-w-xl font-sans text-base text-[#000c3e]/60">
+            مجموعه محصولات ما را کاوش کنید
+          </p> */}
         </header>
 
         {/* ── Category filter bar ── */}
@@ -307,7 +335,10 @@ export default function ArticlesPage() {
             {/* cards skeleton */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#e2e8f0]">
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#e2e8f0]"
+                >
                   <Skeleton className="h-48 rounded-none" />
                   <div className="p-4 space-y-2">
                     <Skeleton className="h-4 w-4/5" />
@@ -357,7 +388,9 @@ export default function ArticlesPage() {
                 {/* main grid */}
                 <div>
                   {filteredLatest.length === 0 ? (
-                    <p className="font-persian text-[#4b5a78]">مقاله‌ای در این دسته‌بندی یافت نشد.</p>
+                    <p className="font-persian text-[#4b5a78]">
+                      مقاله‌ای در این دسته‌بندی یافت نشد.
+                    </p>
                   ) : (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                       {filteredLatest.map((article) => (

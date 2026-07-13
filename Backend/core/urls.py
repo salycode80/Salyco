@@ -31,6 +31,8 @@ urlpatterns = [
     path("api-auth",include("rest_framework.urls")),
     path("api/", include("mattress.urls")),
     path("api/", include("articles.urls")),
+    path("api/", include("contact.urls")),
+    path("api/", include("search.urls")),
 ]
 
 if settings.DEBUG:

@@ -27,7 +27,7 @@ export default function ArticleDetail() {
   }, [slug]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-wheat-50 pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
