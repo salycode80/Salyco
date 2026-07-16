@@ -199,6 +199,11 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
         user = self.context["request"].user
         instance: MattressInstance = self.validated_data["instance"]
 
+        # Link the instance to the registering account's Customer profile (so it
+        # shows up under "My Warranties"). We only ever create this profile or
+        # fill blank fields on it — we never overwrite existing profile data,
+        # because a single account may register several instances for different
+        # buyers and that shared row must not be clobbered.
         customer, _created = Customer.objects.get_or_create(
             user=user,
             defaults={
@@ -209,19 +214,39 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
                 "postal_code": self.validated_data.get("postal_code", ""),
             },
         )
-
         if not _created:
+            # Backfill only fields that are still empty on the profile; leave
+            # already-set values untouched.
+            changed = []
             for field in ("first_name", "last_name", "address", "phone_number", "postal_code"):
                 value = self.validated_data.get(field)
-                if value:
+                if value and not getattr(customer, field):
                     setattr(customer, field, value)
-            customer.save()
+                    changed.append(field)
+            if changed:
+                customer.save(update_fields=changed)
 
+        # Record the buyer for THIS sale on the instance itself. Falling back to
+        # the account/profile values when a field wasn't provided in the form.
         instance.customer = customer
+        instance.buyer_first_name = self.validated_data.get("first_name", "") or customer.first_name
+        instance.buyer_last_name = self.validated_data.get("last_name", "") or customer.last_name
+        instance.buyer_phone_number = self.validated_data.get("phone_number", "") or customer.phone_number
+        instance.buyer_address = self.validated_data.get("address", "") or customer.address
+        instance.buyer_postal_code = self.validated_data.get("postal_code", "") or customer.postal_code
         instance.activation_date = timezone.localdate()
         instance.is_warranty_active = True
         instance.save(
-            update_fields=["customer", "activation_date", "is_warranty_active"]
+            update_fields=[
+                "customer",
+                "buyer_first_name",
+                "buyer_last_name",
+                "buyer_phone_number",
+                "buyer_address",
+                "buyer_postal_code",
+                "activation_date",
+                "is_warranty_active",
+            ]
         )
         return instance
 

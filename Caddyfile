@@ -1,0 +1,7 @@
+# Terminates HTTPS for the domain and proxies everything to the frontend
+# (nginx) container, which serves the React app and reverse-proxies /api,
+# /admin, /media and /static to Django. Caddy obtains and renews the
+# Let's Encrypt certificate automatically — no manual certbot step needed.
+salyco.ir, www.salyco.ir {
+    reverse_proxy frontend:80
+}

@@ -28,14 +28,24 @@ export default function MyWarrantiesPage() {
       <PageBackground />
 
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
-        <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
-            My Warranties
-          </p>
-          <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
-            گارانتی‌های من
-          </h1>
-          <hr className="mt-4 w-24 border-t-2 border-wood-400" />
+        <header className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end" dir="rtl">
+          <div>
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+              My Warranties
+            </p>
+            <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
+              گارانتی‌های من
+            </h1>
+            <hr className="mt-4 w-24 border-t-2 border-wood-400" />
+          </div>
+
+          <Link
+            to="/productregistration"
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-6 py-3 font-persian font-semibold text-white shadow-md transition hover:brightness-110"
+          >
+            <Plus size={18} strokeWidth={2} />
+            ثبت گارانتی جدید
+          </Link>
         </header>
 
         {loading && (

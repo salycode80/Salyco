@@ -37,6 +37,9 @@ def filter_instances(request):
     if search:
         qs = qs.filter(
             Q(serial_number__icontains=search)
+            | Q(buyer_first_name__icontains=search)
+            | Q(buyer_last_name__icontains=search)
+            | Q(buyer_phone_number__icontains=search)
             | Q(customer__first_name__icontains=search)
             | Q(customer__last_name__icontains=search)
             | Q(customer__phone_number__icontains=search)
@@ -184,17 +187,13 @@ class AdminInstanceExportView(APIView):
             ]
         )
         for i in qs:
-            customer_name = (
-                f"{i.customer.first_name} {i.customer.last_name}".strip()
-                if i.customer_id
-                else ""
-            )
             writer.writerow(
                 [
                     i.serial_number,
                     i.mattress.name,
-                    customer_name,
-                    i.customer.phone_number if i.customer_id else "",
+                    i.buyer_full_name,
+                    i.buyer_phone_number
+                    or (i.customer.phone_number if i.customer_id else ""),
                     "Yes" if i.customer_id else "No",
                     "Yes" if i.is_warranty_active else "No",
                     i.activation_date or "",

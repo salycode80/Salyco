@@ -190,6 +190,16 @@ class MattressInstance(models.Model):
         related_name="mattress_instances",
         verbose_name="customer",
     )
+    # Per-sale snapshot of the buyer's details, captured at warranty
+    # registration. Kept on the instance (not only on the linked Customer) so
+    # that registering a later instance for a different buyer can never rewrite
+    # the recorded buyer of an earlier sale — the shared account Customer used
+    # to be overwritten in place, which retroactively changed every past sale.
+    buyer_first_name = models.CharField(max_length=150, blank=True, default="", verbose_name="buyer first name")
+    buyer_last_name = models.CharField(max_length=150, blank=True, default="", verbose_name="buyer last name")
+    buyer_phone_number = models.CharField(max_length=20, blank=True, default="", verbose_name="buyer phone number")
+    buyer_address = models.TextField(blank=True, default="", verbose_name="buyer address")
+    buyer_postal_code = models.CharField(max_length=20, blank=True, default="", verbose_name="buyer postal code")
     is_warranty_active = models.BooleanField(
         default=False,
         verbose_name="warranty active",
@@ -208,6 +218,20 @@ class MattressInstance(models.Model):
 
     def __str__(self) -> str:
         return self.serial_number
+
+    @property
+    def buyer_full_name(self) -> str:
+        """The buyer recorded for this specific sale.
+
+        Prefers the per-instance snapshot; falls back to the linked account
+        Customer for instances registered before the snapshot fields existed.
+        """
+        name = f"{self.buyer_first_name} {self.buyer_last_name}".strip()
+        if name:
+            return name
+        if self.customer_id is not None:
+            return f"{self.customer.first_name} {self.customer.last_name}".strip()
+        return ""
 
     @property
     def warranty_expiration_date(self) -> Optional[date]:

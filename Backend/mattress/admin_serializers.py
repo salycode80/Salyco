@@ -14,7 +14,7 @@ class AdminInstanceSerializer(serializers.ModelSerializer):
     mattress_name = serializers.CharField(source="mattress.name", read_only=True)
     mattress_id = serializers.IntegerField(source="mattress.id", read_only=True)
     customer_name = serializers.SerializerMethodField()
-    customer_phone = serializers.CharField(source="customer.phone_number", read_only=True, default="")
+    customer_phone = serializers.SerializerMethodField()
     is_sold = serializers.SerializerMethodField()
     warranty_expiration_date = serializers.DateField(read_only=True)
     warranty_remaining_days = serializers.IntegerField(read_only=True)
@@ -41,9 +41,13 @@ class AdminInstanceSerializer(serializers.ModelSerializer):
         return obj.customer_id is not None
 
     def get_customer_name(self, obj: MattressInstance) -> str:
-        if obj.customer_id is None:
-            return ""
-        return f"{obj.customer.first_name} {obj.customer.last_name}".strip()
+        # The buyer of this specific sale — read from the per-instance snapshot.
+        return obj.buyer_full_name
+
+    def get_customer_phone(self, obj: MattressInstance) -> str:
+        if obj.buyer_phone_number:
+            return obj.buyer_phone_number
+        return obj.customer.phone_number if obj.customer_id is not None else ""
 
 
 class AdminInstanceDetailSerializer(AdminInstanceSerializer):
@@ -75,16 +79,19 @@ class AdminInstanceDetailSerializer(AdminInstanceSerializer):
         }
 
     def get_customer(self, obj: MattressInstance) -> dict | None:
-        c = obj.customer
-        if c is None:
+        # Show the buyer recorded for THIS sale (the per-instance snapshot),
+        # not the mutable shared account profile. Fall back to the linked
+        # Customer for legacy rows registered before the snapshot existed.
+        if obj.customer_id is None and not obj.buyer_full_name:
             return None
+        c = obj.customer
         return {
-            "id": c.id,
-            "first_name": c.first_name,
-            "last_name": c.last_name,
-            "phone_number": c.phone_number,
-            "address": c.address,
-            "postal_code": c.postal_code,
+            "id": obj.customer_id,
+            "first_name": obj.buyer_first_name or (c.first_name if c else ""),
+            "last_name": obj.buyer_last_name or (c.last_name if c else ""),
+            "phone_number": obj.buyer_phone_number or (c.phone_number if c else ""),
+            "address": obj.buyer_address or (c.address if c else ""),
+            "postal_code": obj.buyer_postal_code or (c.postal_code if c else ""),
         }
 
     def get_warranty_url(self, obj: MattressInstance) -> str:
