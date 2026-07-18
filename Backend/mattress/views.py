@@ -68,7 +68,7 @@ class MattressInstanceQRView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        url = get_warranty_public_url(instance.serial_number)
+        url = get_warranty_public_url(instance.serial_number, request)
         qr_data_url = generate_qr_code_base64(url)
 
         if request.query_params.get("format") == "json":

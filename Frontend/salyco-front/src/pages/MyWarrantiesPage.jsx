@@ -30,18 +30,18 @@ export default function MyWarrantiesPage() {
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
         <header className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end" dir="rtl">
           <div>
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#009CDE]">
               My Warranties
             </p>
-            <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
+            <h1 className="mt-2 font-persian text-4xl font-bold text-[#1A1A2E] md:text-5xl">
               گارانتی‌های من
             </h1>
-            <hr className="mt-4 w-24 border-t-2 border-wood-400" />
+            <hr className="mt-4 w-24 border-t-2 border-[#F5BA2E]" />
           </div>
 
           <Link
             to="/productregistration"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-6 py-3 font-persian font-semibold text-white shadow-md transition hover:brightness-110"
+            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
           >
             <Plus size={18} strokeWidth={2} />
             ثبت گارانتی جدید
@@ -51,7 +51,7 @@ export default function MyWarrantiesPage() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
             <svg
-              className="animate-spin h-10 w-10 text-[#001a5c]"
+              className="animate-spin h-10 w-10 text-[#003087]"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -69,47 +69,47 @@ export default function MyWarrantiesPage() {
                 d="M4 12a8 8 0 018-8v8z"
               />
             </svg>
-            <p className="mt-4 font-persian text-sm text-[#000c3e]/60">
+            <p className="mt-4 font-persian text-sm text-[#687173]">
               در حال بارگذاری...
             </p>
           </div>
         )}
 
         {error && (
-          <div className="overflow-hidden rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
             <AlertTriangle
               size={48}
-              className="mx-auto mb-4 text-red-400"
+              className="mx-auto mb-4 text-[#D20000]"
               strokeWidth={1.5}
             />
-            <p className="font-persian text-sm text-[#000c3e]/60" dir="rtl">
+            <p className="font-persian text-sm text-[#687173]" dir="rtl">
               {error}
             </p>
           </div>
         )}
 
         {!loading && !error && warranties.length === 0 && (
-          <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-12 text-center shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-12 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
             <ShieldOff
               size={56}
-              className="mx-auto mb-4 text-blue-300"
+              className="mx-auto mb-4 text-[#687173]"
               strokeWidth={1.5}
             />
             <h2
-              className="font-persian text-xl font-semibold text-[#000c3e]"
+              className="font-persian text-xl font-semibold text-[#1A1A2E]"
               dir="rtl"
             >
               هیچ گارانتی ثبت‌شده‌ای وجود ندارد
             </h2>
             <p
-              className="mt-2 font-persian text-sm text-[#000c3e]/60"
+              className="mt-2 font-persian text-sm text-[#687173]"
               dir="rtl"
             >
               شماره سریال محصول خود را وارد کنید تا گارانتی را فعال کنید.
             </p>
             <Link
               to="/productregistration"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-6 py-3 font-persian font-semibold text-white shadow-md transition hover:brightness-110"
+              className="mt-6 inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
             >
               <Plus size={18} strokeWidth={2} />
               ثبت گارانتی
@@ -135,20 +135,20 @@ export default function MyWarrantiesPage() {
                 <Link
                   key={item.serial_number}
                   to={`/warranty/mattress/${item.serial_number}`}
-                  className="group overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-400/25 hover:shadow-lg hover:shadow-blue-900/10"
+                  className="group overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-6 shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
                 >
                   <div
                     className="mb-4 flex items-center justify-between"
                     dir="rtl"
                   >
-                    <h3 className="font-persian text-lg font-semibold text-[#000c3e]">
+                    <h3 className="font-persian text-lg font-semibold text-[#1A1A2E]">
                       {product.name}
                     </h3>
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
                         isActive
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-amber-50 text-amber-600"
+                          ? "bg-[#E6F4EA] text-[#019C34]"
+                          : "bg-[#FFF8E1] text-[#F5BA2E]"
                       }`}
                     >
                       <ShieldCheck size={14} strokeWidth={2} />
@@ -157,17 +157,17 @@ export default function MyWarrantiesPage() {
                   </div>
 
                   <p
-                    className="mb-4 font-mono text-xs text-[#000c3e]/40"
+                    className="mb-4 font-mono text-xs text-[#687173]"
                     dir="ltr"
                   >
                     {item.serial_number}
                   </p>
 
-                  <div className="flex items-center gap-4 rounded-xl border border-blue-400/10 bg-[#F5F7FA]/80 p-3">
+                  <div className="flex items-center gap-4 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-3">
                     <GuaranteeDisk product={product} />
                     <div dir="rtl" className="text-sm">
                       {item.activation_date && (
-                        <p className="font-persian text-[#000c3e]/60">
+                        <p className="font-persian text-[#687173]">
                           فعال‌سازی:{" "}
                           {new Date(item.activation_date).toLocaleDateString(
                             "fa-IR",
@@ -175,7 +175,7 @@ export default function MyWarrantiesPage() {
                         </p>
                       )}
                       {item.warranty_expiration_date && (
-                        <p className="font-persian text-[#000c3e]/60">
+                        <p className="font-persian text-[#687173]">
                           انقضا:{" "}
                           {new Date(
                             item.warranty_expiration_date,

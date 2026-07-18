@@ -27,7 +27,7 @@ class Mattress(models.Model):
     long_description = models.TextField(blank=True, default="", verbose_name="long description")
     slug = models.SlugField(unique=True, verbose_name="slug")
     warranty_months = models.PositiveIntegerField(verbose_name="warranty months")
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="price")
+    price = models.DecimalField(max_digits=18, decimal_places=2, verbose_name="price")
     image = models.ImageField(upload_to="mattresses/", blank=True, null=True, verbose_name="image")
     width = models.IntegerField(default=0)
     length = models.IntegerField(default=0)
@@ -74,7 +74,7 @@ class MattressSize(models.Model):
     label = models.CharField(max_length=50, verbose_name="size label")
     width = models.IntegerField(verbose_name="width (cm)")
     length = models.IntegerField(verbose_name="length (cm)")
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="price")
+    price = models.DecimalField(max_digits=18, decimal_places=2, verbose_name="price")
     in_stock = models.BooleanField(default=True, verbose_name="in stock")
 
     class Meta:

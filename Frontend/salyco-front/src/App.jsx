@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop";
 import Navbar from "./components/Navbar";
 import AboutFooter from "./components/AboutFooter";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -23,6 +24,7 @@ import SearchResults from "./pages/SearchResults";
 function App() {
   return (
     <div>
+      <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

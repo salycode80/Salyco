@@ -37,19 +37,19 @@ export default function WarrantyStatusPage() {
 
       <div className="relative mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
         <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#009CDE]">
             Warranty
           </p>
-          <h1 className="mt-2 font-persian text-4xl font-bold text-[#000c3e] md:text-5xl">
+          <h1 className="mt-2 font-persian text-4xl font-bold text-[#1A1A2E] md:text-5xl">
             وضعیت گارانتی
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-wood-400" />
+          <hr className="mt-4 w-24 border-t-2 border-[#F5BA2E]" />
         </header>
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
             <svg
-              className="animate-spin h-10 w-10 text-[#001a5c]"
+              className="animate-spin h-10 w-10 text-[#003087]"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -67,38 +67,38 @@ export default function WarrantyStatusPage() {
                 d="M4 12a8 8 0 018-8v8z"
               />
             </svg>
-            <p className="mt-4 font-persian text-sm text-[#000c3e]/60">
+            <p className="mt-4 font-persian text-sm text-[#687173]">
               در حال بارگذاری...
             </p>
           </div>
         )}
 
         {error && (
-          <div className="overflow-hidden rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
             <AlertTriangle
               size={48}
-              className="mx-auto mb-4 text-red-400"
+              className="mx-auto mb-4 text-[#D20000]"
               strokeWidth={1.5}
             />
             <h2
-              className="font-persian text-xl font-semibold text-[#000c3e]"
+              className="font-persian text-xl font-semibold text-[#1A1A2E]"
               dir="rtl"
             >
               محصول یافت نشد
             </h2>
             <p
-              className="mt-2 font-persian text-sm text-[#000c3e]/60"
+              className="mt-2 font-persian text-sm text-[#687173]"
               dir="rtl"
             >
               شماره سریال{" "}
-              <span className="font-mono text-[#000c3e]" dir="ltr">
+              <span className="font-mono text-[#1A1A2E]" dir="ltr">
                 {serialNumber}
               </span>{" "}
               در سیستم ثبت نشده است.
             </p>
             <button
               onClick={() => navigate("/productregistration")}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-6 py-3 font-persian font-semibold text-white shadow-md transition hover:brightness-110"
+              className="mt-6 inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
             >
               <ShieldCheck size={18} strokeWidth={2} />
               بازگشت به ثبت گارانتی
@@ -109,26 +109,26 @@ export default function WarrantyStatusPage() {
         {!loading && !error && warrantyData && (
           <>
             {!warrantyData.is_warranty_active && !isAuthenticated ? (
-              <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white p-8 text-center shadow-sm">
+              <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
                 <ShieldCheck
                   size={48}
-                  className="mx-auto mb-4 text-blue-400"
+                  className="mx-auto mb-4 text-[#009CDE]"
                   strokeWidth={1.5}
                 />
                 <h2
-                  className="font-persian text-xl font-semibold text-[#000c3e]"
+                  className="font-persian text-xl font-semibold text-[#1A1A2E]"
                   dir="rtl"
                 >
                   {warrantyData.mattress_name}
                 </h2>
                 <p
-                  className="mt-1 font-mono text-sm text-[#000c3e]/50"
+                  className="mt-1 font-mono text-sm text-[#687173]"
                   dir="ltr"
                 >
                   {serialNumber}
                 </p>
                 <p
-                  className="mt-4 font-persian text-sm text-[#000c3e]/60"
+                  className="mt-4 font-persian text-sm text-[#687173]"
                   dir="rtl"
                 >
                   گارانتی این محصول هنوز فعال نشده است. برای فعال‌سازی وارد حساب
@@ -140,7 +140,7 @@ export default function WarrantyStatusPage() {
                       `/auth?redirect=/warranty/mattress/${serialNumber}`,
                     )
                   }
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-6 py-3 font-persian font-semibold text-white shadow-md transition hover:brightness-110"
+                  className="mt-6 inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
                 >
                   <LogIn size={18} strokeWidth={2} />
                   ورود / ثبت‌نام برای فعال‌سازی گارانتی

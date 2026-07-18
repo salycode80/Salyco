@@ -2,8 +2,8 @@ export function AuthAlert({ type, message }) {
   if (!message) return null;
 
   const styles = {
-    success: "bg-emerald-50 border-emerald-200 text-emerald-800",
-    error: "bg-red-50 border-red-200 text-red-700",
+    success: "bg-[#E6F4EA] border-[#CBD2D6] text-[#019C34]",
+    error: "bg-[#FDE7E7] border-[#CBD2D6] text-[#D20000]",
   };
 
   const icons = {
@@ -22,7 +22,7 @@ export function AuthAlert({ type, message }) {
   return (
     <div
       dir="rtl"
-      className={`flex items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-[13px] font-medium ${styles[type]}`}
+      className={`flex items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-[13px] font-medium ${styles[type]}`}
     >
       <span className="flex-shrink-0">{icons[type]}</span>
       <span>{message}</span>

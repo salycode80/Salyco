@@ -189,4 +189,7 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:8080")
+# Base URL used to build absolute links (warranty QR codes). Set explicitly in
+# production (https://salyco.ir) or for LAN phone testing (http://<lan-ip>:8080).
+# When empty, get_warranty_public_url() falls back to the request's own host.
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "")

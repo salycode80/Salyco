@@ -22,7 +22,7 @@ export default function AuthPage() {
     <div className="grid min-h-screen grid-cols-1 pt-[var(--navbar-height)] font-[Vazirmatn,sans-serif]">
       <div className="flex items-center justify-center bg-[#F5F7FA] px-4 py-8 sm:px-5 sm:py-12">
         <div className="w-full max-w-[420px]">
-          <div className="rounded-[20px] border border-[rgba(100,160,255,0.15)] bg-white px-8 py-8 shadow-sm">
+          <div className="rounded-xl border border-[#CBD2D6] bg-white px-8 py-8 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
             <AuthTabs active={tab} onChange={setTab} />
 
             <div className="overflow-hidden">
@@ -38,7 +38,7 @@ export default function AuthPage() {
           </div>
 
           <p
-            className="mt-5 text-center text-[12px] text-[#000c3e]/30"
+            className="mt-5 text-center text-[12px] text-[#687173]"
             dir="rtl"
           >
             © {new Date().getFullYear()} سالیکو — تمامی حقوق محفوظ است

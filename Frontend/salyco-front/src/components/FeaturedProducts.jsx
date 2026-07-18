@@ -33,14 +33,14 @@ export default function FeaturedProducts() {
           dir="rtl"
         >
           <div>
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#003087]">
               Products
             </p>
-            <h2 className="mt-2 font-persian text-3xl font-bold text-[#000c3e] md:text-4xl">
+            <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
               منتخب تشک‌های سالیکو
             </h2>
-            <hr className="mt-4 w-24 border-t-2 border-wood-400" />
-            <p className="mt-4 max-w-xl font-persian text-base text-[#000c3e]/60">
+            <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
+            <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
               گلچینی از محبوب‌ترین تشک‌های ما؛ برای دیدن همه محصولات وارد گالری
               شوید.
             </p>
@@ -48,7 +48,7 @@ export default function FeaturedProducts() {
 
           <Link
             to="/products/mattress"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#000c3e]/20 px-5 py-2.5 font-persian text-sm font-semibold text-[#000c3e] transition-colors hover:border-[#000c3e]/40 hover:bg-[#000c3e]/5"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-5 py-2.5 font-persian text-sm font-semibold text-[#003087] transition-colors hover:bg-[#003087]/5"
           >
             مشاهده همه
             <ArrowLeft size={16} />
@@ -56,16 +56,16 @@ export default function FeaturedProducts() {
         </header>
 
         {loading ? (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="h-[420px] animate-pulse rounded-[28px] bg-[#e2e8f0]"
+                className="h-[420px] animate-pulse rounded-xl bg-[#CBD2D6]"
               />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {mattresses.map((mattress) => (
               <MattressCard key={mattress.slug} mattress={mattress} />
             ))}

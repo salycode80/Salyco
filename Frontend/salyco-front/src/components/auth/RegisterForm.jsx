@@ -57,16 +57,16 @@ export function RegisterForm({ onSwitchToLogin }) {
   if (status.success) {
     return (
       <div className="flex flex-col items-center gap-4 py-4 text-center" dir="rtl">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#000c3e] to-[#001a5c] text-white">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#003087] text-white">
           <CheckIcon />
         </div>
         <div>
-          <h3 className="text-[18px] font-bold text-[#000c3e]">ثبت‌نام موفق!</h3>
-          <p className="mt-1 text-[13px] text-[#000c3e]/50">حساب شما ایجاد شد. اکنون می‌توانید وارد شوید.</p>
+          <h3 className="text-[18px] font-bold text-[#1A1A2E]">ثبت‌نام موفق!</h3>
+          <p className="mt-1 text-[13px] text-[#687173]">حساب شما ایجاد شد. اکنون می‌توانید وارد شوید.</p>
         </div>
         <button
           onClick={onSwitchToLogin}
-          className="mt-2 h-11 w-full max-w-[220px] rounded-[10px] bg-gradient-to-r from-[#000c3e] to-[#001a5c] text-[14px] font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-all"
+          className="mt-2 h-12 w-full max-w-[220px] rounded-lg bg-[#003087] text-[14px] font-medium text-white hover:bg-[#00246B] active:scale-[0.98] transition-colors"
         >
           رفتن به صفحه ورود
         </button>
@@ -107,7 +107,7 @@ export function RegisterForm({ onSwitchToLogin }) {
       <button
         type="submit"
         disabled={status.loading}
-        className="h-11 w-full rounded-[10px] bg-gradient-to-r from-[#000c3e] to-[#001a5c] text-[15px] font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+        className="h-12 w-full rounded-lg bg-[#003087] text-[15px] font-medium text-white transition-colors hover:bg-[#00246B] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status.loading ? (
           <span className="flex items-center justify-center gap-2">
@@ -120,9 +120,9 @@ export function RegisterForm({ onSwitchToLogin }) {
         ) : "ایجاد حساب کاربری"}
       </button>
 
-      <p className="text-center text-[13px] text-[#000c3e]/50">
+      <p className="text-center text-[13px] text-[#687173]">
         حساب دارید؟{" "}
-        <button type="button" onClick={onSwitchToLogin} className="font-semibold text-[#001a5c] hover:underline">
+        <button type="button" onClick={onSwitchToLogin} className="font-medium text-[#003087] hover:underline">
           وارد شوید
         </button>
       </p>

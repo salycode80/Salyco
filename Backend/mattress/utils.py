@@ -8,8 +8,18 @@ import qrcode
 from django.conf import settings
 
 
-def get_warranty_public_url(serial_number: str) -> str:
-    base = settings.FRONTEND_BASE_URL.rstrip("/")
+def get_warranty_public_url(serial_number: str, request=None) -> str:
+    """Absolute URL the warranty QR points at.
+
+    Prefers the explicit FRONTEND_BASE_URL setting (e.g. https://salyco.ir in
+    production, or a LAN IP like http://192.168.1.20:8080 for phone testing).
+    When it is left empty, fall back to the host that actually served this
+    request, so a scanned QR resolves against whatever origin the API was
+    reached on instead of an unreachable http://localhost default.
+    """
+    base = (settings.FRONTEND_BASE_URL or "").rstrip("/")
+    if not base and request is not None:
+        base = request.build_absolute_uri("/").rstrip("/")
     return f"{base}/warranty/mattress/{serial_number}"
 
 

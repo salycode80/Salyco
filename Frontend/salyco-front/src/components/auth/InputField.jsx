@@ -21,7 +21,7 @@ export function InputField({
       {label && (
         <label
           htmlFor={id}
-          className="text-[13px] font-medium text-[#000c3e]"
+          className="text-sm font-medium text-[#1A1A2E]"
         >
           {label}
         </label>
@@ -29,7 +29,7 @@ export function InputField({
       <div className="relative">
         {/* right icon */}
         {icon && (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#000c3e]/30">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#687173]">
             {icon}
           </span>
         )}
@@ -43,13 +43,13 @@ export function InputField({
           dir={dir}
           autoComplete={autoComplete}
           className={[
-            "w-full h-[42px] rounded-[10px] border bg-white text-[14px] text-[#000c3e]",
-            "placeholder:text-[#000c3e]/30 outline-none transition-all duration-200",
-            icon ? "pr-9" : "pr-3",
-            isPassword ? "pl-9" : "pl-3",
+            "w-full h-12 rounded-lg border bg-white text-[14px] text-[#1A1A2E]",
+            "placeholder:text-[#687173] outline-none transition-all duration-200",
+            icon ? "pr-9" : "pr-4",
+            isPassword ? "pl-9" : "pl-4",
             error
-              ? "border-red-400 focus:ring-2 focus:ring-red-100"
-              : "border-[#000c3e]/15 focus:border-[#001a5c] focus:ring-2 focus:ring-[#001a5c]/10",
+              ? "border-[#D20000] focus:ring-2 focus:ring-[#D20000]/20"
+              : "border-[#CBD2D6] focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20",
           ].join(" ")}
         />
 
@@ -58,7 +58,7 @@ export function InputField({
           <button
             type="button"
             onClick={() => setShowPassword((p) => !p)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#000c3e]/30 hover:text-[#000c3e]/60 transition-colors"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#687173] hover:text-[#1A1A2E] transition-colors"
             aria-label={showPassword ? "پنهان کردن رمز" : "نمایش رمز"}
           >
             {showPassword ? (
@@ -78,7 +78,7 @@ export function InputField({
       </div>
 
       {error && (
-        <p className="text-[12px] text-red-500">{error}</p>
+        <p className="text-xs text-[#D20000]">{error}</p>
       )}
     </div>
   );

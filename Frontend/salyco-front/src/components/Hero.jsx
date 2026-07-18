@@ -29,14 +29,14 @@ export default function Hero() {
         <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
           <Link
             to="/products/mattress"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] px-7 py-3 font-persian text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-900/20"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#003087] px-7 py-3 font-persian text-sm font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#00246B] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
           >
             مشاهده محصولات
             <ArrowLeft size={16} />
           </Link>
           <Link
             to="/about"
-            className="inline-flex items-center gap-2 rounded-full border border-[#000c3e]/20 px-7 py-3 font-persian text-sm font-semibold text-[#000c3e] transition-colors hover:border-[#000c3e]/40 hover:bg-[#000c3e]/5"
+            className="inline-flex items-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-7 py-3 font-persian text-sm font-semibold text-[#003087] transition-colors hover:bg-[#003087]/5"
           >
             درباره سالیکو
           </Link>
@@ -46,9 +46,9 @@ export default function Hero() {
           {highlights.map(({ icon: Icon, label }) => (
             <li
               key={label}
-              className="flex items-center gap-2 font-persian text-sm font-medium text-[#000c3e]/75"
+              className="flex items-center gap-2 font-persian text-sm font-medium text-[#1A1A2E]"
             >
-              <Icon size={18} strokeWidth={1.75} className="text-wood-500" />
+              <Icon size={18} strokeWidth={1.75} className="text-[#003087]" />
               {label}
             </li>
           ))}

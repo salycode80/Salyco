@@ -76,19 +76,19 @@ export default function Navbar() {
 
   // Shared dropdown menu content (used by both desktop + mobile avatar buttons)
   const userDropdown = (
-    <div className="absolute left-0 mt-2 w-56 bg-[#001030] backdrop-blur-sm rounded-xl shadow-xl border border-blue-400/20 py-1 z-50">
-      <div className="px-4 py-3 border-b border-blue-400/15">
+    <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-[0_4px_16px_rgba(0,48,135,0.1)] border border-[#CBD2D6] py-1 z-50">
+      <div className="px-4 py-3 border-b border-[#CBD2D6]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-500/25 flex items-center justify-center border border-blue-400/40 flex-shrink-0">
-            <span className="text-lg font-bold text-blue-200">
+          <div className="w-10 h-10 rounded-full bg-[#003087]/10 flex items-center justify-center border border-[#CBD2D6] flex-shrink-0">
+            <span className="text-lg font-bold text-[#003087]">
               {getUserInitials(user?.username)}
             </span>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">
+            <p className="text-sm font-medium text-[#1A1A2E] truncate">
               {user?.username}
             </p>
-            <p className="text-xs text-blue-300/70 truncate">
+            <p className="text-xs text-[#687173] truncate">
               {user?.email || "کاربر"}
             </p>
           </div>
@@ -101,9 +101,9 @@ export default function Navbar() {
           closeUserMenu();
           closeMenu();
         }}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-blue-100 hover:bg-white/5 transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#1A1A2E] hover:bg-[#F5F7FA] transition-colors"
       >
-        <User size={16} className="text-blue-400" />
+        <User size={16} className="text-[#687173]" />
         <span>اطلاعات کاربری</span>
       </Link>
 
@@ -112,7 +112,7 @@ export default function Navbar() {
           closeUserMenu();
           handleLogout();
         }}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors w-full border-t border-blue-400/15"
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#D20000] hover:bg-[#FDE7E7] transition-colors w-full border-t border-[#CBD2D6]"
       >
         <LogOut size={16} />
         <span>خروج</span>
@@ -121,12 +121,9 @@ export default function Navbar() {
   );
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 shadow-lg">
-      {/* ── TOP ROW ── dark navy */}
-      <div
-        className="bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b]"
-        dir="rtl"
-      >
+    <header className="fixed top-0 inset-x-0 z-50 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+      {/* ── TOP ROW ── navy surface (contrast against white category row) */}
+      <div className="bg-[#003087] border-b border-[#00246B]" dir="rtl">
         <div className="mx-auto flex h-16 max-w-9xl items-center gap-3 px-4 sm:px-6 lg:h-[72px] lg:gap-4">
           <div className="flex items-center gap-6">
             <Link
@@ -161,42 +158,42 @@ export default function Navbar() {
                 <Link
                   to="/warranty/my"
                   className="flex items-center gap-1.5 text-sm font-medium
-                             text-blue-200/80 hover:text-white tracking-wide transition-colors"
+                             text-white/90 hover:text-white tracking-wide transition-colors"
                 >
-                  <ClipboardList size={16} className="text-blue-300" />
+                  <ClipboardList size={16} className="text-white/70" />
                   <span>گارانتی‌های من</span>
                 </Link>
 
                 {user?.is_staff && (
                   <>
-                    <div className="h-5 w-px bg-blue-400/25" />
+                    <div className="h-5 w-px bg-white/20" />
                     <Link
                       to="/admin"
                       className="flex items-center gap-1.5 text-sm font-medium
-                                 text-blue-200/80 hover:text-white tracking-wide transition-colors"
+                                 text-white/90 hover:text-white tracking-wide transition-colors"
                     >
-                      <LayoutDashboard size={16} className="text-blue-300" />
+                      <LayoutDashboard size={16} className="text-white/70" />
                       <span>پنل مدیریت</span>
                     </Link>
                   </>
                 )}
 
-                <div className="h-5 w-px bg-blue-400/25" />
+                <div className="h-5 w-px bg-white/20" />
 
                 {/* Avatar + dropdown replaces username + logout button */}
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={toggleUserMenu}
-                    className="flex items-center gap-2 text-sm font-medium text-blue-200/80 hover:text-white transition-colors"
+                    className="flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-400/30">
-                      <span className="text-sm font-bold text-blue-200">
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                      <span className="text-sm font-bold text-white">
                         {getUserInitials(user?.username)}
                       </span>
                     </div>
                     <ChevronDown
                       size={14}
-                      className={`text-blue-300 transition-transform duration-200 ${
+                      className={`text-white/70 transition-transform duration-200 ${
                         isUserMenuOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -209,9 +206,9 @@ export default function Navbar() {
               <Link
                 to="/auth"
                 className="flex items-center gap-1.5 text-sm font-medium
-                           text-blue-200/80 hover:text-white tracking-wide transition-colors"
+                           text-[#003087] bg-white hover:bg-[#F5F7FA] rounded-lg px-4 h-12 tracking-wide transition-colors"
               >
-                <UserCircle size={18} className="text-blue-300" />
+                <UserCircle size={18} />
                 <span>ورود / ثبت‌نام</span>
               </Link>
             )}
@@ -224,8 +221,8 @@ export default function Navbar() {
             aria-label={menuOpen ? "بستن منو" : "باز کردن منو"}
             aria-expanded={menuOpen}
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg
-                       border border-blue-400/25 bg-white/5 text-blue-100
-                       transition-colors hover:bg-white/10 lg:hidden"
+                       border border-white/20 bg-white/10 text-white
+                       transition-colors hover:bg-white/20 lg:hidden"
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -236,14 +233,14 @@ export default function Navbar() {
       <nav
         dir="rtl"
         className="flex h-11 max-w-full items-center justify-start gap-0.5
-                   overflow-x-auto scrollbar-none border-t border-blue-100
-                   bg-white px-3 shadow-sm sm:px-6 lg:px-16"
+                   overflow-x-auto scrollbar-none border-t border-[#CBD2D6]
+                   bg-white px-3 shadow-[0_1px_4px_rgba(0,48,135,0.06)] sm:px-6 lg:px-16"
       >
         {categories.map(({ label, icon: Icon, to, href }) => {
-          const classes = `flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4
+          const classes = `flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
                text-sm font-semibold tracking-wide whitespace-nowrap
                transition-all duration-200
-               text-[#000c3e] hover:text-[#2563eb] hover:bg-blue-50`;
+               text-[#1A1A2E] hover:text-[#003087] hover:bg-[#F5F7FA]`;
 
           if (href) {
             return (
@@ -259,13 +256,13 @@ export default function Navbar() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4
+                `flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
                text-sm font-semibold tracking-wide whitespace-nowrap
                transition-all duration-200
                ${
                  isActive
-                   ? "bg-blue-50 text-[#2563eb]"
-                   : "text-[#000c3e] hover:text-[#2563eb] hover:bg-blue-50"
+                   ? "bg-[#F5F7FA] text-[#003087]"
+                   : "text-[#1A1A2E] hover:text-[#003087] hover:bg-[#F5F7FA]"
                }`
               }
             >
@@ -279,22 +276,22 @@ export default function Navbar() {
       {/* ── MOBILE MENU ── */}
       {menuOpen && (
         <div
-          className="bg-gradient-to-b from-[#001a5c] to-[#00256b] px-4 pb-4 pt-3 lg:hidden"
+          className="bg-white border-t border-[#CBD2D6] px-4 pb-4 pt-3 lg:hidden"
           dir="rtl"
         >
           <div className="mb-3 md:hidden">
             <SearchBar variant="navbar" onNavigate={closeMenu} />
           </div>
 
-          <div className="flex flex-col divide-y divide-blue-400/15">
+          <div className="flex flex-col divide-y divide-[#CBD2D6]">
             {isAuthenticated ? (
               <>
                 <Link
                   to="/warranty/my"
                   onClick={closeMenu}
-                  className="flex items-center gap-2 py-3 text-sm font-medium text-blue-100"
+                  className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
                 >
-                  <ClipboardList size={16} className="text-blue-300" />
+                  <ClipboardList size={16} className="text-[#687173]" />
                   <span>گارانتی‌های من</span>
                 </Link>
 
@@ -302,24 +299,24 @@ export default function Navbar() {
                   <Link
                     to="/admin"
                     onClick={closeMenu}
-                    className="flex items-center gap-2 py-3 text-sm font-medium text-blue-100"
+                    className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
                   >
-                    <LayoutDashboard size={16} className="text-blue-300" />
+                    <LayoutDashboard size={16} className="text-[#687173]" />
                     <span>پنل مدیریت</span>
                   </Link>
                 )}
 
                 <div className="flex items-center gap-3 py-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-400/30 flex-shrink-0">
-                    <span className="text-sm font-bold text-blue-200">
+                  <div className="w-9 h-9 rounded-full bg-[#003087]/10 flex items-center justify-center border border-[#CBD2D6] flex-shrink-0">
+                    <span className="text-sm font-bold text-[#003087]">
                       {getUserInitials(user?.username)}
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm font-medium text-[#1A1A2E] truncate">
                       {user?.username}
                     </p>
-                    <p className="text-xs text-blue-300/70 truncate">
+                    <p className="text-xs text-[#687173] truncate">
                       {user?.email || "کاربر"}
                     </p>
                   </div>
@@ -328,16 +325,16 @@ export default function Navbar() {
                 <Link
                   to="/user-info"
                   onClick={closeMenu}
-                  className="flex items-center gap-2 py-3 text-sm font-medium text-blue-100"
+                  className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
                 >
-                  <User size={16} className="text-blue-300" />
+                  <User size={16} className="text-[#687173]" />
                   <span>اطلاعات کاربری</span>
                 </Link>
 
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center gap-2 py-3 text-sm font-medium text-red-400 hover:text-red-300 transition-colors w-full text-right"
+                  className="flex items-center gap-2 py-3 text-sm font-medium text-[#D20000] hover:text-[#00246B] transition-colors w-full text-right"
                 >
                   <LogOut size={16} />
                   <span>خروج</span>
@@ -347,9 +344,9 @@ export default function Navbar() {
               <Link
                 to="/auth"
                 onClick={closeMenu}
-                className="flex items-center gap-2 py-3 text-sm font-medium text-blue-100"
+                className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
               >
-                <UserCircle size={18} className="text-blue-300" />
+                <UserCircle size={18} className="text-[#687173]" />
                 <span>ورود / ثبت‌نام</span>
               </Link>
             )}

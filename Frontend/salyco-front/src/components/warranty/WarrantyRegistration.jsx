@@ -63,11 +63,11 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
   const clearMessage = () => setMessage({ type: null, text: "" });
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-blue-400/15 bg-white shadow-sm transition-all duration-300 hover:border-blue-400/25 hover:shadow-lg hover:shadow-blue-900/10">
+    <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]">
       <div className="p-6 sm:p-8">
         <ProductHeader product={product} onCopy={clearMessage} />
 
-        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-blue-400/10 bg-[#F5F7FA]/80 p-4 sm:p-5">
+        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-4 sm:p-5">
           <GuaranteeDisk product={product} />
           <StatusBadge isRegistered={isRegistered} />
         </div>
@@ -93,7 +93,7 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
           />
         )}
 
-        <div className="mt-6 flex items-center justify-center gap-2 border-t border-blue-400/10 pt-4 text-center text-xs text-[#000c3e]/50">
+        <div className="mt-6 flex items-center justify-center gap-2 border-t border-[#CBD2D6] pt-4 text-center text-xs text-[#687173]">
           <span>اسکن QR یا وارد کردن سریال · پورتال گارانتی سالیکو</span>
         </div>
       </div>

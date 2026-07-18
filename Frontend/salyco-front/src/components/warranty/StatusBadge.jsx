@@ -2,15 +2,15 @@ const StatusBadge = ({ isRegistered }) => {
   return (
     <div className="ml-auto">
       <span
-        className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold ${
+        className={`inline-flex h-8 items-center gap-2 rounded-full px-3 text-sm font-semibold ${
           isRegistered
-            ? "border-emerald-300/60 bg-emerald-50 text-emerald-700"
-            : "border-amber-300/60 bg-amber-50 text-amber-700"
+            ? "bg-[#E6F4EA] text-[#019C34]"
+            : "bg-[#FFF8E1] text-[#F5BA2E]"
         }`}
       >
         <span
           className={`h-3 w-3 rounded-full ${
-            isRegistered ? "bg-emerald-500" : "bg-amber-500"
+            isRegistered ? "bg-[#019C34]" : "bg-[#F5BA2E]"
           }`}
         />
         <span className="font-persian">

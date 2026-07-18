@@ -74,7 +74,7 @@ export function LoginForm({ onSwitchToRegister, onSuccess }) {
       <button
         type="submit"
         disabled={status.loading}
-        className="h-11 w-full rounded-[10px] bg-gradient-to-r from-[#000c3e] to-[#001a5c] text-[15px] font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+        className="h-12 w-full rounded-lg bg-[#003087] text-[15px] font-medium text-white transition-colors hover:bg-[#00246B] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status.loading ? (
           <span className="flex items-center justify-center gap-2">
@@ -87,12 +87,12 @@ export function LoginForm({ onSwitchToRegister, onSuccess }) {
         ) : "ورود به حساب"}
       </button>
 
-      <p className="text-center text-[13px] text-[#000c3e]/50">
+      <p className="text-center text-[13px] text-[#687173]">
         حساب ندارید؟{" "}
         <button
           type="button"
           onClick={onSwitchToRegister}
-          className="font-semibold text-[#001a5c] hover:underline"
+          className="font-medium text-[#003087] hover:underline"
         >
           ثبت‌نام کنید
         </button>

@@ -134,9 +134,7 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
     <div className="relative w-full" ref={rootRef} dir="ltr">
       <Search
         size={16}
-        className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${
-          isNavbar ? "text-blue-400/70" : "text-[#000c3e]/40"
-        }`}
+        className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#687173]"
       />
 
       <input
@@ -153,8 +151,8 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
         onKeyDown={handleKeyDown}
         className={
           isNavbar
-            ? `w-full pl-9 pr-9 py-[10px] rounded-lg text-sm bg-white/8 border border-blue-400/25 text-blue-100 placeholder-blue-400/50 focus:outline-none focus:border-blue-400/60 focus:bg-white/12 transition-all`
-            : `w-full pl-9 pr-9 py-[11px] rounded-lg text-sm bg-white border border-[#000c3e]/15 text-[#000c3e] placeholder-[#000c3e]/40 focus:outline-none focus:border-[#2563eb]/50 shadow-sm transition-all`
+            ? `w-full h-12 pl-9 pr-9 rounded-lg text-sm bg-[#F5F7FA] border border-[#CBD2D6] text-[#1A1A2E] placeholder-[#687173] focus:outline-none focus:bg-white focus:border-2 focus:border-[#003087] transition-all`
+            : `w-full h-12 pl-9 pr-9 rounded-lg text-sm bg-[#F5F7FA] border border-[#CBD2D6] text-[#1A1A2E] placeholder-[#687173] focus:outline-none focus:bg-white focus:border-2 focus:border-[#003087] transition-all`
         }
       />
 
@@ -162,9 +160,7 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
       {loading ? (
         <Loader2
           size={16}
-          className={`absolute left-3 top-1/2 -translate-y-1/2 animate-spin ${
-            isNavbar ? "text-blue-300" : "text-[#2563eb]"
-          }`}
+          className="absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-[#003087]"
         />
       ) : query ? (
         <button
@@ -173,9 +169,7 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
             setQuery("");
             setData(null);
           }}
-          className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-            isNavbar ? "text-blue-300/70 hover:text-blue-100" : "text-[#000c3e]/40 hover:text-[#000c3e]"
-          }`}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#687173] hover:text-[#1A1A2E]"
           aria-label="پاک کردن"
         >
           <X size={15} />
@@ -186,16 +180,16 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
       {showDropdown && (
         <div
           dir="rtl"
-          className="absolute top-full left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto rounded-xl border border-blue-400/20 bg-white shadow-2xl z-50"
+          className="absolute top-full left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto rounded-xl border border-[#CBD2D6] bg-white shadow-[0_4px_16px_rgba(0,48,135,0.1)] z-50"
         >
           {loading && !data && (
-            <div className="px-4 py-6 text-center text-sm text-[#000c3e]/50 font-persian">
+            <div className="px-4 py-6 text-center text-sm text-[#687173] font-persian">
               در حال جست و جو ...
             </div>
           )}
 
           {data && data.count === 0 && (
-            <div className="px-4 py-6 text-center text-sm text-[#000c3e]/50 font-persian">
+            <div className="px-4 py-6 text-center text-sm text-[#687173] font-persian">
               نتیجه‌ای برای «{q}» یافت نشد.
             </div>
           )}
@@ -204,8 +198,8 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
             data.groups.map((group) => {
               const Icon = iconFor(group.key);
               return (
-                <div key={group.key} className="border-b border-blue-400/10 last:border-b-0">
-                  <div className="flex items-center gap-1.5 px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#2563eb]/70">
+                <div key={group.key} className="border-b border-[#CBD2D6] last:border-b-0">
+                  <div className="flex items-center gap-1.5 px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#687173]">
                     <Icon size={13} />
                     <span>{group.label}</span>
                   </div>
@@ -220,10 +214,10 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
                         onClick={() => goToResult(result)}
                         onMouseEnter={() => setActiveIndex(flatIdx)}
                         className={`flex w-full items-center gap-3 px-4 py-2.5 text-right transition-colors ${
-                          active ? "bg-blue-50" : "hover:bg-blue-50/60"
+                          active ? "bg-[#F5F7FA]" : "hover:bg-[#F5F7FA]"
                         }`}
                       >
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[#0a1f4d]/5">
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[#F5F7FA]">
                           {result.image ? (
                             <img
                               src={getProductImageUrl(result.image)}
@@ -234,17 +228,17 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
                               }}
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[#2563eb]/40">
+                            <div className="flex h-full w-full items-center justify-center text-[#687173]">
                               <Icon size={16} />
                             </div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-[#000c3e]">
+                          <p className="truncate text-sm font-medium text-[#1A1A2E]">
                             {result.title}
                           </p>
                           {result.subtitle && (
-                            <p className="truncate text-xs text-[#000c3e]/50">
+                            <p className="truncate text-xs text-[#687173]">
                               {result.subtitle}
                             </p>
                           )}
@@ -260,7 +254,7 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
             <button
               type="button"
               onClick={goToResultsPage}
-              className="flex w-full items-center justify-center gap-1.5 border-t border-blue-400/10 bg-blue-50/40 px-4 py-2.5 text-sm font-medium text-[#2563eb] hover:bg-blue-50 transition-colors"
+              className="flex w-full items-center justify-center gap-1.5 border-t border-[#CBD2D6] bg-[#F5F7FA] px-4 py-2.5 text-sm font-medium text-[#003087] hover:bg-white transition-colors"
             >
               <Search size={14} />
               <span>مشاهده همه نتایج</span>

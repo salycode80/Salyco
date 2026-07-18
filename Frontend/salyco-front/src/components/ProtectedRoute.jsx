@@ -40,7 +40,7 @@ function ProtectedRoute({ children }) {
       <div className="flex min-h-screen items-center justify-center bg-[#F5F7FA]">
         <div className="flex flex-col items-center gap-3">
           <svg
-            className="animate-spin h-8 w-8 text-[#001a5c]"
+            className="animate-spin h-8 w-8 text-[#003087]"
             viewBox="0 0 24 24"
             fill="none"
           >
@@ -56,7 +56,7 @@ function ProtectedRoute({ children }) {
               d="M4 12a8 8 0 018-8v8z"
             />
           </svg>
-          <p className="text-[13px] text-[#000c3e]/40 font-[Vazirmatn,sans-serif]">
+          <p className="text-[13px] text-[#687173] font-[Vazirmatn,sans-serif]">
             در حال بررسی...
           </p>
         </div>

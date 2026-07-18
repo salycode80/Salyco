@@ -316,7 +316,9 @@ class MattressInstanceCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def get_warranty_url(self, obj: MattressInstance) -> str:
-        return get_warranty_public_url(obj.serial_number)
+        return get_warranty_public_url(obj.serial_number, self.context.get("request"))
 
     def get_qr_code(self, obj: MattressInstance) -> str:
-        return generate_qr_code_base64(get_warranty_public_url(obj.serial_number))
+        return generate_qr_code_base64(
+            get_warranty_public_url(obj.serial_number, self.context.get("request"))
+        )

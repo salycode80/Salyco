@@ -86,9 +86,9 @@ function StatItem({ value, suffix, label, active }) {
     <div className="text-center" dir="rtl">
       <p className="font-sans text-4xl font-extrabold text-white md:text-5xl">
         {n.toLocaleString("fa-IR")}
-        <span className="text-wood-300">{suffix}</span>
+        <span className="text-[#F5BA2E]">{suffix}</span>
       </p>
-      <p className="mt-2 font-persian text-sm text-blue-100/70">{label}</p>
+      <p className="mt-2 font-persian text-sm text-white/70">{label}</p>
     </div>
   );
 }
@@ -110,33 +110,33 @@ export default function About() {
   }, []);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white" dir="rtl">
+    <main className="relative min-h-screen overflow-hidden bg-[#F5F7FA]" dir="rtl">
       {/* ══ HERO ══ */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#000c2e] via-[#001a5c] to-[#00256b] pt-[calc(var(--navbar-height)+3rem)] pb-24">
+      <section className="relative overflow-hidden bg-[#003087] pt-[calc(var(--navbar-height)+3rem)] pb-24">
         {/* ambient glows */}
         <div
           className="pointer-events-none absolute -right-20 -top-10 h-96 w-96 rounded-full opacity-40"
-          style={{ background: "radial-gradient(circle, rgba(193,154,107,0.45) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(245,186,46,0.45) 0%, transparent 70%)" }}
         />
         <div
           className="pointer-events-none absolute -left-24 bottom-0 h-96 w-96 rounded-full opacity-30"
-          style={{ background: "radial-gradient(circle, rgba(37,99,235,0.6) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(0,156,222,0.6) 0%, transparent 70%)" }}
         />
 
         <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 font-persian text-xs font-medium text-blue-100 ring-1 ring-white/15">
-            <Sparkles size={14} className="text-wood-300" />
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 font-persian text-xs font-medium text-white ring-1 ring-white/15">
+            <Sparkles size={14} className="text-[#F5BA2E]" />
             داستان سالیکو
           </span>
           <h1 className="mt-6 font-persian text-4xl font-bold leading-tight text-white md:text-6xl">
             آنجا که خواب بر بال‌های قو آرام می‌گیرد
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl font-persian text-base leading-loose text-blue-100/80 md:text-lg">
+          <p className="mx-auto mt-6 max-w-2xl font-persian text-base leading-loose text-white/80 md:text-lg">
             سالیکو با بیش از دو دهه تجربه در تولید تشک و محصولات خواب، ترکیبی از
             فناوری مدرن و کیفیت ممتاز را برای خوابی آرام و سالم به خانه‌ی شما
             می‌آورد. باور ما این است که یک خواب خوب، آغاز یک زندگی بهتر است.
           </p>
-          <p className="mx-auto mt-4 max-w-2xl font-sans text-sm italic leading-relaxed text-blue-200/50">
+          <p className="mx-auto mt-4 max-w-2xl font-sans text-sm italic leading-relaxed text-white/50">
             Where every night rests on swan wings.
           </p>
         </div>
@@ -157,27 +157,27 @@ export default function About() {
         <PageBackground />
         <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
           <div dir="rtl">
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
               Our Story
             </p>
-            <h2 className="mt-2 font-persian text-3xl font-bold text-[#000c3e] md:text-4xl">
+            <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
               رسالت ما، خوابِ راحتِ شماست
             </h2>
-            <hr className="mt-4 w-20 border-t-2 border-wood-400" />
-            <p className="mt-6 font-persian text-base leading-loose text-[#4b5a78]">
+            <hr className="mt-4 w-20 border-t-2 border-[#003087]" />
+            <p className="mt-6 font-persian text-base leading-loose text-[#687173]">
               از یک کارگاه کوچک آغاز کردیم، با این باور که هر انسان سزاوار یک خواب
               آرام و سالم است. امروز پس از سال‌ها تلاش، سالیکو به برندی مورد
               اعتماد بدل شده که هر تشک را نه یک کالا، بلکه بخشی از سلامت و آرامش
               خانواده‌ها می‌داند.
             </p>
-            <p className="mt-4 font-persian text-base leading-loose text-[#4b5a78]">
+            <p className="mt-4 font-persian text-base leading-loose text-[#687173]">
               تیم ما با وسواس، از انتخاب مواد اولیه تا کنترل کیفیت نهایی، در کنار
               شماست تا خیالتان از انتخابی درست آسوده باشد.
             </p>
 
             <Link
               to="/products/mattress"
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#001a5c] to-[#00256b] px-6 py-3 font-persian text-sm font-bold text-white shadow-md transition hover:brightness-110"
+              className="group mt-8 inline-flex items-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
             >
               مشاهده محصولات
               <ArrowLeft size={17} className="transition-transform group-hover:-translate-x-1" />
@@ -186,20 +186,20 @@ export default function About() {
 
           {/* decorative image stack */}
           <div className="relative" dir="ltr">
-            <div className="overflow-hidden rounded-3xl shadow-xl ring-1 ring-[#e2e8f0]">
+            <div className="overflow-hidden rounded-xl shadow-[0_4px_16px_rgba(0,48,135,0.1)] ring-1 ring-[#CBD2D6]">
               <img
                 src="/heroimage.png"
                 alt="سالیکو"
                 className="h-full w-full object-cover"
               />
             </div>
-            <div className="absolute -bottom-6 -left-6 hidden items-center gap-3 rounded-2xl bg-white p-4 shadow-lg ring-1 ring-[#e2e8f0] sm:flex" dir="rtl">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#000c2e] to-[#00256b] text-white">
+            <div className="absolute -bottom-6 -left-6 hidden items-center gap-3 rounded-xl bg-white p-4 shadow-[0_4px_16px_rgba(0,48,135,0.1)] ring-1 ring-[#CBD2D6] sm:flex" dir="rtl">
+              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#003087] text-white">
                 <Moon size={20} />
               </span>
               <div>
-                <p className="font-persian text-sm font-bold text-[#000c3e]">خواب سالم</p>
-                <p className="font-persian text-xs text-[#8a9ab8]">تعهد همیشگی ما</p>
+                <p className="font-persian text-sm font-bold text-[#1A1A2E]">خواب سالم</p>
+                <p className="font-persian text-xs text-[#687173]">تعهد همیشگی ما</p>
               </div>
             </div>
           </div>
@@ -209,9 +209,9 @@ export default function About() {
       {/* ══ STATS (count-up) ══ */}
       <section
         ref={statsRef}
-        className="relative overflow-hidden bg-gradient-to-r from-[#000c2e] via-[#001a5c] to-[#00256b] py-16"
+        className="relative overflow-hidden bg-[#003087] py-16"
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(193,154,107,0.15),transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,186,46,0.15),transparent_60%)]" />
         <div className="relative mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 sm:px-6 md:grid-cols-4">
           {STATS.map((s) => (
             <StatItem key={s.label} {...s} active={statsActive} />
@@ -224,29 +224,29 @@ export default function About() {
         <PageBackground />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center" dir="rtl">
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
               Our Values
             </p>
-            <h2 className="mt-2 font-persian text-3xl font-bold text-[#000c3e] md:text-4xl">
+            <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
               ارزش‌هایی که به آن پایبندیم
             </h2>
-            <hr className="mx-auto mt-4 w-20 border-t-2 border-wood-400" />
+            <hr className="mx-auto mt-4 w-20 border-t-2 border-[#003087]" />
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {VALUES.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
-                className="group rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-[#e2e8f0] transition hover:-translate-y-1 hover:shadow-md"
+                className="group rounded-xl bg-white p-6 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6] transition hover:-translate-y-1 hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
                 dir="rtl"
               >
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#000c2e] to-[#00256b] text-white shadow-inner transition group-hover:scale-110">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-[#003087] text-white shadow-inner transition group-hover:scale-110">
                   <Icon size={24} />
                 </span>
-                <h3 className="mt-5 font-persian text-lg font-bold text-[#000c3e]">
+                <h3 className="mt-5 font-persian text-lg font-bold text-[#1A1A2E]">
                   {title}
                 </h3>
-                <p className="mt-2 font-persian text-sm leading-relaxed text-[#4b5a78]">
+                <p className="mt-2 font-persian text-sm leading-relaxed text-[#687173]">
                   {desc}
                 </p>
               </div>
@@ -256,21 +256,21 @@ export default function About() {
       </section>
 
       {/* ══ TIMELINE ══ */}
-      <section className="relative bg-[#f7f9fd] py-20">
+      <section className="relative bg-[#F5F7FA] py-20">
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6">
           <div className="mb-14 text-center" dir="rtl">
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
               Our Journey
             </p>
-            <h2 className="mt-2 font-persian text-3xl font-bold text-[#000c3e] md:text-4xl">
+            <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
               مسیری که پیموده‌ایم
             </h2>
-            <hr className="mx-auto mt-4 w-20 border-t-2 border-wood-400" />
+            <hr className="mx-auto mt-4 w-20 border-t-2 border-[#003087]" />
           </div>
 
           <div className="relative">
             {/* vertical line */}
-            <div className="absolute right-4 top-0 h-full w-0.5 bg-gradient-to-b from-[#2563eb] via-[#001a5c] to-transparent md:right-1/2" />
+            <div className="absolute right-4 top-0 h-full w-0.5 bg-gradient-to-b from-[#009CDE] via-[#003087] to-transparent md:right-1/2" />
 
             <div className="flex flex-col gap-10">
               {TIMELINE.map((item, i) => (
@@ -282,15 +282,15 @@ export default function About() {
                   dir="rtl"
                 >
                   {/* dot */}
-                  <span className="absolute right-2 top-1.5 z-10 h-5 w-5 -translate-y-0 rounded-full border-4 border-white bg-[#2563eb] shadow md:right-auto md:left-[-2.6rem] ltr:md:left-auto" />
-                  <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#e2e8f0]">
-                    <span className="font-sans text-sm font-bold text-wood-500">
+                  <span className="absolute right-2 top-1.5 z-10 h-5 w-5 -translate-y-0 rounded-full border-4 border-white bg-[#009CDE] shadow md:right-auto md:left-[-2.6rem] ltr:md:left-auto" />
+                  <div className="rounded-xl bg-white p-5 shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6]">
+                    <span className="font-sans text-sm font-bold text-[#009CDE]">
                       {item.year}
                     </span>
-                    <h3 className="mt-1 font-persian text-lg font-bold text-[#000c3e]">
+                    <h3 className="mt-1 font-persian text-lg font-bold text-[#1A1A2E]">
                       {item.title}
                     </h3>
-                    <p className="mt-1.5 font-persian text-sm leading-relaxed text-[#4b5a78]">
+                    <p className="mt-1.5 font-persian text-sm leading-relaxed text-[#687173]">
                       {item.text}
                     </p>
                   </div>
@@ -305,13 +305,13 @@ export default function About() {
       <section className="relative bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center" dir="rtl">
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-wood-500/80">
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
               Gallery
             </p>
-            <h2 className="mt-2 font-persian text-3xl font-bold text-[#000c3e] md:text-4xl">
+            <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
               گالری سالیکو
             </h2>
-            <hr className="mx-auto mt-4 w-20 border-t-2 border-wood-400" />
+            <hr className="mx-auto mt-4 w-20 border-t-2 border-[#003087]" />
           </div>
 
           {/* masonry-style columns; plain images, no frame or card */}

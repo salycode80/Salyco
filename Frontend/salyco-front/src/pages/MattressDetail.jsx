@@ -8,7 +8,6 @@ import {
   ChevronUp,
   Check,
   X,
-  Ruler,
   Package,
 } from "lucide-react";
 import { getMattressDetail } from "../api/warranty";
@@ -23,6 +22,10 @@ const toPersianNumber = (num) => {
 const formatPersianPrice = (price) =>
   toPersianNumber(Number(price).toLocaleString());
 
+// Salyco design tokens
+const CARD =
+  "rounded-xl border border-[#CBD2D6] bg-white p-6 shadow-[0_1px_4px_rgba(0,48,135,0.06)]";
+
 function StarRating({ rating, size = 16 }) {
   return (
     <div className="flex gap-0.5" dir="ltr">
@@ -32,8 +35,8 @@ function StarRating({ rating, size = 16 }) {
           size={size}
           className={
             i <= Math.round(rating)
-              ? "fill-amber-400 text-amber-400"
-              : "text-gray-300"
+              ? "fill-[#F5BA2E] text-[#F5BA2E]"
+              : "text-[#CBD2D6]"
           }
         />
       ))}
@@ -44,20 +47,20 @@ function StarRating({ rating, size = 16 }) {
 function FAQItem({ faq }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[#0a1f4d]/10 last:border-b-0">
+    <div className="border-b border-[#CBD2D6] last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between py-4 text-right"
       >
-        <span className="font-medium text-[#0a1f4d]">{faq.question}</span>
+        <span className="font-medium text-[#1A1A2E]">{faq.question}</span>
         {open ? (
-          <ChevronUp size={18} className="shrink-0 text-[#0a1f4d]/40" />
+          <ChevronUp size={18} className="shrink-0 text-[#687173]" />
         ) : (
-          <ChevronDown size={18} className="shrink-0 text-[#0a1f4d]/40" />
+          <ChevronDown size={18} className="shrink-0 text-[#687173]" />
         )}
       </button>
       {open && (
-        <p className="pb-4 text-sm leading-7 text-[#0a1f4d]/60">{faq.answer}</p>
+        <p className="pb-4 text-sm leading-7 text-[#687173]">{faq.answer}</p>
       )}
     </div>
   );
@@ -93,7 +96,7 @@ export default function MattressDetail() {
     return (
       <section className="min-h-screen bg-[#F5F7FA] pt-[var(--navbar-height)]">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
-          <p className="font-persian text-center text-[#000c3e]/60">
+          <p className="font-persian text-center text-[#687173]">
             در حال بارگذاری...
           </p>
         </div>
@@ -105,7 +108,7 @@ export default function MattressDetail() {
     return (
       <section className="min-h-screen bg-[#F5F7FA] pt-[var(--navbar-height)]">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
-          <p className="font-persian text-center text-red-600/80">
+          <p className="font-persian text-center text-[#D20000]">
             {error || "محصول یافت نشد."}
           </p>
         </div>
@@ -119,13 +122,13 @@ export default function MattressDetail() {
   const cons = mattress.pros_cons?.filter((p) => p.type === "CON") || [];
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
       <PageBackground />
 
-      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="relative mx-auto max-w-[1120px] px-6 py-8 sm:py-10">
         <Link
           to="/products/mattress"
-          className="mb-8 inline-flex items-center gap-2 font-persian text-sm text-[#001a5c] transition-colors hover:text-blue-500"
+          className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] transition-colors hover:text-[#009CDE]"
           dir="rtl"
         >
           <ArrowRight size={16} />
@@ -136,8 +139,8 @@ export default function MattressDetail() {
         <div className="grid gap-10 lg:grid-cols-2" dir="rtl">
           {/* Image gallery */}
           <div className="space-y-4">
-            <div className="overflow-hidden rounded-[20px] border border-[#0a1f4d]/10 bg-white shadow-sm">
-              <div className="relative aspect-square overflow-hidden bg-[#f0f2f5]">
+            <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+              <div className="relative aspect-square overflow-hidden bg-[#F5F7FA]">
                 <img
                   src={selectedImage}
                   alt={mattress.name}
@@ -154,10 +157,10 @@ export default function MattressDetail() {
                     <button
                       key={img.id}
                       onClick={() => setSelectedImage(url)}
-                      className={`h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
+                      className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                         selectedImage === url
-                          ? "border-blue-500 shadow-md"
-                          : "border-transparent opacity-70 hover:opacity-100"
+                          ? "border-[#003087]"
+                          : "border-[#CBD2D6] opacity-70 hover:opacity-100"
                       }`}
                     >
                       <img
@@ -175,46 +178,46 @@ export default function MattressDetail() {
           {/* Product info */}
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-3">
-              <h1 className="order-1 font-persian text-3xl font-bold text-[#0a1f4d] md:text-4xl">
+              <h1 className="order-1 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
                 {mattress.name}
               </h1>
-              <div className="order-2 flex items-center gap-1 rounded-xl bg-blue-50 px-2 py-1">
-                <ShieldCheck size={14} className="text-blue-500" />
-                <span className="text-xs font-medium text-blue-700">
+              <div className="order-2 flex items-center gap-1 rounded-full bg-[#F5F7FA] px-3 py-1">
+                <ShieldCheck size={14} className="text-[#003087]" />
+                <span className="text-xs font-medium text-[#003087]">
                   {toPersianNumber(warrantyYears)} سال
                 </span>
               </div>
             </div>
             {mattress.subtitle && (
-              <p className="text-base text-[#0a1f4d]/60">{mattress.subtitle}</p>
+              <p className="text-base text-[#687173]">{mattress.subtitle}</p>
             )}
 
             {/* Rating */}
             {mattress.review_count > 0 && (
               <div className="flex items-center gap-3">
                 <StarRating rating={mattress.average_rating} />
-                <span>امتیاز این محصول</span>
+                <span className="text-sm text-[#687173]">امتیاز این محصول</span>
               </div>
             )}
 
-            {/* Dimensions */}
-            <div className="flex flex-wrap gap-3">
-              {!mattress.is_available && (
-                <div className="flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-2">
-                  <Package size={16} className="text-red-500" />
-                  <span className="text-sm font-medium text-red-600">
+            {/* Availability */}
+            {!mattress.is_available && (
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-2 rounded-full bg-[#FDE7E7] px-3 py-1.5">
+                  <Package size={16} className="text-[#D20000]" />
+                  <span className="text-sm font-medium text-[#D20000]">
                     ناموجود
                   </span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Size selector */}
             {mattress.sizes?.length > 0 && (
               <div className="space-y-3">
                 <label
                   htmlFor="size-select"
-                  className="block text-sm font-medium text-[#0a1f4d]/70"
+                  className="block text-sm font-medium text-[#1A1A2E]"
                 >
                   سایز های موجود :
                 </label>
@@ -230,7 +233,7 @@ export default function MattressDetail() {
                       setSelectedSize(size);
                     }
                   }}
-                  className="w-full rounded-xl border border-[#0a1f4d]/15 bg-white px-4 py-3 text-sm text-[#0a1f4d] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 text-sm text-[#1A1A2E] focus:border-[#003087] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20"
                 >
                   <option value="" disabled>
                     لطفاً سایز را انتخاب کنید
@@ -252,21 +255,19 @@ export default function MattressDetail() {
 
             {/* Price */}
             <div className="mt-2">
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-[#0a1f4d]/40">
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-[#687173]">
                 قیمت
               </p>
-              <p className="mt-1 font-persian text-3xl font-bold text-[#0a1a3a] tracking-tight">
+              <p className="mt-1 font-persian text-3xl font-bold tracking-tight text-[#003087] [font-feature-settings:'tnum']">
                 {formatPersianPrice(displayPrice)}
-                <span className="mr-2 text-base font-normal text-blue-400/60">
+                <span className="mr-2 text-base font-normal text-[#687173]">
                   تومان
                 </span>
               </p>
             </div>
 
             {/* Description */}
-            <p className="leading-8 text-[#0a1f4d]/65">
-              {mattress.description}
-            </p>
+            <p className="leading-8 text-[#687173]">{mattress.description}</p>
 
             {/* Features */}
             {mattress.features?.length > 0 && (
@@ -274,10 +275,10 @@ export default function MattressDetail() {
                 {mattress.features.map((f) => (
                   <div
                     key={f.id}
-                    className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 border border-[#0a1f4d]/8 shadow-sm"
+                    className="flex items-center gap-2 rounded-full bg-[#F5F7FA] px-3 py-1.5"
                   >
-                    <Check size={14} className="text-emerald-500" />
-                    <span className="text-sm text-[#0a1f4d]/75">{f.title}</span>
+                    <Check size={14} className="text-[#019C34]" />
+                    <span className="text-sm text-[#1A1A2E]">{f.title}</span>
                   </div>
                 ))}
               </div>
@@ -286,14 +287,14 @@ export default function MattressDetail() {
         </div>
 
         {/* Detailed sections */}
-        <div className="mt-16 space-y-12" dir="rtl">
+        <div className="mt-16 space-y-8" dir="rtl">
           {/* Long description */}
           {mattress.long_description && (
-            <div className="rounded-[20px] border border-[#0a1f4d]/10 bg-white p-8 shadow-sm">
-              <h2 className="mb-4 font-persian text-xl font-bold text-[#0a1f4d]">
+            <div className={CARD}>
+              <h2 className="mb-4 font-persian text-xl font-semibold text-[#003087]">
                 توضیحات تکمیلی
               </h2>
-              <div className="whitespace-pre-wrap leading-8 text-[#0a1f4d]/65">
+              <div className="whitespace-pre-wrap leading-8 text-[#687173]">
                 {mattress.long_description}
               </div>
             </div>
@@ -301,24 +302,17 @@ export default function MattressDetail() {
 
           {/* Specifications */}
           {mattress.specifications?.length > 0 && (
-            <div className="rounded-[20px] border border-[#0a1f4d]/10 bg-white p-8 shadow-sm">
-              <h2 className="mb-6 font-persian text-xl font-bold text-[#0a1f4d]">
+            <div className={CARD}>
+              <h2 className="mb-4 font-persian text-xl font-semibold text-[#003087]">
                 مشخصات فنی
               </h2>
-              <div className="divide-y divide-[#0a1f4d]/8">
-                {mattress.specifications.map((spec, i) => (
-                  <div
-                    key={spec.id}
-                    className={`flex justify-between py-3 ${
-                      i % 2 === 0 ? "bg-[#f8f9fb]" : ""
-                    } px-4 rounded-lg`}
-                  >
-                    <span className="text-sm font-medium text-[#0a1f4d]/70">
+              <div className="divide-y divide-[#CBD2D6]">
+                {mattress.specifications.map((spec) => (
+                  <div key={spec.id} className="flex justify-between py-3">
+                    <span className="text-sm font-medium text-[#1A1A2E]">
                       {spec.key}
                     </span>
-                    <span className="text-sm text-[#0a1f4d]/55">
-                      {spec.value}
-                    </span>
+                    <span className="text-sm text-[#687173]">{spec.value}</span>
                   </div>
                 ))}
               </div>
@@ -329,8 +323,8 @@ export default function MattressDetail() {
           {(pros.length > 0 || cons.length > 0) && (
             <div className="grid gap-6 md:grid-cols-2">
               {pros.length > 0 && (
-                <div className="rounded-[20px] border border-emerald-200/60 bg-white p-8 shadow-sm">
-                  <h2 className="mb-4 font-persian text-lg font-bold text-emerald-700">
+                <div className={CARD}>
+                  <h2 className="mb-4 font-persian text-lg font-semibold text-[#019C34]">
                     مزایا
                   </h2>
                   <ul className="space-y-3">
@@ -338,9 +332,9 @@ export default function MattressDetail() {
                       <li key={p.id} className="flex items-start gap-3">
                         <Check
                           size={16}
-                          className="mt-1 shrink-0 text-emerald-500"
+                          className="mt-1 shrink-0 text-[#019C34]"
                         />
-                        <span className="text-sm leading-6 text-[#0a1f4d]/70">
+                        <span className="text-sm leading-6 text-[#687173]">
                           {p.text}
                         </span>
                       </li>
@@ -349,15 +343,15 @@ export default function MattressDetail() {
                 </div>
               )}
               {cons.length > 0 && (
-                <div className="rounded-[20px] border border-red-200/60 bg-white p-8 shadow-sm">
-                  <h2 className="mb-4 font-persian text-lg font-bold text-red-600">
+                <div className={CARD}>
+                  <h2 className="mb-4 font-persian text-lg font-semibold text-[#D20000]">
                     معایب
                   </h2>
                   <ul className="space-y-3">
                     {cons.map((c) => (
                       <li key={c.id} className="flex items-start gap-3">
-                        <X size={16} className="mt-1 shrink-0 text-red-400" />
-                        <span className="text-sm leading-6 text-[#0a1f4d]/70">
+                        <X size={16} className="mt-1 shrink-0 text-[#D20000]" />
+                        <span className="text-sm leading-6 text-[#687173]">
                           {c.text}
                         </span>
                       </li>
@@ -370,8 +364,8 @@ export default function MattressDetail() {
 
           {/* FAQs */}
           {mattress.faqs?.length > 0 && (
-            <div className="rounded-[20px] border border-[#0a1f4d]/10 bg-white p-8 shadow-sm">
-              <h2 className="mb-4 font-persian text-xl font-bold text-[#0a1f4d]">
+            <div className={CARD}>
+              <h2 className="mb-2 font-persian text-xl font-semibold text-[#003087]">
                 سوالات متداول
               </h2>
               <div>
@@ -384,14 +378,14 @@ export default function MattressDetail() {
 
           {/* Reviews */}
           {mattress.reviews?.length > 0 && (
-            <div className="rounded-[20px] border border-[#0a1f4d]/10 bg-white p-8 shadow-sm">
+            <div className={CARD}>
               <div className="mb-6 flex items-center justify-between">
-                <h2 className="font-persian text-xl font-bold text-[#0a1f4d]">
+                <h2 className="font-persian text-xl font-semibold text-[#003087]">
                   نظرات کاربران
                 </h2>
                 <div className="flex items-center gap-2">
                   <StarRating rating={mattress.average_rating} size={18} />
-                  <span className="text-sm text-[#0a1f4d]/50">
+                  <span className="text-sm text-[#687173]">
                     {toPersianNumber(
                       Number(mattress.average_rating).toFixed(1),
                     )}{" "}
@@ -399,36 +393,36 @@ export default function MattressDetail() {
                   </span>
                 </div>
               </div>
-              <div className="divide-y divide-[#0a1f4d]/8">
+              <div className="divide-y divide-[#CBD2D6]">
                 {mattress.reviews.map((review) => (
                   <div key={review.id} className="py-5 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-600">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F7FA] text-sm font-bold text-[#003087]">
                         {review.customer_name?.charAt(0) || "ک"}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#0a1f4d]">
+                        <p className="text-sm font-medium text-[#1A1A2E]">
                           {review.customer_name}
                         </p>
                         <StarRating rating={review.rating} size={12} />
                       </div>
                     </div>
-                    <h4 className="mt-3 font-medium text-[#0a1f4d]">
+                    <h4 className="mt-3 font-medium text-[#1A1A2E]">
                       {review.title}
                     </h4>
-                    <p className="mt-2 text-sm leading-7 text-[#0a1f4d]/60">
+                    <p className="mt-2 text-sm leading-7 text-[#687173]">
                       {review.body}
                     </p>
                     {(review.pros || review.cons) && (
                       <div className="mt-3 flex flex-wrap gap-4 text-xs">
                         {review.pros && (
-                          <span className="text-emerald-600">
+                          <span className="text-[#019C34]">
                             <Check size={12} className="ml-1 inline" />
                             {review.pros}
                           </span>
                         )}
                         {review.cons && (
-                          <span className="text-red-500">
+                          <span className="text-[#D20000]">
                             <X size={12} className="ml-1 inline" />
                             {review.cons}
                           </span>

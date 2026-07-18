@@ -1,10 +1,10 @@
 const MessageToast = ({ type, text }) => {
   return (
     <div
-      className={`mt-4 rounded-xl border px-5 py-3 text-sm font-medium ${
+      className={`mt-4 rounded-lg border border-[#CBD2D6] px-5 py-3 text-sm font-medium ${
         type === "success"
-          ? "border-emerald-300/60 bg-emerald-50 text-emerald-700"
-          : "border-red-300/60 bg-red-50 text-red-700"
+          ? "bg-[#E6F4EA] text-[#019C34]"
+          : "bg-[#FDE7E7] text-[#D20000]"
       }`}
       dir="rtl"
     >
