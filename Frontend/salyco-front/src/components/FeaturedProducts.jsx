@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import api from "../api";
@@ -13,14 +13,53 @@ export default function FeaturedProducts() {
   const [mattresses, setMattresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const trackRef = useRef(null);
 
   useEffect(() => {
     api
       .get("/api/mattress/")
-      .then((res) => setMattresses(res.data.slice(0, 4)))
+      .then((res) => setMattresses(res.data.slice(0, 8)))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  // Auto-advance the carousel one card at a time, looping back to the start at
+  // the end. Scrolls to each child's actual position (via offsetLeft) so it is
+  // direction-agnostic — RTL vs LTR scrollLeft sign differences don't matter.
+  // Pauses while the user hovers/touches so it never fights manual scrolling.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || mattresses.length === 0) return;
+
+    let paused = false;
+    let index = 0;
+    const pause = () => (paused = true);
+    const resume = () => (paused = false);
+    track.addEventListener("pointerenter", pause);
+    track.addEventListener("pointerleave", resume);
+    track.addEventListener("touchstart", pause, { passive: true });
+    track.addEventListener("touchend", resume, { passive: true });
+
+    const id = setInterval(() => {
+      if (paused) return;
+      const cards = track.children;
+      if (cards.length === 0) return;
+      index = (index + 1) % cards.length;
+      // Assign scrollLeft DIRECTLY (not scrollTo / scrollIntoView). A direct
+      // property assignment scrolls only this element and can never move the
+      // window — that page-jump-to-section bug came from the smooth scrollTo
+      // pulling the whole page. The `scroll-smooth` class keeps it animated.
+      track.scrollLeft = cards[index].offsetLeft;
+    }, 3500);
+
+    return () => {
+      clearInterval(id);
+      track.removeEventListener("pointerenter", pause);
+      track.removeEventListener("pointerleave", resume);
+      track.removeEventListener("touchstart", pause);
+      track.removeEventListener("touchend", resume);
+    };
+  }, [mattresses]);
 
   // Hide the whole section if there is nothing to show.
   if (!loading && (error || mattresses.length === 0)) return null;
@@ -56,18 +95,26 @@ export default function FeaturedProducts() {
         </header>
 
         {loading ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex gap-3 overflow-hidden sm:gap-6">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="h-[420px] animate-pulse rounded-xl bg-[#CBD2D6]"
+                className="h-[240px] w-[calc((100%-1.5rem)/3)] shrink-0 animate-pulse rounded-xl bg-[#CBD2D6] sm:h-[420px] sm:w-[calc((100%-4.5rem)/4)]"
               />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            ref={trackRef}
+            className="relative flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6"
+          >
             {mattresses.map((mattress) => (
-              <MattressCard key={mattress.slug} mattress={mattress} />
+              <div
+                key={mattress.slug}
+                className="w-[calc((100%-1.5rem)/3)] shrink-0 snap-start sm:w-[calc((100%-4.5rem)/4)]"
+              >
+                <MattressCard mattress={mattress} />
+              </div>
             ))}
           </div>
         )}

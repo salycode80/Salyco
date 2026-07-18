@@ -36,26 +36,29 @@ export default function MattressCard({ mattress }) {
           <div className="absolute inset-0 bg-gradient-to-t from-[#003087]/60 via-[#003087]/5 to-transparent" />
 
           {/* Warranty badge */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-white/10 backdrop-blur-md px-4 py-2 border border-white/20">
-            <ShieldCheck size={16} className="text-[#019C34]" />
-            <span className="font-persian text-xs font-medium text-white tracking-wide">
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-md sm:bottom-4 sm:right-4 sm:gap-2 sm:px-4 sm:py-2">
+            <ShieldCheck
+              size={14}
+              className="shrink-0 text-[#019C34] sm:size-4"
+            />
+            <span className="font-persian text-[10px] font-medium tracking-wide text-white sm:text-xs">
               {toPersianNumber(warrantyYears)} سال گارانتی
             </span>
           </div>
 
           {/* quiet "calm sleep" mark — the signature touch */}
-          <span className="absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white/90 backdrop-blur-sm">
+          <span className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white/90 backdrop-blur-sm sm:left-4 sm:top-4 sm:h-8 sm:w-8">
             <Moon size={14} strokeWidth={1.75} />
           </span>
         </div>
 
         {/* Content */}
-        <div className="flex flex-1 flex-col gap-3 px-6 py-6">
-          <h3 className="font-[600] text-[1.35rem] leading-snug tracking-tight text-[#003087]">
+        <div className="flex flex-1 flex-col gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-6">
+          <h3 className="line-clamp-2 min-h-[1lh] font-[600] text-sm leading-snug tracking-tight text-[#003087] sm:text-[1.35rem]">
             {mattress.name}
           </h3>
 
-          <p className="line-clamp-3 flex-1 text-[0.925rem] leading-[1.9] text-[#687173]">
+          <p className="line-clamp-2 min-h-[2lh] flex-1 text-xs leading-[1.7] text-[#687173] sm:line-clamp-3 sm:min-h-[3lh] sm:text-[0.925rem] sm:leading-[1.9]">
             {mattress.description}
           </p>
 
@@ -64,19 +67,19 @@ export default function MattressCard({ mattress }) {
 
           <div className="flex items-end justify-between pt-1">
             <div dir="ltr" className="text-left">
-              <p className="text-[0.65rem] font-medium uppercase tracking-[0.15em] text-[#687173]">
+              <p className="hidden text-[0.65rem] font-medium uppercase tracking-[0.15em] text-[#687173] sm:block">
                 قیمت / Price
               </p>
-              <p className="font-persian text-2xl font-bold text-[#003087] tracking-tight">
+              <p className="font-persian text-base font-bold tracking-tight text-[#003087] sm:text-2xl">
                 {formatPersianPrice(mattress.price)}
-                <span className="text-base font-normal text-[#687173] mr-1">
+                <span className="mr-1 text-xs font-normal text-[#687173] sm:text-base">
                   تومان
                 </span>
               </p>
             </div>
 
             {(mattress.width > 0 || mattress.length > 0) && (
-              <p className="rounded-full bg-[#F5F7FA] px-3 py-1 text-xs text-[#687173]">
+              <p className="hidden rounded-full bg-[#F5F7FA] px-3 py-1 text-xs text-[#687173] sm:block">
                 {mattress.width} × {mattress.length} سانتی‌متر
               </p>
             )}
