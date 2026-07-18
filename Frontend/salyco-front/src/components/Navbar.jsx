@@ -309,27 +309,39 @@ export default function Navbar() {
                   </Link>
                 )}
 
-                <div className="relative py-3">
-                  <button
-                    onClick={toggleUserMenu}
-                    className="flex items-center gap-2 text-sm font-medium text-blue-100 hover:text-white transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-400/30">
-                      <span className="text-sm font-bold text-blue-200">
-                        {getUserInitials(user?.username)}
-                      </span>
-                    </div>
-                    <span>{user?.username}</span>
-                    <ChevronDown
-                      size={14}
-                      className={`text-blue-300 transition-transform duration-200 ${
-                        isUserMenuOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {isUserMenuOpen && userDropdown}
+                <div className="flex items-center gap-3 py-3">
+                  <div className="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-400/30 flex-shrink-0">
+                    <span className="text-sm font-bold text-blue-200">
+                      {getUserInitials(user?.username)}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white truncate">
+                      {user?.username}
+                    </p>
+                    <p className="text-xs text-blue-300/70 truncate">
+                      {user?.email || "کاربر"}
+                    </p>
+                  </div>
                 </div>
+
+                <Link
+                  to="/user-info"
+                  onClick={closeMenu}
+                  className="flex items-center gap-2 py-3 text-sm font-medium text-blue-100"
+                >
+                  <User size={16} className="text-blue-300" />
+                  <span>اطلاعات کاربری</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 py-3 text-sm font-medium text-red-400 hover:text-red-300 transition-colors w-full text-right"
+                >
+                  <LogOut size={16} />
+                  <span>خروج</span>
+                </button>
               </>
             ) : (
               <Link
