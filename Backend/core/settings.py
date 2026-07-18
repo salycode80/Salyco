@@ -41,6 +41,23 @@ CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://127.0.0.1:5173').split(',') if o.strip()
 ]
 
+# ── HTTPS / reverse-proxy security ───────────────────────────────────────────
+# In production Django runs behind Caddy (TLS) → nginx → gunicorn, all speaking
+# plain HTTP internally. Trust the X-Forwarded-Proto header so request.is_secure()
+# is correct, absolute URLs (warranty QR codes) come out as https, and admin
+# CSRF over HTTPS is accepted. nginx is configured to forward Caddy's real proto.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Only harden cookies/redirects/HSTS when not in DEBUG, so local http dev works.
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS: tell browsers to always use HTTPS for this host.
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
 # REST Framework settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
