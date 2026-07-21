@@ -26,6 +26,17 @@ const formatPersianPrice = (price) =>
 const CARD =
   "rounded-xl border border-[#CBD2D6] bg-white p-6 shadow-[0_1px_4px_rgba(0,48,135,0.06)]";
 
+// The six canonical mattress sizes. Names/dimensions are static; the price for
+// each comes from the matching MattressSize on the model (matched by w×l).
+const STANDARD_SIZES = [
+  { width: 90, length: 200, name: " یک‌نفره استاندارد", note: "استاندارد" },
+  { width: 120, length: 200, name: " یک‌نفره بزرگ" },
+  { width: 140, length: 200, name: " دو نفره کوچک" },
+  { width: 160, length: 200, name: " دو نفره کوئین", note: "استاندارد" },
+  { width: 180, length: 200, name: " دو نفره کینگ" },
+  { width: 200, length: 200, name: " دو نفره سوپر کینگ" },
+];
+
 function StarRating({ rating, size = 16 }) {
   return (
     <div className="flex gap-0.5" dir="ltr">
@@ -118,6 +129,21 @@ export default function MattressDetail() {
 
   const warrantyYears = Math.round(mattress.warranty_months / 12);
   const displayPrice = selectedSize ? selectedSize.price : mattress.price;
+
+  // Merge the six canonical sizes with the model's priced sizes (matched by w×l).
+  // A canonical size with no matching MattressSize is shown as unavailable.
+  const sizeCards = STANDARD_SIZES.map((std) => {
+    const match = mattress.sizes?.find(
+      (s) => s.width === std.width && s.length === std.length,
+    );
+    return {
+      ...std,
+      image: `/bedicon_${std.width}_${std.length}.png`,
+      modelSize: match || null,
+      price: match ? match.price : null,
+      available: !!match && match.in_stock,
+    };
+  });
   const pros = mattress.pros_cons?.filter((p) => p.type === "PRO") || [];
   const cons = mattress.pros_cons?.filter((p) => p.type === "CON") || [];
 
@@ -177,27 +203,46 @@ export default function MattressDetail() {
 
           {/* Product info */}
           <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-3">
-              <h1 className="order-1 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
-                {mattress.name}
-              </h1>
-              <div className="order-2 flex items-center gap-1 rounded-full bg-[#F5F7FA] px-3 py-1">
-                <ShieldCheck size={14} className="text-[#003087]" />
-                <span className="text-xs font-medium text-[#003087]">
-                  {toPersianNumber(warrantyYears)} سال
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between">
+                {/* Rating */}
+                {mattress.review_count > 0 && (
+                  <div className="order-2 flex items-center gap-3">
+                    <StarRating rating={mattress.average_rating} />
+                  </div>
+                )}
+                <h1 className="font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+                  {mattress.name}
+                </h1>
+              </div>
+              <div
+                className="group flex w-fit items-center gap-2 rounded-xl border border-[#003087]/15 bg-[#F5F7FA] px-4 py-2 transition-all duration-300 ease-out hover:-translate-y-0.5"
+                style={{
+                  boxShadow: "0 1px 4px rgba(0,48,135,0.06)", // Elevation Level 1
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 16px rgba(0,48,135,0.1)"; // Elevation Level 2 on hover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 1px 4px rgba(0,48,135,0.06)";
+                }}
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded-xl bg-[#003087]/10 transition-colors duration-300 group-hover:bg-[#003087]/15">
+                  <ShieldCheck
+                    size={16}
+                    className="text-[#003087]"
+                    strokeWidth={2.5}
+                  />
+                </div>
+                <span className="text-[14px] font-semibold text-[#003087]">
+                  {toPersianNumber(warrantyYears)} سال گارانتی
                 </span>
               </div>
             </div>
             {mattress.subtitle && (
               <p className="text-base text-[#687173]">{mattress.subtitle}</p>
-            )}
-
-            {/* Rating */}
-            {mattress.review_count > 0 && (
-              <div className="flex items-center gap-3">
-                <StarRating rating={mattress.average_rating} />
-                <span className="text-sm text-[#687173]">امتیاز این محصول</span>
-              </div>
             )}
 
             {/* Availability */}
@@ -215,41 +260,65 @@ export default function MattressDetail() {
             {/* Size selector */}
             {mattress.sizes?.length > 0 && (
               <div className="space-y-3">
-                <label
-                  htmlFor="size-select"
-                  className="block text-sm font-medium text-[#1A1A2E]"
-                >
+                <span className="block text-sm font-medium text-[#1A1A2E]">
                   سایز های موجود :
-                </label>
+                </span>
 
-                <select
-                  id="size-select"
-                  value={selectedSize?.id ?? ""}
-                  onChange={(e) => {
-                    const size = mattress.sizes.find(
-                      (s) => s.id === Number(e.target.value),
+                <div className="grid grid-cols-3 gap-3">
+                  {sizeCards.map((sz) => {
+                    const isSelected =
+                      sz.modelSize && selectedSize?.id === sz.modelSize.id;
+                    return (
+                      <button
+                        key={`${sz.width}x${sz.length}`}
+                        type="button"
+                        disabled={!sz.available}
+                        onClick={() =>
+                          sz.modelSize && setSelectedSize(sz.modelSize)
+                        }
+                        className={`group relative flex flex-col items-center rounded-xl border bg-white p-3 text-center transition-all duration-300 ease-out ${
+                          isSelected
+                            ? "border-[#003087] shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+                            : "border-[#CBD2D6] shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
+                        } ${
+                          sz.available
+                            ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#009CDE] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+                            : "cursor-not-allowed opacity-50"
+                        }`}
+                      >
+                        {sz.note && (
+                          <span className="absolute -top-2 right-2 rounded-full bg-[#FFF8E1] px-2 py-0.5 text-[10px] font-medium text-[#F5BA2E]">
+                            {sz.note}
+                          </span>
+                        )}
+                        <img
+                          src={sz.image}
+                          alt={sz.name}
+                          onError={(e) => {
+                            e.currentTarget.src = "/matress.png";
+                          }}
+                          className="mb-2 h-14 w-14 object-contain"
+                        />
+                        <span className="text-[11px] font-medium leading-tight text-[#1A1A2E]">
+                          {sz.name}
+                        </span>
+                        <span className="mt-0.5 text-[10px] text-[#687173] [font-feature-settings:'tnum']">
+                          {toPersianNumber(sz.width)} ×{" "}
+                          {toPersianNumber(sz.length)} سانتی‌متر
+                        </span>
+                        {sz.price != null ? (
+                          <span className="mt-1 text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
+                            {formatPersianPrice(sz.price)} تومان
+                          </span>
+                        ) : (
+                          <span className="mt-1 text-[10px] text-[#687173]">
+                            ناموجود
+                          </span>
+                        )}
+                      </button>
                     );
-                    if (size) {
-                      setSelectedSize(size);
-                    }
-                  }}
-                  className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 text-sm text-[#1A1A2E] focus:border-[#003087] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20"
-                >
-                  <option value="" disabled>
-                    لطفاً سایز را انتخاب کنید
-                  </option>
-
-                  {mattress.sizes.map((size) => (
-                    <option
-                      key={size.id}
-                      value={size.id}
-                      disabled={!size.in_stock}
-                    >
-                      {size.label}
-                      {!size.in_stock ? " (ناموجود)" : ""}
-                    </option>
-                  ))}
-                </select>
+                  })}
+                </div>
               </div>
             )}
 
