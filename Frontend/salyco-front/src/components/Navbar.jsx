@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/UseAuth";
+import { useCart } from "../context/CartContext";
+import { toPersianNumber } from "../utils/persian";
 import api from "../api";
 import SearchBar from "./SearchBar";
 import {
@@ -18,6 +20,7 @@ import {
   Menu,
   X,
   MapPin,
+  ShoppingCart,
 } from "lucide-react";
 
 const categories = [
@@ -30,6 +33,7 @@ const categories = [
 
 export default function Navbar() {
   const { isAuthenticated, logout } = useAuth();
+  const { count: cartCount } = useCart();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -153,6 +157,21 @@ export default function Navbar() {
 
           {/* Desktop actions */}
           <div className="hidden items-center gap-4 lg:flex" dir="rtl">
+            <Link
+              to="/cart"
+              aria-label="سبد خرید"
+              className="relative flex items-center gap-1.5 text-sm font-medium text-white/90 hover:text-white transition-colors"
+            >
+              <ShoppingCart size={20} className="text-white/80" />
+              {cartCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-[#003087]">
+                  {cartCount > 99 ? "۹۹+" : toPersianNumber(cartCount)}
+                </span>
+              )}
+            </Link>
+
+            <div className="h-5 w-px bg-white/20" />
+
             {isAuthenticated ? (
               <>
                 <Link
@@ -284,6 +303,20 @@ export default function Navbar() {
           </div>
 
           <div className="flex flex-col divide-y divide-[#CBD2D6]">
+            <Link
+              to="/cart"
+              onClick={closeMenu}
+              className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
+            >
+              <ShoppingCart size={16} className="text-[#687173]" />
+              <span>سبد خرید</span>
+              {cartCount > 0 && (
+                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#003087] px-1 text-[11px] font-bold text-white">
+                  {cartCount > 99 ? "۹۹+" : toPersianNumber(cartCount)}
+                </span>
+              )}
+            </Link>
+
             {isAuthenticated ? (
               <>
                 <Link

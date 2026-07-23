@@ -99,7 +99,7 @@ export default function FeaturedProducts() {
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="h-[240px] w-[calc((100%-1.5rem)/3)] shrink-0 animate-pulse rounded-xl bg-[#CBD2D6] sm:h-[420px] sm:w-[calc((100%-4.5rem)/4)]"
+                className="h-[240px] w-[calc((100%-1.5rem)/2)] shrink-0 animate-pulse rounded-xl bg-[#CBD2D6] sm:h-[420px] sm:w-[calc((100%-4.5rem)/4)]"
               />
             ))}
           </div>
@@ -111,7 +111,7 @@ export default function FeaturedProducts() {
             {mattresses.map((mattress) => (
               <div
                 key={mattress.slug}
-                className="w-[calc((100%-1.5rem)/3)] shrink-0 snap-start sm:w-[calc((100%-4.5rem)/4)]"
+                className="w-[calc((100%-1.5rem)/2)] shrink-0 snap-start sm:w-[calc((100%-4.5rem)/4)]"
               >
                 <MattressCard mattress={mattress} />
               </div>

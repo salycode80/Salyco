@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from users.models import Customer
 
-from .models import MattressInstance
+from .models import MattressInstance, Review
 from .utils import generate_qr_code_base64, get_warranty_public_url
 
 
@@ -130,3 +130,43 @@ class AdminCustomerSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj: Customer) -> str:
         return f"{obj.first_name} {obj.last_name}".strip()
+
+
+class AdminReviewSerializer(serializers.ModelSerializer):
+    """Review row for the moderation panel. Only `is_approved` is writable so a
+    staff member can approve a pending review; everything else is read-only."""
+
+    customer_name = serializers.SerializerMethodField()
+    mattress_name = serializers.CharField(source="mattress.name", read_only=True)
+    mattress_slug = serializers.CharField(source="mattress.slug", read_only=True)
+
+    class Meta:
+        model = Review
+        fields = [
+            "id",
+            "mattress_name",
+            "mattress_slug",
+            "customer_name",
+            "rating",
+            "title",
+            "body",
+            "pros",
+            "cons",
+            "is_approved",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "mattress_name",
+            "mattress_slug",
+            "customer_name",
+            "rating",
+            "title",
+            "body",
+            "pros",
+            "cons",
+            "created_at",
+        ]
+
+    def get_customer_name(self, obj: Review) -> str:
+        return f"{obj.customer.first_name} {obj.customer.last_name}".strip() or "کاربر"

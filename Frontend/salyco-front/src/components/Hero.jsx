@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, Moon, Sparkles } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Moon, Sparkles, Download } from "lucide-react";
 import PageBackground from "./PageBackground";
 
 const highlights = [
@@ -16,7 +16,7 @@ export default function Hero() {
         <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen">
           <div className="relative aspect-[16/8] w-full overflow-hidden sm:aspect-[16/7] lg:aspect-[21/8]">
             <img
-              src="/heroimage2.png"
+              src="/layerdimage.png"
               alt="تشک سالیکو"
               className="h-full w-full object-cover"
             />
@@ -34,12 +34,14 @@ export default function Hero() {
             مشاهده محصولات
             <ArrowLeft size={16} />
           </Link>
-          <Link
-            to="/about"
+          <a
+            href="/catalog.pdf"
+            download
             className="inline-flex items-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-7 py-3 font-persian text-sm font-semibold text-[#003087] transition-colors hover:bg-[#003087]/5"
           >
-            درباره سالیکو
-          </Link>
+            <Download size={16} />
+            دانلود کاتالوگ
+          </a>
         </div>
         {/* ── Highlights ── */}
         <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">

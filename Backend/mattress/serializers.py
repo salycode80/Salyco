@@ -104,6 +104,40 @@ class ReviewSerializer(serializers.ModelSerializer):
         return f"{obj.customer.first_name} {obj.customer.last_name}".strip() or "کاربر"
 
 
+class ReviewCreateSerializer(serializers.ModelSerializer):
+    """Public review submission. The mattress and customer are supplied by the
+    view; every new review starts unapproved and is hidden until a staff member
+    approves it in the moderation panel."""
+
+    class Meta:
+        model = Review
+        fields = ["id", "rating", "title", "body", "pros", "cons"]
+        read_only_fields = ["id"]
+
+    def validate_rating(self, value: int) -> int:
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("امتیاز باید بین ۱ تا ۵ باشد.")
+        return value
+
+    def save(self, **kwargs) -> Review:
+        user = self.context["request"].user
+
+        # Reuse the account's Customer profile, creating a minimal one from the
+        # user record when it doesn't exist yet (e.g. the buyer never registered
+        # a warranty). We never overwrite an existing profile here.
+        customer, _created = Customer.objects.get_or_create(
+            user=user,
+            defaults={
+                "first_name": user.first_name or "",
+                "last_name": user.last_name or "",
+                "address": "",
+                "phone_number": "",
+                "postal_code": "",
+            },
+        )
+        return super().save(customer=customer, is_approved=False, **kwargs)
+
+
 class MattressDetailSerializer(serializers.ModelSerializer):
     images = MattressImageSerializer(many=True, read_only=True)
     sizes = MattressSizeSerializer(many=True, read_only=True)

@@ -33,6 +33,7 @@ urlpatterns = [
     path("api/", include("articles.urls")),
     path("api/", include("contact.urls")),
     path("api/", include("search.urls")),
+    path("api/", include("orders.urls")),
 ]
 
 if settings.DEBUG:

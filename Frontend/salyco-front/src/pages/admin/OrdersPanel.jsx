@@ -1,0 +1,323 @@
+import { useState, useEffect, useCallback } from "react";
+import {
+  ShoppingBag,
+  Search,
+  Filter,
+  Trash2,
+  Truck,
+  Phone,
+  Loader2,
+  RotateCcw,
+  MapPin,
+  User,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import {
+  listAdminOrders,
+  updateAdminOrder,
+  deleteAdminOrder,
+} from "../../api/admin";
+import { toPersianNumber, formatPersianPrice } from "../../utils/persian";
+
+const faDate = (iso) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("fa-IR");
+  } catch {
+    return iso;
+  }
+};
+
+// Order lifecycle → badge colors.
+const STATUS_META = {
+  PENDING: { label: "در انتظار", cls: "bg-[#FFF8E1] text-[#F5BA2E]" },
+  CONFIRMED: { label: "تأیید شده", cls: "bg-[#E6F0FB] text-[#003087]" },
+  SHIPPED: { label: "ارسال شده", cls: "bg-[#E6F4EA] text-[#019C34]" },
+  CANCELLED: { label: "لغو شده", cls: "bg-[#FDE7E7] text-[#D20000]" },
+};
+const STATUS_ORDER = ["PENDING", "CONFIRMED", "SHIPPED", "CANCELLED"];
+
+function OrderCard({ order, busy, onStatus, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const isPhone = order.method === "PHONE";
+
+  return (
+    <div className="rounded-xl border border-[#CBD2D6] bg-white p-5 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="font-persian text-base font-semibold text-[#1A1A2E]">
+              سفارش #{toPersianNumber(order.id)}
+            </h3>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                isPhone
+                  ? "bg-[#E6F4EA] text-[#019C34]"
+                  : "bg-[#E6F0FB] text-[#003087]"
+              }`}
+            >
+              {isPhone ? <Phone size={12} /> : <Truck size={12} />}
+              {order.method_display}
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                STATUS_META[order.status]?.cls || ""
+              }`}
+            >
+              {STATUS_META[order.status]?.label || order.status}
+            </span>
+          </div>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 font-persian text-xs text-[#687173]">
+            <span className="inline-flex items-center gap-1">
+              <User size={12} /> {order.customer_name}
+            </span>
+            {order.phone_number && (
+              <span className="inline-flex items-center gap-1" dir="ltr">
+                <Phone size={12} /> {order.phone_number}
+              </span>
+            )}
+            <span>{faDate(order.created_at)}</span>
+          </p>
+        </div>
+
+        <span className="font-persian text-base font-bold text-[#003087] [font-feature-settings:'tnum']">
+          {formatPersianPrice(order.total_amount)}
+          <span className="mr-1 text-xs font-normal text-[#687173]">تومان</span>
+        </span>
+      </div>
+
+      {/* Shipping address for online orders */}
+      {!isPhone && (order.province || order.address) && (
+        <p className="mt-3 flex items-start gap-1.5 font-persian text-sm text-[#687173]">
+          <MapPin size={15} className="mt-0.5 shrink-0 text-[#003087]" />
+          {[order.province, order.city, order.address].filter(Boolean).join("، ")}
+          {order.postal_code ? ` — کد پستی ${toPersianNumber(order.postal_code)}` : ""}
+        </p>
+      )}
+
+      {/* Items (collapsible) */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="mt-3 inline-flex items-center gap-1 font-persian text-sm font-medium text-[#003087] hover:text-[#009CDE]"
+      >
+        {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+        {toPersianNumber(order.items?.length || 0)} قلم کالا
+      </button>
+      {open && (
+        <div className="mt-2 divide-y divide-[#CBD2D6] rounded-lg border border-[#CBD2D6]">
+          {order.items?.map((it) => (
+            <div
+              key={it.id}
+              className="flex items-center justify-between px-3 py-2 text-sm"
+            >
+              <span className="text-[#1A1A2E]">
+                {it.mattress_name}
+                {it.size_label ? ` (${it.size_label})` : ""}
+                <span className="text-[#687173]">
+                  {" "}
+                  × {toPersianNumber(it.quantity)}
+                </span>
+              </span>
+              <span className="text-[#687173] [font-feature-settings:'tnum']">
+                {formatPersianPrice(it.line_total)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#CBD2D6] pt-4">
+        <span className="font-persian text-sm text-[#687173]">تغییر وضعیت:</span>
+        <select
+          value={order.status}
+          disabled={busy}
+          onChange={(e) => onStatus(order.id, e.target.value)}
+          className="h-9 rounded-lg border border-[#CBD2D6] bg-white px-3 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] disabled:opacity-60"
+        >
+          {STATUS_ORDER.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_META[s].label}
+            </option>
+          ))}
+        </select>
+        {busy && <Loader2 size={16} className="animate-spin text-[#003087]" />}
+        <button
+          onClick={() => onDelete(order.id)}
+          disabled={busy}
+          className="mr-auto inline-flex items-center gap-1.5 rounded-lg border-2 border-[#D20000] bg-white px-4 py-2 font-persian text-sm font-semibold text-[#D20000] transition hover:bg-[#FDE7E7] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Trash2 size={14} /> حذف
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function OrdersPanel() {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [methodFilter, setMethodFilter] = useState("");
+
+  const params = useCallback(
+    () => ({ search, status: statusFilter, method: methodFilter }),
+    [search, statusFilter, methodFilter]
+  );
+
+  const load = useCallback(() => {
+    setLoading(true);
+    listAdminOrders(params())
+      .then((d) => setRows(Array.isArray(d) ? d : d.results || []))
+      .catch(() => setRows([]))
+      .finally(() => setLoading(false));
+  }, [params]);
+
+  useEffect(() => {
+    const t = setTimeout(load, 300);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  const handleStatus = async (id, status) => {
+    setBusyId(id);
+    try {
+      await updateAdminOrder(id, { status });
+      setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
+    } catch {
+      /* keep row as-is on error */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("این سفارش حذف شود؟ این عمل قابل بازگشت نیست.")) return;
+    setBusyId(id);
+    try {
+      await deleteAdminOrder(id);
+      setRows((rs) => rs.filter((r) => r.id !== id));
+    } catch {
+      /* keep row on error */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setStatusFilter("");
+    setMethodFilter("");
+  };
+
+  const hasFilters = search || statusFilter || methodFilter;
+  const pending = rows.filter((r) => r.status === "PENDING").length;
+
+  return (
+    <>
+      {/* header */}
+      <header className="mb-8" dir="rtl">
+        <p className="flex items-center gap-2 font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+          <ShoppingBag size={16} /> Orders
+        </p>
+        <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+          مدیریت سفارش‌ها
+        </h1>
+        <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
+        <p className="mt-4 font-persian text-sm text-[#687173]">
+          سفارش‌های ثبت‌شده مشتریان را بررسی و وضعیت آن‌ها را مدیریت کنید.
+          {pending > 0 && (
+            <span className="mr-1 font-semibold text-[#F5BA2E]">
+              ({toPersianNumber(pending)} سفارش در انتظار)
+            </span>
+          )}
+        </p>
+      </header>
+
+      {/* filters */}
+      <div
+        className="mb-6 rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
+        dir="rtl"
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[220px] flex-1">
+            <Search
+              size={16}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#687173]"
+            />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="جستجوی نام، تلفن، شهر..."
+              className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white pr-11 pl-4 text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-12 rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+          >
+            <option value="">وضعیت (همه)</option>
+            {STATUS_ORDER.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_META[s].label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={methodFilter}
+            onChange={(e) => setMethodFilter(e.target.value)}
+            className="h-12 rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+          >
+            <option value="">روش (همه)</option>
+            <option value="ONLINE">آنلاین</option>
+            <option value="PHONE">تلفنی</option>
+          </select>
+
+          {hasFilters && (
+            <button
+              onClick={resetFilters}
+              className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#003087] bg-white px-4 py-2.5 font-persian text-sm text-[#003087] transition hover:bg-[#F5F7FA]"
+            >
+              <RotateCcw size={14} /> پاک کردن
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* list */}
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-[#003087]" />
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-xl border border-[#CBD2D6] bg-white py-20 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+          <Filter size={40} className="mx-auto mb-3 text-[#CBD2D6]" />
+          <p className="font-persian text-sm text-[#687173]">سفارشی یافت نشد.</p>
+        </div>
+      ) : (
+        <div className="space-y-4" dir="rtl">
+          {rows.map((r) => (
+            <OrderCard
+              key={r.id}
+              order={r}
+              busy={busyId === r.id}
+              onStatus={handleStatus}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
+
+      <p className="mt-4 text-center font-persian text-xs text-[#687173]" dir="rtl">
+        {toPersianNumber(rows.length)} سفارش نمایش داده شد
+      </p>
+    </>
+  );
+}

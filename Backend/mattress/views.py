@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.http import HttpResponse
 from rest_framework import generics, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +14,7 @@ from .serializers import (
     MattressInstanceCreateSerializer,
     MattressInstanceSerializer,
     MattressSerializer,
+    ReviewCreateSerializer,
     WarrantyCheckSerializer,
     WarrantyRegistrationSerializer,
 )
@@ -26,6 +28,8 @@ class MattressViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return MattressDetailSerializer
+        if self.action == "reviews":
+            return ReviewCreateSerializer
         return MattressSerializer
 
     def get_queryset(self):
@@ -40,7 +44,22 @@ class MattressViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ("list", "retrieve"):
             return [AllowAny()]
+        if self.action == "reviews":
+            return [IsAuthenticated()]
         return [IsAuthenticated()]
+
+    @action(detail=True, methods=["post"], url_path="reviews")
+    def reviews(self, request, slug=None):
+        """Submit a review for this mattress. Saved unapproved and hidden from
+        the public detail page until a staff member approves it."""
+        mattress = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(mattress=mattress)
+        return Response(
+            {"detail": "نظر شما ثبت شد و پس از تأیید نمایش داده می‌شود."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class MattressInstanceAdminViewSet(viewsets.ModelViewSet):

@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { CartProvider } from "./context/CartContext";
 import ScrollToTop from "./components/ScrollToTop";
 import Navbar from "./components/Navbar";
 import AboutFooter from "./components/AboutFooter";
@@ -18,14 +19,23 @@ import MyWarrantiesPage from "./pages/MyWarrantiesPage";
 import AdminWorkspace from "./pages/admin/AdminWorkspace";
 import DashboardPanel from "./pages/admin/DashboardPanel";
 import CreateInstancePanel from "./pages/admin/CreateInstancePanel";
+import ReviewsPanel from "./pages/admin/ReviewsPanel";
+import SuggestionsPanel from "./pages/admin/SuggestionsPanel";
 import UserInfo from "./pages/UserInfo";
 import SearchResults from "./pages/SearchResults";
+import CartPage from "./pages/CartPage";
+import CheckoutMethod from "./pages/checkout/CheckoutMethod";
+import CheckoutShipping from "./pages/checkout/CheckoutShipping";
+import CheckoutPhone from "./pages/checkout/CheckoutPhone";
+import OrdersPanel from "./pages/admin/OrdersPanel";
+import AllowedLocationsPanel from "./pages/admin/AllowedLocationsPanel";
 
 function App() {
   return (
-    <div>
-      <ScrollToTop />
-      <Navbar />
+    <CartProvider>
+      <div>
+        <ScrollToTop />
+        <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/products/mattress" element={<Mattress />} />
@@ -43,6 +53,31 @@ function App() {
         />
         <Route path="/user-info" element={<UserInfo />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutMethod />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout/shipping"
+          element={
+            <ProtectedRoute>
+              <CheckoutShipping />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout/phone"
+          element={
+            <ProtectedRoute>
+              <CheckoutPhone />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/warranty/my"
           element={
@@ -61,10 +96,15 @@ function App() {
         >
           <Route index element={<DashboardPanel />} />
           <Route path="create" element={<CreateInstancePanel />} />
+          <Route path="reviews" element={<ReviewsPanel />} />
+          <Route path="suggestions" element={<SuggestionsPanel />} />
+          <Route path="orders" element={<OrdersPanel />} />
+          <Route path="locations" element={<AllowedLocationsPanel />} />
         </Route>
       </Routes>
-      <AboutFooter />
-    </div>
+        <AboutFooter />
+      </div>
+    </CartProvider>
   );
 }
 

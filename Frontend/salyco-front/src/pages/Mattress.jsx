@@ -51,7 +51,7 @@ export default function Gallery() {
         )}
 
         {!loading && mattresses.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
             {mattresses.map((mattress) => (
               <MattressCard key={mattress.slug} mattress={mattress} />
             ))}

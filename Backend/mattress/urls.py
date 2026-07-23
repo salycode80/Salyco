@@ -30,4 +30,6 @@ urlpatterns = [
     path("admin/instances/<str:serial_number>/", admin_views.AdminInstanceDetailView.as_view(), name="admin-instance-detail"),
     path("admin/customers/export/", admin_views.AdminCustomerExportView.as_view(), name="admin-customers-export"),
     path("admin/customers/", admin_views.AdminCustomerListView.as_view(), name="admin-customers"),
+    path("admin/reviews/", admin_views.AdminReviewListView.as_view(), name="admin-reviews"),
+    path("admin/reviews/<int:pk>/", admin_views.AdminReviewDetailView.as_view(), name="admin-review-detail"),
 ]

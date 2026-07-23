@@ -16,3 +16,13 @@ class SuggestionSerializer(serializers.ModelSerializer):
                 "لطفاً ایمیل یا شماره تماس را وارد کنید."
             )
         return attrs
+
+
+class AdminSuggestionSerializer(serializers.ModelSerializer):
+    """Suggestion row for the admin panel. Only `is_read` is writable so a staff
+    member can mark a message as read; the message content stays read-only."""
+
+    class Meta:
+        model = Suggestion
+        fields = ["id", "name", "email", "phone", "message", "is_read", "created_at"]
+        read_only_fields = ["id", "name", "email", "phone", "message", "created_at"]

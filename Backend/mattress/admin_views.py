@@ -15,8 +15,9 @@ from .admin_serializers import (
     AdminCustomerSerializer,
     AdminInstanceDetailSerializer,
     AdminInstanceSerializer,
+    AdminReviewSerializer,
 )
-from .models import MattressInstance
+from .models import MattressInstance, Review
 from .permissions import IsAdminUser
 
 
@@ -243,3 +244,53 @@ class AdminCustomerExportView(APIView):
                 ]
             )
         return response
+
+
+class AdminReviewListView(generics.ListAPIView):
+    """List all reviews for moderation. Filter by `is_approved` query param."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminReviewSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = Review.objects.select_related("mattress", "customer").order_by("-created_at")
+
+        # Filter by approval status
+        is_approved = self.request.query_params.get("is_approved")
+        if is_approved == "true":
+            qs = qs.filter(is_approved=True)
+        elif is_approved == "false":
+            qs = qs.filter(is_approved=False)
+
+        # Search across title, body, customer name
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            qs = qs.filter(
+                Q(title__icontains=search)
+                | Q(body__icontains=search)
+                | Q(customer__first_name__icontains=search)
+                | Q(customer__last_name__icontains=search)
+            )
+
+        return qs
+
+
+class AdminReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve/update/delete a single review. PATCH to approve (set is_approved=True),
+    DELETE to reject and remove. Both operations refresh the mattress rating cache."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminReviewSerializer
+    queryset = Review.objects.select_related("mattress", "customer")
+
+    def perform_update(self, serializer):
+        review = serializer.save()
+        # Refresh the cached rating + count on the parent mattress
+        review.mattress.update_rating_cache()
+
+    def perform_destroy(self, instance):
+        mattress = instance.mattress
+        instance.delete()
+        # Refresh the cached rating + count after removing the review
+        mattress.update_rating_cache()

@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "users",
     "contact",
     "search",
+    "orders",
 ]
 
 MIDDLEWARE = [

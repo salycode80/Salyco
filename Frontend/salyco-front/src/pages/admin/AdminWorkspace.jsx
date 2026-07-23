@@ -7,6 +7,10 @@ import {
   Lock,
   Loader2,
   ShieldCheck,
+  MessageSquare,
+  Inbox,
+  ShoppingBag,
+  MapPin,
 } from "lucide-react";
 import PageBackground from "../../components/PageBackground";
 
@@ -25,6 +29,30 @@ const controls = [
     label: "ساخت نمونه محصول",
     hint: "تولید سریال و QR کد",
     icon: PackagePlus,
+  },
+  {
+    to: "/admin/orders",
+    label: "مدیریت سفارش‌ها",
+    hint: "بررسی و پیگیری سفارش‌ها",
+    icon: ShoppingBag,
+  },
+  {
+    to: "/admin/locations",
+    label: "مناطق مجاز ارسال",
+    hint: "تعیین محدوده خرید آنلاین",
+    icon: MapPin,
+  },
+  {
+    to: "/admin/reviews",
+    label: "مدیریت نظرات",
+    hint: "تأیید یا رد نظرات کاربران",
+    icon: MessageSquare,
+  },
+  {
+    to: "/admin/suggestions",
+    label: "نظرات و پیشنهادات",
+    hint: "پیام‌های فرم تماس با ما",
+    icon: Inbox,
   },
 ];
 

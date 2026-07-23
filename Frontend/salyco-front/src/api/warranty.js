@@ -76,3 +76,17 @@ export async function getMattressDetail(slug) {
     throw new Error(msg);
   }
 }
+
+export async function submitReview(slug, data) {
+  try {
+    const res = await api.post(`/api/mattresses/${slug}/reviews/`, data);
+    return res.data;
+  } catch (err) {
+    const data_ = err.response?.data;
+    const firstError =
+      data_ && typeof data_ === "object"
+        ? data_.detail || Object.values(data_).flat()[0]
+        : null;
+    throw new Error(firstError || "خطا در ثبت نظر");
+  }
+}

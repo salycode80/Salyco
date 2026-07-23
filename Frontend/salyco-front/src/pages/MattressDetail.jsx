@@ -9,9 +9,16 @@ import {
   Check,
   X,
   Package,
+  MessageSquarePlus,
+  CheckCircle2,
+  Loader2,
+  LogIn,
+  ShoppingCart,
 } from "lucide-react";
-import { getMattressDetail } from "../api/warranty";
+import { getMattressDetail, submitReview } from "../api/warranty";
 import { getProductImageUrl } from "../utils/productImage";
+import { ACCESS_TOKEN } from "../constants";
+import { useCart } from "../context/CartContext";
 import PageBackground from "../components/PageBackground";
 
 const toPersianNumber = (num) => {
@@ -77,13 +84,235 @@ function FAQItem({ faq }) {
   );
 }
 
+// Interactive star picker for the review form.
+function StarPicker({ value, onChange }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1" dir="ltr">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => onChange(i)}
+          onMouseEnter={() => setHover(i)}
+          onMouseLeave={() => setHover(0)}
+          className="transition-transform hover:scale-110"
+          aria-label={`${i} ستاره`}
+        >
+          <Star
+            size={28}
+            className={
+              i <= (hover || value)
+                ? "fill-[#F5BA2E] text-[#F5BA2E]"
+                : "text-[#CBD2D6]"
+            }
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Review submission form shown at the bottom of the detail page. Requires the
+// visitor to be logged in; on success the review is queued for admin approval.
+function ReviewForm({ slug, onSubmitted }) {
+  const isAuthenticated = !!localStorage.getItem(ACCESS_TOKEN);
+  const [form, setForm] = useState({
+    rating: 0,
+    title: "",
+    body: "",
+    pros: "",
+    cons: "",
+  });
+  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+  const [error, setError] = useState("");
+
+  const inputBase =
+    "w-full rounded-lg border border-[#CBD2D6] bg-white px-4 py-3 font-persian text-sm text-[#1A1A2E] placeholder-[#687173] transition focus:border-[#009CDE] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20";
+
+  const handleChange = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (form.rating < 1) {
+      setError("لطفاً امتیاز خود را انتخاب کنید.");
+      return;
+    }
+    setStatus("sending");
+    try {
+      await submitReview(slug, form);
+      setStatus("success");
+      setForm({ rating: 0, title: "", body: "", pros: "", cons: "" });
+      onSubmitted?.();
+    } catch (err) {
+      setError(err.message);
+      setStatus("error");
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className={CARD}>
+        <h2 className="mb-2 font-persian text-xl font-semibold text-[#003087]">
+          ثبت نظر
+        </h2>
+        <p className="mb-4 font-persian text-sm text-[#687173]">
+          برای ثبت نظر ابتدا وارد حساب کاربری خود شوید.
+        </p>
+        <Link
+          to="/auth"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
+        >
+          <LogIn size={16} />
+          ورود / ثبت‌نام
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <div className={CARD}>
+        <div className="flex flex-col items-center justify-center rounded-xl bg-[#E6F4EA] p-8 text-center ring-1 ring-[#019C34]/30">
+          <CheckCircle2 className="h-14 w-14 text-[#019C34]" />
+          <h3 className="mt-4 font-persian text-lg font-bold text-[#1A1A2E]">
+            نظر شما ثبت شد
+          </h3>
+          <p className="mt-2 font-persian text-sm text-[#687173]">
+            نظر شما پس از تأیید توسط کارشناسان ما نمایش داده خواهد شد. سپاسگزاریم.
+          </p>
+          <button
+            onClick={() => setStatus("idle")}
+            className="mt-6 rounded-lg border-2 border-[#003087] px-6 py-2 font-persian text-sm font-medium text-[#003087] transition hover:bg-[#003087] hover:text-white"
+          >
+            ثبت نظر جدید
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={CARD}>
+      <h2 className="mb-1 flex items-center gap-2 font-persian text-xl font-semibold text-[#003087]">
+        <MessageSquarePlus size={20} />
+        ثبت نظر
+      </h2>
+      <p className="mb-6 font-persian text-sm text-[#687173]">
+        تجربه خود از این محصول را با دیگران به اشتراک بگذارید.
+      </p>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* rating */}
+        <div>
+          <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+            امتیاز شما
+          </label>
+          <StarPicker
+            value={form.rating}
+            onChange={(r) => setForm((f) => ({ ...f, rating: r }))}
+          />
+        </div>
+
+        {/* title */}
+        <div>
+          <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+            عنوان نظر
+          </label>
+          <input
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            required
+            maxLength={200}
+            placeholder="مثلاً: کیفیت عالی و خواب راحت"
+            className={inputBase}
+          />
+        </div>
+
+        {/* body */}
+        <div>
+          <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+            متن نظر
+          </label>
+          <textarea
+            name="body"
+            value={form.body}
+            onChange={handleChange}
+            required
+            rows={4}
+            placeholder="نظر خود را درباره این محصول بنویسید..."
+            className={`${inputBase} resize-none`}
+          />
+        </div>
+
+        {/* pros + cons */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block font-persian text-sm font-medium text-[#019C34]">
+              نقاط مثبت (اختیاری)
+            </label>
+            <input
+              name="pros"
+              value={form.pros}
+              onChange={handleChange}
+              placeholder="مثلاً: راحتی بالا"
+              className={inputBase}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block font-persian text-sm font-medium text-[#D20000]">
+              نقاط منفی (اختیاری)
+            </label>
+            <input
+              name="cons"
+              value={form.cons}
+              onChange={handleChange}
+              placeholder="مثلاً: قیمت بالا"
+              className={inputBase}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <p className="rounded-lg bg-[#FDE7E7] px-4 py-2.5 font-persian text-sm text-[#D20000]">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={status === "sending"}
+          className="mt-2 inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {status === "sending" ? (
+            <>
+              <Loader2 size={17} className="animate-spin" />
+              در حال ارسال...
+            </>
+          ) : (
+            <>
+              <MessageSquarePlus size={17} />
+              ثبت نظر
+            </>
+          )}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function MattressDetail() {
   const { slug } = useParams();
+  const { addItem } = useCart();
   const [mattress, setMattress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -129,6 +358,24 @@ export default function MattressDetail() {
 
   const warrantyYears = Math.round(mattress.warranty_months / 12);
   const displayPrice = selectedSize ? selectedSize.price : mattress.price;
+
+  // Can the visitor buy? Either the chosen size is in stock, or (no sizes) the
+  // product itself is available.
+  const hasSizes = mattress.sizes?.length > 0;
+  const canBuy = hasSizes
+    ? !!selectedSize && selectedSize.in_stock
+    : mattress.is_available;
+
+  const handleAddToCart = async () => {
+    if (!canBuy) return;
+    try {
+      await addItem(mattress, hasSizes ? selectedSize : null, 1);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1800);
+    } catch {
+      /* cart errors are non-fatal here */
+    }
+  };
 
   // Merge the six canonical sizes with the model's priced sizes (matched by w×l).
   // A canonical size with no matching MattressSize is shown as unavailable.
@@ -322,17 +569,41 @@ export default function MattressDetail() {
               </div>
             )}
 
-            {/* Price */}
-            <div className="mt-2">
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-[#687173]">
-                قیمت
-              </p>
-              <p className="mt-1 font-persian text-3xl font-bold tracking-tight text-[#003087] [font-feature-settings:'tnum']">
-                {formatPersianPrice(displayPrice)}
-                <span className="mr-2 text-base font-normal text-[#687173]">
-                  تومان
+            {/* Price + add to cart */}
+            <div className="flex flex-col gap-3 rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)] sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <span className="block text-xs font-medium text-[#687173]">
+                  قیمت
                 </span>
-              </p>
+                <span className="font-persian text-2xl font-bold text-[#003087] [font-feature-settings:'tnum']">
+                  {formatPersianPrice(displayPrice)}
+                  <span className="mr-1 text-sm font-normal text-[#687173]">
+                    تومان
+                  </span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={!canBuy}
+                className={`inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition ${
+                  added
+                    ? "bg-[#019C34]"
+                    : "bg-[#003087] hover:bg-[#00246B]"
+                } disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                {added ? (
+                  <>
+                    <Check size={17} />
+                    به سبد اضافه شد
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart size={17} />
+                    افزودن به سبد خرید
+                  </>
+                )}
+              </button>
             </div>
 
             {/* Description */}
@@ -347,7 +618,9 @@ export default function MattressDetail() {
                     className="flex items-center gap-2 rounded-full bg-[#F5F7FA] px-3 py-1.5"
                   >
                     <Check size={14} className="text-[#019C34]" />
-                    <span className="text-sm text-[#1A1A2E]">{f.title}</span>
+                    <span className="text-sm font-persian text-[#1A1A2E]">
+                      {f.title}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -503,6 +776,9 @@ export default function MattressDetail() {
               </div>
             </div>
           )}
+
+          {/* Review submission */}
+          <ReviewForm slug={slug} />
         </div>
       </div>
     </section>
