@@ -61,10 +61,6 @@ export function CartProvider({ children }) {
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
   // When the user logs in, push the local cart to the server then reload.
   const syncOnLogin = useCallback(async () => {
     const local = readLocal();
@@ -84,6 +80,18 @@ export function CartProvider({ children }) {
     }
     await refresh();
   }, [refresh]);
+
+  // On mount, load the right cart. If the visitor is authed but a non-empty
+  // local cart still exists, they just logged in via a full page reload (the
+  // login flow does window.location = "/"), so the logged-out → logged-in
+  // transition below never fires. Merge the leftover local cart here.
+  useEffect(() => {
+    if (isAuthed() && readLocal().length > 0) {
+      syncOnLogin();
+    } else {
+      refresh();
+    }
+  }, [refresh, syncOnLogin]);
 
   // Poll auth transitions (login/logout happen in other components without a
   // shared event). Cheap: just reads a localStorage flag.

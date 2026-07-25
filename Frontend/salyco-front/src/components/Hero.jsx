@@ -9,7 +9,7 @@ const highlights = [
 ];
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-white pt-[var(--navbar-height)]">
+    <section className="relative overflow-hidden bg-white">
       <PageBackground />
       <div className="relative mx-auto max-w-7xl sm:px-6">
         {/* ── Image (full-bleed) ── */}

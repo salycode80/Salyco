@@ -35,6 +35,8 @@ class Mattress(models.Model):
     is_available = models.BooleanField(default=True, verbose_name="is available")
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0, verbose_name="average rating")
     review_count = models.IntegerField(default=0, verbose_name="review count")
+    is_on_off = models.BooleanField(default=False, verbose_name="on sale")
+    off_percentage = models.PositiveIntegerField(default=0, verbose_name="discount percentage", help_text="0-100")
 
     class Meta:
         verbose_name = "mattress"

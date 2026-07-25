@@ -36,6 +36,10 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class MattressSerializer(serializers.ModelSerializer):
+    discount_price = serializers.SerializerMethodField()
+    is_on_off = serializers.BooleanField()
+    off_percentage = serializers.IntegerField()
+
     class Meta:
         model = Mattress
         fields = [
@@ -47,6 +51,7 @@ class MattressSerializer(serializers.ModelSerializer):
             "slug",
             "warranty_months",
             "price",
+            "discount_price",
             "width",
             "length",
             "height",
@@ -54,7 +59,15 @@ class MattressSerializer(serializers.ModelSerializer):
             "is_available",
             "average_rating",
             "review_count",
+            "is_on_off",
+            "off_percentage",
         ]
+
+    def get_discount_price(self, obj):
+        if obj.is_on_off and obj.off_percentage > 0:
+            discount = (obj.price * obj.off_percentage) / 100
+            return obj.price - discount
+        return None
 
 
 class MattressImageSerializer(serializers.ModelSerializer):
@@ -146,6 +159,7 @@ class MattressDetailSerializer(serializers.ModelSerializer):
     faqs = MattressFAQSerializer(many=True, read_only=True)
     pros_cons = MattressProConSerializer(many=True, read_only=True)
     reviews = serializers.SerializerMethodField()
+    discount_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Mattress
@@ -159,6 +173,7 @@ class MattressDetailSerializer(serializers.ModelSerializer):
             "slug",
             "warranty_months",
             "price",
+            "discount_price",
             "width",
             "length",
             "height",
@@ -166,6 +181,8 @@ class MattressDetailSerializer(serializers.ModelSerializer):
             "is_available",
             "average_rating",
             "review_count",
+            "is_on_off",
+            "off_percentage",
             "images",
             "sizes",
             "specifications",
@@ -174,6 +191,12 @@ class MattressDetailSerializer(serializers.ModelSerializer):
             "pros_cons",
             "reviews",
         ]
+
+    def get_discount_price(self, obj):
+        if obj.is_on_off and obj.off_percentage > 0:
+            discount = (obj.price * obj.off_percentage) / 100
+            return obj.price - discount
+        return None
 
     def get_reviews(self, obj):
         approved = obj.reviews.filter(is_approved=True)

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Moon, Star, Plus, Check } from "lucide-react";
+import { ShieldCheck, Moon, Star, Plus, Check, Tag } from "lucide-react";
 import { getProductImageUrl } from "../../utils/productImage";
 import { useCart } from "../../context/CartContext";
 
@@ -20,18 +20,22 @@ export default function MattressCard({ mattress }) {
   const [imageSrc, setImageSrc] = useState(getProductImageUrl(mattress.image));
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const isOnSale = mattress.is_on_off && mattress.off_percentage > 0;
+  const discountPrice = mattress.discount_price;
 
   // Quick-add the base product (no size chosen) straight from the gallery card.
   const handleAdd = async (e) => {
     // The card is wrapped in a <Link>; keep the click from navigating.
     e.preventDefault();
     e.stopPropagation();
+    // Show feedback optimistically so it appears instantly on the logged-in
+    // path too (server add awaits a network round-trip). Revert if it fails.
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
     try {
       await addItem(mattress, null, 1);
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1500);
     } catch {
-      /* surfaced elsewhere; keep the card interaction quiet */
+      setAdded(false);
     }
   };
 
@@ -65,7 +69,17 @@ export default function MattressCard({ mattress }) {
             {added ? <Check size={18} /> : <Plus size={18} />}
           </button>
 
-          {/* Warranty badge — sized off the card's own width, not the viewport */}
+          {/* Sale badge - top right corner */}
+          {isOnSale && (
+            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-red-500 px-2 py-1 shadow-lg @[280px]:right-4 @[280px]:top-4 @[280px]:gap-1.5 @[280px]:px-3 @[280px]:py-1.5">
+              <Tag size={12} className="shrink-0 text-white @[280px]:size-4" />
+              <span className="font-persian text-[9px] font-bold text-white @[280px]:text-xs">
+                {toPersianNumber(mattress.off_percentage)}٪ تخفیف
+              </span>
+            </div>
+          )}
+
+          {/* Warranty badge */}
           <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-md @[280px]:bottom-4 @[280px]:right-4 @[280px]:gap-2 @[280px]:px-4 @[280px]:py-2">
             <ShieldCheck
               size={14}
@@ -118,15 +132,30 @@ export default function MattressCard({ mattress }) {
             <p className="truncate text-[0.65rem] font-medium tracking-[0.05em] text-[#687173]">
               قیمت / Price
             </p>
-            <p className="truncate font-persian text-base font-bold tracking-tight text-[#003087] @[280px]:text-2xl">
-              <span className="ml-1 text-xs font-normal text-[#687173] @[280px]:text-base">
-                از
-              </span>
-              {formatPersianPrice(mattress.price)}
-              <span className="mr-1 text-xs font-normal text-[#687173] @[280px]:text-base">
-                تومان
-              </span>
-            </p>
+            {isOnSale ? (
+              <div className="flex flex-col items-center gap-0.5">
+                <p className="truncate font-persian text-xs font-medium text-gray-400 line-through decoration-red-500 @[280px]:text-sm">
+                  {formatPersianPrice(mattress.price)}
+                  <span className="mr-1 text-[10px] @[280px]:text-xs">تومان</span>
+                </p>
+                <p className="truncate font-persian text-base font-bold tracking-tight text-[#003087] @[280px]:text-2xl">
+                  {formatPersianPrice(discountPrice)}
+                  <span className="mr-1 text-xs font-normal text-[#003087] @[280px]:text-base">
+                    تومان
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <p className="truncate font-persian text-base font-bold tracking-tight text-[#003087] @[280px]:text-2xl">
+                <span className="ml-1 text-xs font-normal text-[#687173] @[280px]:text-base">
+                  از
+                </span>
+                {formatPersianPrice(mattress.price)}
+                <span className="mr-1 text-xs font-normal text-[#687173] @[280px]:text-base">
+                  تومان
+                </span>
+              </p>
+            )}
           </div>
         </div>
       </article>

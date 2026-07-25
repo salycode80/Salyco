@@ -358,6 +358,8 @@ export default function MattressDetail() {
 
   const warrantyYears = Math.round(mattress.warranty_months / 12);
   const displayPrice = selectedSize ? selectedSize.price : mattress.price;
+  const isOnSale = mattress.is_on_off && mattress.off_percentage > 0;
+  const discountPrice = isOnSale && mattress.discount_price ? mattress.discount_price : null;
 
   // Can the visitor buy? Either the chosen size is in stock, or (no sizes) the
   // product itself is available.
@@ -575,12 +577,29 @@ export default function MattressDetail() {
                 <span className="block text-xs font-medium text-[#687173]">
                   قیمت
                 </span>
-                <span className="font-persian text-2xl font-bold text-[#003087] [font-feature-settings:'tnum']">
-                  {formatPersianPrice(displayPrice)}
-                  <span className="mr-1 text-sm font-normal text-[#687173]">
-                    تومان
+                {isOnSale && discountPrice ? (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-persian text-lg font-medium text-gray-400 line-through decoration-red-500 [font-feature-settings:'tnum']">
+                      {formatPersianPrice(displayPrice)}
+                      <span className="mr-1 text-sm font-normal text-gray-400">
+                        تومان
+                      </span>
+                    </span>
+                    <span className="font-persian text-2xl font-bold text-[#003087] [font-feature-settings:'tnum']">
+                      {formatPersianPrice(discountPrice)}
+                      <span className="mr-1 text-sm font-normal text-[#003087]">
+                        تومان
+                      </span>
+                    </span>
+                  </div>
+                ) : (
+                  <span className="font-persian text-2xl font-bold text-[#003087] [font-feature-settings:'tnum']">
+                    {formatPersianPrice(displayPrice)}
+                    <span className="mr-1 text-sm font-normal text-[#687173]">
+                      تومان
+                    </span>
                   </span>
-                </span>
+                )}
               </div>
               <button
                 type="button"

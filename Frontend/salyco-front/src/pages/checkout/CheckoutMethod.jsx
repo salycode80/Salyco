@@ -20,7 +20,10 @@ export default function CheckoutMethod() {
     <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
       <PageBackground />
 
-      <div className="relative mx-auto max-w-[720px] px-6 py-8 sm:py-12" dir="rtl">
+      <div
+        className="relative mx-auto max-w-[720px] px-6 py-8 sm:py-12"
+        dir="rtl"
+      >
         <Link
           to="/cart"
           className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] transition-colors hover:text-[#009CDE]"
@@ -33,25 +36,32 @@ export default function CheckoutMethod() {
           روش سفارش را انتخاب کنید
         </h1>
         <p className="mb-8 font-persian text-sm text-[#687173]">
-          سفارش خود را به صورت آنلاین ثبت کنید یا از طریق تماس تلفنی اقدام نمایید.
+          سفارش خود را به صورت آنلاین ثبت کنید یا از طریق تماس تلفنی اقدام
+          نمایید.
         </p>
 
         <div className="grid gap-5 sm:grid-cols-2">
-          {/* Online */}
-          <Link
-            to="/checkout/shipping"
-            className={`${CARD} group flex flex-col items-center p-8 text-center transition-all hover:-translate-y-1 hover:border-[#003087] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]`}
-          >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#003087]/10 text-[#003087] transition-colors group-hover:bg-[#003087] group-hover:text-white">
-              <Truck size={30} />
+          {/* Online - Disabled */}
+          <div className="relative cursor-not-allowed">
+            <div
+              className={`${CARD} flex flex-col items-center p-8 text-center grayscale opacity-60`}
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#003087]/10 text-[#003087]">
+                <Truck size={30} />
+              </div>
+              <h2 className="mt-4 font-persian text-lg font-bold text-[#1A1A2E]">
+                خرید آنلاین
+              </h2>
+              <p className="mt-2 font-persian text-sm text-[#687173]">
+                وارد کردن آدرس و اطلاعات ارسال و ثبت نهایی سفارش
+              </p>
             </div>
-            <h2 className="mt-4 font-persian text-lg font-bold text-[#1A1A2E]">
-              خرید آنلاین
-            </h2>
-            <p className="mt-2 font-persian text-sm text-[#687173]">
-              وارد کردن آدرس و اطلاعات ارسال و ثبت نهایی سفارش
-            </p>
-          </Link>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="rounded-lg bg-amber-700/90 px-4 py-2 font-persian text-sm font-bold text-white shadow-lg backdrop-blur-sm">
+                در حال حاضر فروش آنلاین در دسترس نیست
+              </span>
+            </div>
+          </div>
 
           {/* Phone */}
           <Link

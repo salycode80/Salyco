@@ -34,6 +34,7 @@ urlpatterns = [
     path("api/", include("contact.urls")),
     path("api/", include("search.urls")),
     path("api/", include("orders.urls")),
+    path("api/banners/", include("banners.urls")),
 ]
 
 if settings.DEBUG:

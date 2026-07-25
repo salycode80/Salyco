@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/UseAuth";
@@ -7,6 +7,7 @@ import { ACCESS_TOKEN } from "../constants";
 function ProtectedRoute({ children }) {
   const { isAuthenticated, refresh, logout } = useAuth();
   const [checking, setChecking] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     checkAuth();
@@ -64,7 +65,13 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/auth" replace />;
+  if (isAuthenticated) return children;
+
+  // Send the user to login, remembering where they were headed so we can
+  // return them there (SPA navigation) instead of dropping them on the home
+  // page after a full reload.
+  const redirect = encodeURIComponent(location.pathname + location.search);
+  return <Navigate to={`/auth?redirect=${redirect}`} replace />;
 }
 
 export default ProtectedRoute;
