@@ -94,6 +94,10 @@ class Order(models.Model):
     recipient_name = models.CharField(max_length=255, blank=True, default="")
     phone_number = models.CharField(max_length=20, blank=True, default="")
 
+    # Phone order specific fields
+    customer_phone = models.CharField(max_length=20, blank=True, default="", verbose_name="شماره تماس مشتری")
+    call_time_preference = models.CharField(max_length=255, blank=True, default="", verbose_name="ترجیح زمان تماس")
+
     # Shipping snapshot — blank for phone orders.
     province = models.CharField(max_length=100, blank=True, default="")
     city = models.CharField(max_length=100, blank=True, default="")

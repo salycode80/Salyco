@@ -14,9 +14,9 @@ import PageBackground from "../components/PageBackground";
 
 // ─── Static contact info ──────────────────────────────────────────────────────
 const CONTACT = {
-  phone: "۰۵۱-۸۸۷۷۶۶۵۵",
-  phoneRaw: "+985188776655",
-  email: "info@salyco.com",
+  phone: "09126847234",
+  phoneRaw: "+989126847234",
+  email: "thisissalyco@gmail.com",
   address: "نیشابور، خیابان مدرس، خیابان فضل",
   hours: "شنبه تا پنج‌شنبه، ۹ تا ۲۰",
 };

@@ -109,6 +109,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "status_display",
             "recipient_name",
             "phone_number",
+            "customer_phone",
+            "call_time_preference",
             "province",
             "city",
             "postal_code",

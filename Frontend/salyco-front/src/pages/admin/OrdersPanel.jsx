@@ -77,6 +77,16 @@ function OrderCard({ order, busy, onStatus, onDelete }) {
                 <Phone size={12} /> {order.phone_number}
               </span>
             )}
+            {order.customer_phone && order.method === "PHONE" && (
+              <span className="inline-flex items-center gap-1" dir="ltr">
+                <Phone size={12} /> تماس مشتری: {order.customer_phone}
+              </span>
+            )}
+            {order.call_time_preference && order.method === "PHONE" && (
+              <span className="inline-flex items-center gap-1">
+                <span className="text-[#019C34]">⏰</span> ترجیح: {order.call_time_preference}
+              </span>
+            )}
             <span>{faDate(order.created_at)}</span>
           </p>
         </div>

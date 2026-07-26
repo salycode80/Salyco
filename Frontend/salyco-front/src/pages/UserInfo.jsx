@@ -17,7 +17,13 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  ShoppingBag,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Truck,
 } from "lucide-react";
+import { getMyOrders } from "../api/orders";
 
 const EMPTY_PROFILE = {
   first_name: "",
@@ -54,6 +60,11 @@ export default function UserInfo() {
   const [pwSuccess, setPwSuccess] = useState("");
   const [showPw, setShowPw] = useState(false);
 
+  // Orders
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+
   const fillForm = (data) => ({
     first_name: data.first_name || "",
     last_name: data.last_name || "",
@@ -77,6 +88,16 @@ export default function UserInfo() {
       .catch(() => setError("خطا در دریافت اطلاعات کاربر"))
       .finally(() => setLoading(false));
   }, [isAuthenticated, navigate]);
+
+  // Load orders
+  useEffect(() => {
+    if (isAuthenticated) {
+      getMyOrders()
+        .then((data) => setOrders(Array.isArray(data) ? data : data.results || []))
+        .catch(() => setOrders([]))
+        .finally(() => setOrdersLoading(false));
+    }
+  }, [isAuthenticated]);
 
   const getUserInitials = (username) => {
     if (!username) return "?";
@@ -396,6 +417,125 @@ export default function UserInfo() {
               <Lock size={15} />
               {pwSaving ? "در حال تغییر..." : "تغییر رمز عبور"}
             </button>
+          </div>
+        </div>
+
+        {/* Orders Section */}
+        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,48,135,0.06)] border border-[#CBD2D6] overflow-hidden mt-6">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-[#CBD2D6]">
+            <ShoppingBag size={18} className="text-[#003087]" />
+            <h2 className="text-base font-bold text-[#1A1A2E]">سفارش‌های من</h2>
+          </div>
+
+          <div className="p-6">
+            {ordersLoading ? (
+              <p className="text-center text-sm text-[#687173]">در حال بارگذاری...</p>
+            ) : orders.length === 0 ? (
+              <p className="text-center text-sm text-[#687173]">هنوز سفارشی ثبت نشده است.</p>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order) => {
+                  const isPhone = order.method === "PHONE";
+                  const isExpanded = expandedOrder === order.id;
+                  const STATUS_META = {
+                    PENDING: { label: "در انتظار", cls: "bg-[#FFF8E1] text-[#F5BA2E]" },
+                    CONFIRMED: { label: "تأیید شده", cls: "bg-[#E6F0FB] text-[#003087]" },
+                    SHIPPED: { label: "ارسال شده", cls: "bg-[#E6F4EA] text-[#019C34]" },
+                    CANCELLED: { label: "لغو شده", cls: "bg-[#FDE7E7] text-[#D20000]" },
+                  };
+
+                  return (
+                    <div
+                      key={order.id}
+                      className="rounded-lg border border-[#CBD2D6] bg-[#F5F7FA] p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-[#003087]">#{order.id}</span>
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                                isPhone
+                                  ? "bg-[#E6F4EA] text-[#019C34]"
+                                  : "bg-[#E6F0FB] text-[#003087]"
+                              }`}
+                            >
+                              {isPhone ? <Phone size={10} /> : <Truck size={10} />}
+                              {order.method_display}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                STATUS_META[order.status]?.cls || ""
+                              }`}
+                            >
+                              {STATUS_META[order.status]?.label || order.status}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-[#687173]">
+                            {new Date(order.created_at).toLocaleDateString("fa-IR")}
+                          </p>
+                        </div>
+                        <div className="text-left">
+                          <p className="font-bold text-[#003087]">
+                            {Number(order.total_amount).toLocaleString()}
+                            <span className="mr-1 text-xs font-normal text-[#687173]">تومان</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Phone order specific fields */}
+                      {isPhone && (order.customer_phone || order.call_time_preference) && (
+                        <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#687173]">
+                          {order.customer_phone && (
+                            <span className="inline-flex items-center gap-1">
+                              <Phone size={12} />
+                              شماره تماس: <span dir="ltr">{order.customer_phone}</span>
+                            </span>
+                          )}
+                          {order.call_time_preference && (
+                            <span className="inline-flex items-center gap-1">
+                              <Clock size={12} />
+                              ترجیح زمان: {order.call_time_preference}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Items toggle */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#003087] hover:text-[#009CDE]"
+                      >
+                        {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {order.items?.length || 0} قلم کالا
+                      </button>
+
+                      {/* Items list */}
+                      {isExpanded && order.items?.length > 0 && (
+                        <div className="mt-2 divide-y divide-[#CBD2D6] rounded-lg border border-[#CBD2D6] bg-white">
+                          {order.items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between px-3 py-2 text-xs"
+                            >
+                              <span className="text-[#1A1A2E]">
+                                {item.mattress_name}
+                                {item.size_label ? ` (${item.size_label})` : ""}
+                                <span className="text-[#687173]"> × {item.quantity}</span>
+                              </span>
+                              <span className="text-[#687173]">
+                                {Number(item.line_total).toLocaleString()} تومان
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

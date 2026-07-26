@@ -9,16 +9,16 @@ const highlights = [
 ];
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-white">
+    <section className="relative overflow-hidden bg-white pt-[var(--navbar-height)]">
       <PageBackground />
       <div className="relative mx-auto max-w-7xl sm:px-6">
-        {/* ── Image (full-bleed) ── */}
+        {/* ── Image  ── */}
         <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen">
           <div className="relative aspect-[16/8] w-full overflow-hidden sm:aspect-[16/7] lg:aspect-[21/8]">
             <img
               src="/layerdimage.png"
               alt="تشک سالیکو"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover object-center"
             />
             <span className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white/90 backdrop-blur-sm">
               <Moon size={16} strokeWidth={1.75} />

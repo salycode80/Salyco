@@ -145,6 +145,8 @@ class OrderCreateView(APIView):
             )
 
         customer = cart.customer
+        customer_phone = (request.data.get("customer_phone") or "").strip()
+        call_time_preference = (request.data.get("call_time_preference") or "").strip()
         province = (request.data.get("province") or "").strip()
         city = (request.data.get("city") or "").strip()
 
@@ -171,6 +173,8 @@ class OrderCreateView(APIView):
             order = Order.objects.create(
                 customer=customer,
                 method=method,
+                customer_phone=customer_phone if method == Order.PHONE else "",
+                call_time_preference=call_time_preference if method == Order.PHONE else "",
                 recipient_name=(request.data.get("recipient_name") or "").strip()
                 or f"{customer.first_name} {customer.last_name}".strip(),
                 phone_number=(request.data.get("phone_number") or "").strip()
