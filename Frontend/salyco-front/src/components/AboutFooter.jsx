@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin } from "lucide-react";
 
 const footerLinks = [
-  { label: "محصولات", href: "/gallery" },
-  { label: "گالری", href: "/gallery" },
-  { label: "مقالات", href: "#" },
-  { label: "تماس با ما", href: "#contact" },
+  { label: "محصولات", href: "/products/mattress" },
+  { label: "مقالات", href: "/articles" },
+  { label: "تماس با ما", href: "/contact" },
+  { label: "درباره ما", href: "/about" },
 ];
 
 export default function AboutFooter() {
@@ -37,10 +37,9 @@ export default function AboutFooter() {
             <hr className="mt-3 w-16 border-t-2 border-[#009CDE]/40" />
 
             <p className="mt-4 font-persian text-sm leading-relaxed text-white/75">
-              سالیکو با بیش از دو دهه تجربه در تولید تشک و محصولات خواب،
-              ترکیبی از فناوری مدرن و کیفیت ممتاز را برای خوابی آرام و
-              سالم ارائه می‌دهد. شعار ما: آن جا که خواب بر بال‌های قو آرام
-              می‌گیرد.
+              سالیکو با بیش از دو دهه تجربه در تولید تشک و محصولات خواب، ترکیبی
+              از فناوری مدرن و کیفیت ممتاز را برای خوابی آرام و سالم ارائه
+              می‌دهد. شعار ما: آن جا که خواب بر بال‌های قو آرام می‌گیرد.
             </p>
 
             <p className="mt-4 font-sans text-sm leading-relaxed text-white/60">
@@ -95,7 +94,7 @@ export default function AboutFooter() {
                   <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5">
                     <Phone size={16} className="text-[#009CDE]" />
                   </span>
-                  ۰۲۱-۱۲۳۴۵۶۷۸
+                  051-42222687
                 </a>
               </li>
               <li>
@@ -106,14 +105,14 @@ export default function AboutFooter() {
                   <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5">
                     <Mail size={16} className="text-[#009CDE]" />
                   </span>
-                  info@salyco.com
+                  thisissalyco@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-3 font-persian text-sm text-white/75">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5">
                   <MapPin size={16} className="text-[#009CDE]" />
                 </span>
-                تهران، ایران
+                خراسان رضوی، ایران
               </li>
             </ul>
           </div>
@@ -123,11 +122,8 @@ export default function AboutFooter() {
           <p className="font-sans text-xs tracking-wide text-white/60">
             © {new Date().getFullYear()} Salyco. All rights reserved.
           </p>
-          <p
-            className="font-persian text-xs text-white/60"
-            dir="rtl"
-          >
-            طراحی و تولید با عشق برای خواب بهتر
+          <p className="font-persian text-xs text-white/60" dir="rtl">
+            طراحی و تولید توسط مهندس امیررضا سلامت
           </p>
         </div>
       </div>

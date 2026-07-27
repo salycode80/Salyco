@@ -89,7 +89,7 @@ export default function Navbar() {
             </span>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-[#1A1A2E] truncate">
+            <p className="font-persian text-sm font-medium text-[#1A1A2E] truncate">
               {user?.username}
             </p>
             <p className="text-xs text-[#687173] truncate">
@@ -105,7 +105,7 @@ export default function Navbar() {
           closeUserMenu();
           closeMenu();
         }}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#1A1A2E] hover:bg-[#F5F7FA] transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 font-persian text-sm text-[#1A1A2E] hover:bg-[#F5F7FA] transition-colors"
       >
         <User size={16} className="text-[#687173]" />
         <span>اطلاعات کاربری</span>
@@ -116,7 +116,7 @@ export default function Navbar() {
           closeUserMenu();
           handleLogout();
         }}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#D20000] hover:bg-[#FDE7E7] transition-colors w-full border-t border-[#CBD2D6]"
+        className="flex items-center gap-2 px-4 py-2.5 font-persian text-sm text-[#D20000] hover:bg-[#FDE7E7] transition-colors w-full border-t border-[#CBD2D6]"
       >
         <LogOut size={16} />
         <span>خروج</span>
@@ -160,7 +160,7 @@ export default function Navbar() {
             <Link
               to="/cart"
               aria-label="سبد خرید"
-              className="relative flex items-center gap-1.5 text-sm font-medium text-white/90 hover:text-white transition-colors"
+              className="relative flex items-center gap-1.5 font-persian text-sm font-medium text-white/90 hover:text-white transition-colors"
             >
               <ShoppingCart size={20} className="text-white/80" />
               {cartCount > 0 && (
@@ -176,7 +176,7 @@ export default function Navbar() {
               <>
                 <Link
                   to="/warranty/my"
-                  className="flex items-center gap-1.5 text-sm font-medium
+                  className="flex items-center gap-1.5 font-persian text-sm font-persian font-medium
                              text-white/90 hover:text-white tracking-wide transition-colors"
                 >
                   <ClipboardList size={16} className="text-white/70" />
@@ -188,7 +188,7 @@ export default function Navbar() {
                     <div className="h-5 w-px bg-white/20" />
                     <Link
                       to="/admin"
-                      className="flex items-center gap-1.5 text-sm font-medium
+                      className="flex items-center gap-1.5 font-persian text-sm font-medium
                                  text-white/90 hover:text-white tracking-wide transition-colors"
                     >
                       <LayoutDashboard size={16} className="text-white/70" />
@@ -203,10 +203,10 @@ export default function Navbar() {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={toggleUserMenu}
-                    className="flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition-colors"
+                    className="flex items-center gap-2 font-persian text-sm font-medium text-white/90 hover:text-white transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
-                      <span className="text-sm font-bold text-white">
+                      <span className="font-persian text-sm font-bold text-white">
                         {getUserInitials(user?.username)}
                       </span>
                     </div>
@@ -224,7 +224,7 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/auth"
-                className="flex items-center gap-1.5 text-sm font-medium
+                className="flex items-center gap-1.5 font-persian text-sm font-medium
                            text-[#003087] bg-white hover:bg-[#F5F7FA] rounded-lg px-4 h-12 tracking-wide transition-colors"
               >
                 <UserCircle size={18} />
@@ -257,7 +257,7 @@ export default function Navbar() {
       >
         {categories.map(({ label, icon: Icon, to, href }) => {
           const classes = `flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
-               text-sm font-semibold tracking-wide whitespace-nowrap
+               font-persian text-sm font-semibold tracking-wide whitespace-nowrap
                transition-all duration-200
                text-[#1A1A2E] hover:text-[#003087] hover:bg-[#F5F7FA]`;
 
@@ -276,7 +276,7 @@ export default function Navbar() {
               to={to}
               className={({ isActive }) =>
                 `flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
-               text-sm font-semibold tracking-wide whitespace-nowrap
+               font-persian text-sm font-semibold tracking-wide whitespace-nowrap
                transition-all duration-200
                ${
                  isActive
@@ -306,7 +306,7 @@ export default function Navbar() {
             <Link
               to="/cart"
               onClick={closeMenu}
-              className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
+              className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
             >
               <ShoppingCart size={16} className="text-[#687173]" />
               <span>سبد خرید</span>
@@ -322,7 +322,7 @@ export default function Navbar() {
                 <Link
                   to="/warranty/my"
                   onClick={closeMenu}
-                  className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
+                  className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
                 >
                   <ClipboardList size={16} className="text-[#687173]" />
                   <span>گارانتی‌های من</span>
@@ -332,7 +332,7 @@ export default function Navbar() {
                   <Link
                     to="/admin"
                     onClick={closeMenu}
-                    className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
+                    className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
                   >
                     <LayoutDashboard size={16} className="text-[#687173]" />
                     <span>پنل مدیریت</span>
@@ -341,12 +341,12 @@ export default function Navbar() {
 
                 <div className="flex items-center gap-3 py-3">
                   <div className="w-9 h-9 rounded-full bg-[#003087]/10 flex items-center justify-center border border-[#CBD2D6] flex-shrink-0">
-                    <span className="text-sm font-bold text-[#003087]">
+                    <span className="font-persian text-sm font-bold text-[#003087]">
                       {getUserInitials(user?.username)}
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1A1A2E] truncate">
+                    <p className="font-persian text-sm font-medium text-[#1A1A2E] truncate">
                       {user?.username}
                     </p>
                     <p className="text-xs text-[#687173] truncate">
@@ -358,7 +358,7 @@ export default function Navbar() {
                 <Link
                   to="/user-info"
                   onClick={closeMenu}
-                  className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
+                  className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
                 >
                   <User size={16} className="text-[#687173]" />
                   <span>اطلاعات کاربری</span>
@@ -367,7 +367,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center gap-2 py-3 text-sm font-medium text-[#D20000] hover:text-[#00246B] transition-colors w-full text-right"
+                  className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#D20000] hover:text-[#00246B] transition-colors w-full text-right"
                 >
                   <LogOut size={16} />
                   <span>خروج</span>
@@ -377,7 +377,7 @@ export default function Navbar() {
               <Link
                 to="/auth"
                 onClick={closeMenu}
-                className="flex items-center gap-2 py-3 text-sm font-medium text-[#1A1A2E]"
+                className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
               >
                 <UserCircle size={18} className="text-[#687173]" />
                 <span>ورود / ثبت‌نام</span>

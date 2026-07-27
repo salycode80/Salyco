@@ -22,7 +22,11 @@ const DEBOUNCE_MS = 300;
  * @param {function} [onNavigate]        called after navigating (e.g. close mobile menu)
  * @param {boolean}  [autoFocus]
  */
-export default function SearchBar({ variant = "navbar", onNavigate, autoFocus }) {
+export default function SearchBar({
+  variant = "navbar",
+  onNavigate,
+  autoFocus,
+}) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [data, setData] = useState(null); // { count, groups }
@@ -90,7 +94,7 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
       navigate(result.url);
       onNavigate?.();
     },
-    [navigate, onNavigate, closeAndReset]
+    [navigate, onNavigate, closeAndReset],
   );
 
   const goToResultsPage = useCallback(() => {
@@ -151,8 +155,8 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
         onKeyDown={handleKeyDown}
         className={
           isNavbar
-            ? `w-full h-12 pl-9 pr-9 rounded-lg text-sm bg-[#F5F7FA] border border-[#CBD2D6] text-[#1A1A2E] placeholder-[#687173] focus:outline-none focus:bg-white focus:border-2 focus:border-[#003087] transition-all`
-            : `w-full h-12 pl-9 pr-9 rounded-lg text-sm bg-[#F5F7FA] border border-[#CBD2D6] text-[#1A1A2E] placeholder-[#687173] focus:outline-none focus:bg-white focus:border-2 focus:border-[#003087] transition-all`
+            ? `w-full h-12 pl-9 pr-9 rounded-lg font-persian text-sm bg-[#F5F7FA] border border-[#CBD2D6] text-[#1A1A2E] placeholder-[#687173] focus:outline-none focus:bg-white focus:border-2 focus:border-[#003087] transition-all`
+            : `w-full h-12 pl-9 pr-9 rounded-lg font-persian text-sm bg-[#F5F7FA] border border-[#CBD2D6] text-[#1A1A2E] placeholder-[#687173] focus:outline-none focus:bg-white focus:border-2 focus:border-[#003087] transition-all`
         }
       />
 
@@ -198,7 +202,10 @@ export default function SearchBar({ variant = "navbar", onNavigate, autoFocus })
             data.groups.map((group) => {
               const Icon = iconFor(group.key);
               return (
-                <div key={group.key} className="border-b border-[#CBD2D6] last:border-b-0">
+                <div
+                  key={group.key}
+                  className="border-b border-[#CBD2D6] last:border-b-0"
+                >
                   <div className="flex items-center gap-1.5 px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#687173]">
                     <Icon size={13} />
                     <span>{group.label}</span>
