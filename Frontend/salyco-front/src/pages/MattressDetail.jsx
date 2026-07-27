@@ -181,7 +181,8 @@ function ReviewForm({ slug, onSubmitted }) {
             نظر شما ثبت شد
           </h3>
           <p className="mt-2 font-persian text-sm text-[#687173]">
-            نظر شما پس از تأیید توسط کارشناسان ما نمایش داده خواهد شد. سپاسگزاریم.
+            نظر شما پس از تأیید توسط کارشناسان ما نمایش داده خواهد شد.
+            سپاسگزاریم.
           </p>
           <button
             onClick={() => setStatus("idle")}
@@ -359,7 +360,8 @@ export default function MattressDetail() {
   const warrantyYears = Math.round(mattress.warranty_months / 12);
   const displayPrice = selectedSize ? selectedSize.price : mattress.price;
   const isOnSale = mattress.is_on_off && mattress.off_percentage > 0;
-  const discountPrice = isOnSale && mattress.discount_price ? mattress.discount_price : null;
+  const discountPrice =
+    isOnSale && mattress.discount_price ? mattress.discount_price : null;
 
   // Can the visitor buy? Either the chosen size is in stock, or (no sizes) the
   // product itself is available.
@@ -485,13 +487,15 @@ export default function MattressDetail() {
                     strokeWidth={2.5}
                   />
                 </div>
-                <span className="text-[14px] font-semibold text-[#003087]">
+                <span className="text-[14px] font-persian font-semibold text-[#003087]">
                   {toPersianNumber(warrantyYears)} سال گارانتی
                 </span>
               </div>
             </div>
             {mattress.subtitle && (
-              <p className="text-base text-[#687173]">{mattress.subtitle}</p>
+              <p className="text-base font-persian text-[#687173]">
+                {mattress.subtitle}
+              </p>
             )}
 
             {/* Availability */}
@@ -499,7 +503,7 @@ export default function MattressDetail() {
               <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 rounded-full bg-[#FDE7E7] px-3 py-1.5">
                   <Package size={16} className="text-[#D20000]" />
-                  <span className="text-sm font-medium text-[#D20000]">
+                  <span className="text-sm font-persian font-medium text-[#D20000]">
                     ناموجود
                   </span>
                 </div>
@@ -509,7 +513,7 @@ export default function MattressDetail() {
             {/* Size selector */}
             {mattress.sizes?.length > 0 && (
               <div className="space-y-3">
-                <span className="block text-sm font-medium text-[#1A1A2E]">
+                <span className="block text-sm font-persian font-medium text-[#1A1A2E]">
                   سایز های موجود :
                 </span>
 
@@ -536,7 +540,7 @@ export default function MattressDetail() {
                         }`}
                       >
                         {sz.note && (
-                          <span className="absolute -top-2 right-2 rounded-full bg-[#FFF8E1] px-2 py-0.5 text-[10px] font-medium text-[#F5BA2E]">
+                          <span className="absolute -top-2 right-2 font-persian rounded-full bg-[#FFF8E1] px-2 py-0.5 text-[10px] font-medium text-[#F5BA2E]">
                             {sz.note}
                           </span>
                         )}
@@ -548,19 +552,19 @@ export default function MattressDetail() {
                           }}
                           className="mb-2 h-14 w-14 object-contain"
                         />
-                        <span className="text-[11px] font-medium leading-tight text-[#1A1A2E]">
+                        <span className="text-[11px] font-persian font-medium leading-tight text-[#1A1A2E]">
                           {sz.name}
                         </span>
-                        <span className="mt-0.5 text-[10px] text-[#687173] [font-feature-settings:'tnum']">
+                        <span className="mt-0.5 font-persian text-[10px] text-[#687173] [font-feature-settings:'tnum']">
                           {toPersianNumber(sz.width)} ×{" "}
                           {toPersianNumber(sz.length)} سانتی‌متر
                         </span>
                         {sz.price != null ? (
-                          <span className="mt-1 text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
+                          <span className="mt-1 font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
                             {formatPersianPrice(sz.price)} تومان
                           </span>
                         ) : (
-                          <span className="mt-1 text-[10px] text-[#687173]">
+                          <span className="mt-1 font-persian text-[10px] text-[#687173]">
                             ناموجود
                           </span>
                         )}
@@ -606,9 +610,7 @@ export default function MattressDetail() {
                 onClick={handleAddToCart}
                 disabled={!canBuy}
                 className={`inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition ${
-                  added
-                    ? "bg-[#019C34]"
-                    : "bg-[#003087] hover:bg-[#00246B]"
+                  added ? "bg-[#019C34]" : "bg-[#003087] hover:bg-[#00246B]"
                 } disabled:cursor-not-allowed disabled:opacity-50`}
               >
                 {added ? (
