@@ -97,11 +97,11 @@ export default function MattressCard({ mattress }) {
 
         {/* Content */}
         <div className="flex flex-1 flex-col gap-2 px-3 py-3 @[280px]:gap-3 @[280px]:px-6 @[280px]:py-6">
-          <h3 className="line-clamp-2 min-h-[1lh] font-[600] text-sm leading-snug tracking-tight text-[#003087] @[280px]:text-[1.35rem]">
+          <h3 className="line-clamp-2 min-h-[1lh] font-persian font-[600] text-sm leading-snug tracking-tight text-[#003087] @[280px]:text-[1.35rem]">
             {mattress.name}
           </h3>
 
-          <p className="line-clamp-2 min-h-[2lh] flex-1 text-xs leading-[1.7] text-[#687173] @[280px]:line-clamp-3 @[280px]:min-h-[3lh] @[280px]:text-[0.925rem] @[280px]:leading-[1.9]">
+          <p className="line-clamp-2 min-h-[2lh] flex-1 font-persian text-xs leading-[1.7] text-[#687173] @[280px]:line-clamp-3 @[280px]:min-h-[3lh] @[280px]:text-[0.925rem] @[280px]:leading-[1.9]">
             {mattress.subtitle}
           </p>
 
@@ -136,7 +136,9 @@ export default function MattressCard({ mattress }) {
               <div className="flex flex-col items-center gap-0.5">
                 <p className="truncate font-persian text-xs font-medium text-gray-400 line-through decoration-red-500 @[280px]:text-sm">
                   {formatPersianPrice(mattress.price)}
-                  <span className="mr-1 text-[10px] @[280px]:text-xs">تومان</span>
+                  <span className="mr-1 text-[10px] @[280px]:text-xs">
+                    تومان
+                  </span>
                 </p>
                 <p className="truncate font-persian text-base font-bold tracking-tight text-[#003087] @[280px]:text-2xl">
                   {formatPersianPrice(discountPrice)}
