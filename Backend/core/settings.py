@@ -69,8 +69,27 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    # Sliding idle window: every refresh rotates the refresh token and resets its
+    # clock, so activity extends the session and inactivity ends it. The frontend
+    # (src/context/AuthContext.jsx) refreshes on a keep-alive tick while the user
+    # is interacting, and hard-logs-out at IDLE_TIMEOUT_MS of inactivity.
+    #
+    # INVARIANT: REFRESH_TOKEN_LIFETIME must exceed the frontend IDLE_TIMEOUT_MS
+    # (30 min). SIMPLE_JWT LEEWAY is 0 — there is no grace period — so a token
+    # expiring at exactly 30 min makes the «ادامه نشست» button fail at 29:59.
+    #
+    # Worst-case server-side validity after the last user interaction =
+    #   REFRESH_TOKEN_LIFETIME + frontend KEEPALIVE_INTERVAL_MS = 32 min.
+    # The 30-minute figure is enforced exactly by the client; this is the backstop.
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=31),
+    "ROTATE_REFRESH_TOKENS": True,
+    # Deliberately off. Blacklisting would invalidate a token another tab already
+    # has in flight (N tabs each run the keep-alive), causing spurious logouts.
+    # It also requires the token_blacklist app, whose OutstandingToken row is
+    # written on every login *and every rotation* — with rotation alone,
+    # refresh.outstand() is a no-op and the whole scheme costs zero DB writes.
+    "BLACKLIST_AFTER_ROTATION": False,
 }
 
 # Application definition

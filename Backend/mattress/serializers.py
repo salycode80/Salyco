@@ -39,6 +39,10 @@ class MattressSerializer(serializers.ModelSerializer):
     discount_price = serializers.SerializerMethodField()
     is_on_off = serializers.BooleanField()
     off_percentage = serializers.IntegerField()
+    # The score to render. Equals average_rating once reviews exist, and the
+    # unreviewed default (5.00) before that — see Mattress.rating. Clients should
+    # read this and use review_count to decide whether to caption it.
+    rating = serializers.DecimalField(max_digits=3, decimal_places=2, read_only=True)
 
     class Meta:
         model = Mattress
@@ -57,6 +61,7 @@ class MattressSerializer(serializers.ModelSerializer):
             "height",
             "image",
             "is_available",
+            "rating",
             "average_rating",
             "review_count",
             "is_on_off",
@@ -64,10 +69,7 @@ class MattressSerializer(serializers.ModelSerializer):
         ]
 
     def get_discount_price(self, obj):
-        if obj.is_on_off and obj.off_percentage > 0:
-            discount = (obj.price * obj.off_percentage) / 100
-            return obj.price - discount
-        return None
+        return obj.discount_price
 
 
 class MattressImageSerializer(serializers.ModelSerializer):
@@ -77,9 +79,16 @@ class MattressImageSerializer(serializers.ModelSerializer):
 
 
 class MattressSizeSerializer(serializers.ModelSerializer):
+    # Null unless the parent mattress is on sale — same convention as the
+    # mattress serializers, so the frontend can treat both the same way.
+    discount_price = serializers.SerializerMethodField()
+
     class Meta:
         model = MattressSize
-        fields = ["id", "label", "width", "length", "price", "in_stock"]
+        fields = ["id", "label", "width", "length", "price", "discount_price", "in_stock"]
+
+    def get_discount_price(self, obj):
+        return obj.discount_price
 
 
 class MattressSpecificationSerializer(serializers.ModelSerializer):
@@ -160,6 +169,7 @@ class MattressDetailSerializer(serializers.ModelSerializer):
     pros_cons = MattressProConSerializer(many=True, read_only=True)
     reviews = serializers.SerializerMethodField()
     discount_price = serializers.SerializerMethodField()
+    rating = serializers.DecimalField(max_digits=3, decimal_places=2, read_only=True)
 
     class Meta:
         model = Mattress
@@ -179,6 +189,7 @@ class MattressDetailSerializer(serializers.ModelSerializer):
             "height",
             "image",
             "is_available",
+            "rating",
             "average_rating",
             "review_count",
             "is_on_off",
@@ -193,10 +204,7 @@ class MattressDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_discount_price(self, obj):
-        if obj.is_on_off and obj.off_percentage > 0:
-            discount = (obj.price * obj.off_percentage) / 100
-            return obj.price - discount
-        return None
+        return obj.discount_price
 
     def get_reviews(self, obj):
         approved = obj.reviews.filter(is_approved=True)

@@ -17,11 +17,16 @@ const formatPersianPrice = (price) => {
 
 export default function MattressCard({ mattress }) {
   const warrantyYears = Math.round(mattress.warranty_months / 12);
+  // `rating` is the server-side display score: the approved-review average, or
+  // 5 for a product nobody has reviewed yet. Fall back to 5 here too, so an
+  // older cached API response can't render an unrated product as zero stars.
+  const stars = Math.round(Number(mattress.rating ?? 5));
   const [imageSrc, setImageSrc] = useState(getProductImageUrl(mattress.image));
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
-  const isOnSale = mattress.is_on_off && mattress.off_percentage > 0;
-  const discountPrice = mattress.discount_price;
+  const discountPrice = mattress.discount_price ?? null;
+  const isOnSale =
+    mattress.is_on_off && mattress.off_percentage > 0 && discountPrice != null;
 
   // Quick-add the base product (no size chosen) straight from the gallery card.
   const handleAdd = async (e) => {
@@ -118,7 +123,7 @@ export default function MattressCard({ mattress }) {
                   size={14}
                   strokeWidth={1.5}
                   className={
-                    i < Math.round(mattress.average_rating || 0)
+                    i < stars
                       ? "fill-[#F5B301] text-[#F5B301] @[280px]:size-4"
                       : "fill-[#E5E9EB] text-[#E5E9EB] @[280px]:size-4"
                   }

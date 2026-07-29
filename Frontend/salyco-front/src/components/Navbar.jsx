@@ -233,6 +233,23 @@ export default function Navbar() {
             )}
           </div>
 
+          {/* Mobile cart — always visible, never inside the hamburger menu */}
+          <Link
+            to="/cart"
+            onClick={closeMenu}
+            aria-label="سبد خرید"
+            className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg
+                       border border-white/20 bg-white/10 text-white
+                       transition-colors hover:bg-white/20 lg:hidden"
+          >
+            <ShoppingCart size={20} />
+            {cartCount > 0 && (
+              <span className="absolute -left-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-[#003087]">
+                {cartCount > 99 ? "۹۹+" : toPersianNumber(cartCount)}
+              </span>
+            )}
+          </Link>
+
           {/* Mobile hamburger */}
           <button
             type="button"
@@ -293,36 +310,26 @@ export default function Navbar() {
       </nav>
 
       {/* ── MOBILE MENU ── */}
-      {menuOpen && (
-        <div
-          className="bg-white border-t border-[#CBD2D6] px-4 pb-4 pt-3 lg:hidden"
-          dir="rtl"
-        >
+      <div
+        className={`bg-white border-t border-[#CBD2D6] px-4 lg:hidden overflow-hidden transition-all duration-300 ease-in-out shadow-[0_8px_16px_rgba(0,48,135,0.12)] ${
+          menuOpen ? "max-h-[600px] pb-4 pt-3 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+        }`}
+        dir="rtl"
+        style={menuOpen ? {
+          boxShadow: '0 8px 16px rgba(0, 48, 135, 0.12), inset 0 1px 0 rgba(0, 48, 135, 0.05)'
+        } : {}}
+      >
           <div className="mb-3 md:hidden">
             <SearchBar variant="navbar" onNavigate={closeMenu} />
           </div>
 
           <div className="flex flex-col divide-y divide-[#CBD2D6]">
-            <Link
-              to="/cart"
-              onClick={closeMenu}
-              className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
-            >
-              <ShoppingCart size={16} className="text-[#687173]" />
-              <span>سبد خرید</span>
-              {cartCount > 0 && (
-                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#003087] px-1 text-[11px] font-bold text-white">
-                  {cartCount > 99 ? "۹۹+" : toPersianNumber(cartCount)}
-                </span>
-              )}
-            </Link>
-
             {isAuthenticated ? (
               <>
                 <Link
                   to="/warranty/my"
                   onClick={closeMenu}
-                  className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
+                  className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E] hover:text-[#003087] transition-colors"
                 >
                   <ClipboardList size={16} className="text-[#687173]" />
                   <span>گارانتی‌های من</span>
@@ -332,7 +339,7 @@ export default function Navbar() {
                   <Link
                     to="/admin"
                     onClick={closeMenu}
-                    className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
+                    className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E] hover:text-[#003087] transition-colors"
                   >
                     <LayoutDashboard size={16} className="text-[#687173]" />
                     <span>پنل مدیریت</span>
@@ -358,7 +365,7 @@ export default function Navbar() {
                 <Link
                   to="/user-info"
                   onClick={closeMenu}
-                  className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
+                  className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E] hover:text-[#003087] transition-colors"
                 >
                   <User size={16} className="text-[#687173]" />
                   <span>اطلاعات کاربری</span>
@@ -377,15 +384,14 @@ export default function Navbar() {
               <Link
                 to="/auth"
                 onClick={closeMenu}
-                className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E]"
+                className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E] hover:text-[#003087] transition-colors"
               >
                 <UserCircle size={18} className="text-[#687173]" />
                 <span>ورود / ثبت‌نام</span>
               </Link>
             )}
           </div>
-        </div>
-      )}
+      </div>
     </header>
   );
 }

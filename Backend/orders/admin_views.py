@@ -4,24 +4,35 @@ from django.db.models import Q
 from rest_framework import generics
 
 from mattress.permissions import IsAdminUser
+from mattress.admin_views import apply_ordering
 
 from .admin_serializers import AdminAllowedLocationSerializer, AdminOrderSerializer
 from .models import AllowedLocation, Order
 
+# Whitelisted sort options, same shape as the instance list. Every choice ends
+# in a unique-ish tie-breaker so equal values don't shuffle between requests.
+ORDER_ORDERING = {
+    "newest": ["-created_at", "-id"],
+    "oldest": ["created_at", "id"],
+    "amount_desc": ["-total_amount", "-created_at"],
+    "amount_asc": ["total_amount", "-created_at"],
+    "status": ["status", "-created_at"],
+    "recipient": ["recipient_name", "-created_at"],
+}
+
+DEFAULT_ORDER_ORDERING = "newest"
+
 
 class AdminOrderListView(generics.ListAPIView):
-    """List orders for fulfillment. Filter by `status`, `method`, `search`."""
+    """List orders for fulfillment. Filter by `status`, `method`, `search`,
+    sort with `ordering` (see ORDER_ORDERING)."""
 
     permission_classes = [IsAdminUser]
     serializer_class = AdminOrderSerializer
     pagination_class = None
 
     def get_queryset(self):
-        qs = (
-            Order.objects.select_related("customer")
-            .prefetch_related("items")
-            .order_by("-created_at")
-        )
+        qs = Order.objects.select_related("customer").prefetch_related("items")
 
         status_param = self.request.query_params.get("status")
         if status_param:
@@ -42,7 +53,12 @@ class AdminOrderListView(generics.ListAPIView):
                 | Q(customer__last_name__icontains=search)
             )
 
-        return qs
+        return apply_ordering(
+            qs,
+            self.request.query_params.get("ordering"),
+            ORDER_ORDERING,
+            DEFAULT_ORDER_ORDERING,
+        )
 
 
 class AdminOrderDetailView(generics.RetrieveUpdateDestroyAPIView):

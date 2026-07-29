@@ -15,6 +15,7 @@ import {
   deleteAdminLocation,
 } from "../../api/admin";
 import { IRAN_PROVINCES } from "../../constants/provinces";
+import { IRAN_PROVINCES_CITIES, getCitiesForProvince } from "../../constants/cities";
 
 export default function AllowedLocationsPanel() {
   const [rows, setRows] = useState([]);
@@ -27,6 +28,10 @@ export default function AllowedLocationsPanel() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
 
+  // Get available cities for selected province
+  const availableCities = province ? getCitiesForProvince(province) : [];
+  const [showCitySelect, setShowCitySelect] = useState(false);
+
   const load = useCallback(() => {
     setLoading(true);
     listAdminLocations()
@@ -38,6 +43,11 @@ export default function AllowedLocationsPanel() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleProvinceChange = (e) => {
+    setProvince(e.target.value);
+    setCity(""); // Reset city when province changes
+  };
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -120,7 +130,7 @@ export default function AllowedLocationsPanel() {
             </label>
             <select
               value={province}
-              onChange={(e) => setProvince(e.target.value)}
+              onChange={handleProvinceChange}
               className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
             >
               <option value="">انتخاب استان</option>
@@ -135,12 +145,28 @@ export default function AllowedLocationsPanel() {
             <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
               شهر (اختیاری)
             </label>
-            <input
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="خالی = کل استان"
-              className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] placeholder-[#687173] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
-            />
+            {province && availableCities.length > 0 ? (
+              <select
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+              >
+                <option value="">کل استان (همه شهرها)</option>
+                {availableCities.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder={province ? "نام شهر را وارد کنید" : "ابتدا استان را انتخاب کنید"}
+                disabled={!province}
+                className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] placeholder-[#687173] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            )}
           </div>
           <button
             type="submit"

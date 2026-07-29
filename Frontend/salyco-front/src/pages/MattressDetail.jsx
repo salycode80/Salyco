@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -14,12 +14,14 @@ import {
   Loader2,
   LogIn,
   ShoppingCart,
+  Tag,
 } from "lucide-react";
 import { getMattressDetail, submitReview } from "../api/warranty";
 import { getProductImageUrl } from "../utils/productImage";
 import { ACCESS_TOKEN } from "../constants";
 import { useCart } from "../context/CartContext";
 import PageBackground from "../components/PageBackground";
+import ProductGallery from "../components/product/ProductGallery";
 
 const toPersianNumber = (num) => {
   const persianDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
@@ -311,7 +313,6 @@ export default function MattressDetail() {
   const [mattress, setMattress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [added, setAdded] = useState(false);
 
@@ -321,17 +322,37 @@ export default function MattressDetail() {
     getMattressDetail(slug)
       .then((data) => {
         setMattress(data);
-        const primary = data.images?.find((img) => img.is_primary);
-        setSelectedImage(
-          primary
-            ? getProductImageUrl(primary.image)
-            : getProductImageUrl(data.image),
-        );
         if (data.sizes?.length > 0) setSelectedSize(data.sizes[0]);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Gallery images, primary first (the gallery shows index 0 on load), then the
+  // remaining images in API order. Products with no gallery fall back to the
+  // single `image` field.
+  const galleryImages = useMemo(() => {
+    if (!mattress) return [];
+    const extra = mattress.images ?? [];
+    if (extra.length === 0) {
+      return [
+        {
+          key: "base",
+          src: getProductImageUrl(mattress.image),
+          alt: mattress.name,
+        },
+      ];
+    }
+    const ordered = [
+      ...extra.filter((img) => img.is_primary),
+      ...extra.filter((img) => !img.is_primary),
+    ];
+    return ordered.map((img) => ({
+      key: img.id,
+      src: getProductImageUrl(img.image),
+      alt: img.alt_text || mattress.name,
+    }));
+  }, [mattress]);
 
   if (loading) {
     return (
@@ -358,10 +379,19 @@ export default function MattressDetail() {
   }
 
   const warrantyYears = Math.round(mattress.warranty_months / 12);
-  const displayPrice = selectedSize ? selectedSize.price : mattress.price;
-  const isOnSale = mattress.is_on_off && mattress.off_percentage > 0;
-  const discountPrice =
-    isOnSale && mattress.discount_price ? mattress.discount_price : null;
+  // Price and discount must come from the same source. Each size is priced
+  // independently and carries its own discount_price, so pairing a size's
+  // price with the base product's discount would quote a bogus saving.
+  const priceSource = selectedSize || mattress;
+  const displayPrice = priceSource.price;
+  const discountPrice = priceSource.discount_price ?? null;
+  const isOnSale =
+    mattress.is_on_off && mattress.off_percentage > 0 && discountPrice != null;
+  // Once a product has per-size pricing, a bare number is ambiguous — say which
+  // price the figure was derived from so the customer can check the arithmetic.
+  const priceBasis = selectedSize
+    ? `قیمت سایز ${selectedSize.label}`
+    : "قیمت پایه محصول";
 
   // Can the visitor buy? Either the chosen size is in stock, or (no sizes) the
   // product itself is available.
@@ -392,11 +422,20 @@ export default function MattressDetail() {
       image: `/bedicon_${std.width}_${std.length}.png`,
       modelSize: match || null,
       price: match ? match.price : null,
+      discountPrice: match ? match.discount_price ?? null : null,
       available: !!match && match.in_stock,
     };
   });
   const pros = mattress.pros_cons?.filter((p) => p.type === "PRO") || [];
   const cons = mattress.pros_cons?.filter((p) => p.type === "CON") || [];
+
+  // `rating` is the score the server wants rendered: the approved-review
+  // average, or 5 for a product nobody has reviewed yet. The 5 fallback is
+  // repeated here so an older API response missing the field still renders
+  // stars instead of NaN. `reviewCount` is what tells the two cases apart, so
+  // the caption can say "بدون نظر" rather than implying a perfect score.
+  const displayRating = Number(mattress.rating ?? 5);
+  const reviewCount = Number(mattress.review_count ?? 0);
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
@@ -415,53 +454,26 @@ export default function MattressDetail() {
         {/* Hero: Image + Info */}
         <div className="grid gap-10 lg:grid-cols-2" dir="rtl">
           {/* Image gallery */}
-          <div className="space-y-4">
-            <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-              <div className="relative aspect-square overflow-hidden bg-[#F5F7FA]">
-                <img
-                  src={selectedImage}
-                  alt={mattress.name}
-                  onError={() => setSelectedImage("/matress.png")}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-            {mattress.images?.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {mattress.images.map((img) => {
-                  const url = getProductImageUrl(img.image);
-                  return (
-                    <button
-                      key={img.id}
-                      onClick={() => setSelectedImage(url)}
-                      className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                        selectedImage === url
-                          ? "border-[#003087]"
-                          : "border-[#CBD2D6] opacity-70 hover:opacity-100"
-                      }`}
-                    >
-                      <img
-                        src={url}
-                        alt={img.alt_text || mattress.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <ProductGallery
+            key={slug}
+            images={galleryImages}
+            name={mattress.name}
+          />
 
           {/* Product info */}
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-4">
               <div className="flex justify-between">
-                {/* Rating */}
-                {mattress.review_count > 0 && (
-                  <div className="order-2 flex items-center gap-3">
-                    <StarRating rating={mattress.average_rating} />
-                  </div>
-                )}
+                {/* Rating — always shown; an unreviewed product scores 5 by
+                    default, with the count clarifying where the score is from. */}
+                <div className="order-2 flex items-center gap-2">
+                  <StarRating rating={displayRating} />
+                  <span className="whitespace-nowrap font-persian text-xs text-[#687173]">
+                    {reviewCount > 0
+                      ? `${toPersianNumber(reviewCount)} نظر`
+                      : "بدون نظر"}
+                  </span>
+                </div>
                 <h1 className="font-persian text-3xl font-bold text-[#003087] md:text-4xl">
                   {mattress.name}
                 </h1>
@@ -559,13 +571,22 @@ export default function MattressDetail() {
                           {toPersianNumber(sz.width)} ×{" "}
                           {toPersianNumber(sz.length)} سانتی‌متر
                         </span>
-                        {sz.price != null ? (
-                          <span className="mt-1 font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
-                            {formatPersianPrice(sz.price)} تومان
-                          </span>
-                        ) : (
+                        {sz.price == null ? (
                           <span className="mt-1 font-persian text-[10px] text-[#687173]">
                             ناموجود
+                          </span>
+                        ) : sz.discountPrice != null ? (
+                          <>
+                            <span className="mt-1 font-persian text-[10px] text-gray-400 line-through decoration-red-500 [font-feature-settings:'tnum']">
+                              {formatPersianPrice(sz.price)}
+                            </span>
+                            <span className="font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
+                              {formatPersianPrice(sz.discountPrice)} تومان
+                            </span>
+                          </>
+                        ) : (
+                          <span className="mt-1 font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
+                            {formatPersianPrice(sz.price)} تومان
                           </span>
                         )}
                       </button>
@@ -578,9 +599,17 @@ export default function MattressDetail() {
             {/* Price + add to cart */}
             <div className="flex flex-col gap-3 rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)] sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <span className="block text-xs font-medium text-[#687173]">
-                  قیمت
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-[#687173]">
+                    قیمت
+                  </span>
+                  {isOnSale && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#FDE7E7] px-2 py-0.5 font-persian text-[10px] font-bold text-[#D20000]">
+                      <Tag size={11} className="shrink-0" />
+                      {toPersianNumber(mattress.off_percentage)}٪ تخفیف
+                    </span>
+                  )}
+                </div>
                 {isOnSale && discountPrice ? (
                   <div className="flex flex-col gap-0.5">
                     <span className="font-persian text-lg font-medium text-gray-400 line-through decoration-red-500 [font-feature-settings:'tnum']">
@@ -604,6 +633,11 @@ export default function MattressDetail() {
                     </span>
                   </span>
                 )}
+                <span className="mt-1 block font-persian text-[11px] leading-5 text-[#687173]">
+                  محاسبه بر اساس {priceBasis}
+                  {isOnSale &&
+                    ` با ${toPersianNumber(mattress.off_percentage)}٪ تخفیف`}
+                </span>
               </div>
               <button
                 type="button"
@@ -747,12 +781,12 @@ export default function MattressDetail() {
                   نظرات کاربران
                 </h2>
                 <div className="flex items-center gap-2">
-                  <StarRating rating={mattress.average_rating} size={18} />
+                  {/* Same figure as the hero: this block only renders when
+                      approved reviews exist, so displayRating is the real
+                      average here, not the unreviewed default. */}
+                  <StarRating rating={displayRating} size={18} />
                   <span className="text-sm text-[#687173]">
-                    {toPersianNumber(
-                      Number(mattress.average_rating).toFixed(1),
-                    )}{" "}
-                    از ۵
+                    {toPersianNumber(displayRating.toFixed(1))} از ۵
                   </span>
                 </div>
               </div>

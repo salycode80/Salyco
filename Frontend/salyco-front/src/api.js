@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
+import { clearTokens, getAccess, getRefresh, saveTokens } from "./auth/tokenStorage";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -9,7 +9,7 @@ const api = axios.create({
 // Attaches the access token to every request that has one in storage.
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(ACCESS_TOKEN);
+    const token = getAccess();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -42,10 +42,12 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Skip refresh loop for the refresh endpoint itself
+    // Skip refresh loop for the refresh endpoint itself. A 401 here means the
+    // refresh token is gone or past its 31-minute window — i.e. the session
+    // expired through inactivity, so say so on the login page.
     if (original.url?.includes("/api/token/refresh/")) {
       clearTokens();
-      redirectToAuth();
+      redirectToAuth("expired");
       return Promise.reject(error);
     }
 
@@ -63,7 +65,7 @@ api.interceptors.response.use(
 
     isRefreshing = true;
 
-    const refresh = localStorage.getItem(REFRESH_TOKEN);
+    const refresh = getRefresh();
     if (!refresh) {
       clearTokens();
       redirectToAuth();
@@ -76,7 +78,10 @@ api.interceptors.response.use(
         { refresh }
       );
 
-      localStorage.setItem(ACCESS_TOKEN, data.access);
+      // ROTATE_REFRESH_TOKENS is on, so the response carries a *new* refresh
+      // token whose 31-minute clock starts now. Dropping it here would strand
+      // the session on the original token and log the user out mid-session.
+      saveTokens(data);
       api.defaults.headers.common.Authorization = `Bearer ${data.access}`;
       processQueue(null, data.access);
 
@@ -85,7 +90,7 @@ api.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       clearTokens();
-      redirectToAuth();
+      redirectToAuth("expired");
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
@@ -93,15 +98,10 @@ api.interceptors.response.use(
   }
 );
 
-function clearTokens() {
-  localStorage.removeItem(ACCESS_TOKEN);
-  localStorage.removeItem(REFRESH_TOKEN);
-}
-
-function redirectToAuth() {
-  // Adjust the path to match your auth route
+function redirectToAuth(reason) {
   if (window.location.pathname !== "/auth") {
-    window.location.href = "/auth";
+    const query = reason ? `?reason=${encodeURIComponent(reason)}` : "";
+    window.location.href = `/auth${query}`;
   }
 }
 

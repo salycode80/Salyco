@@ -237,6 +237,8 @@ export default function DashboardPanel() {
   const [sold, setSold] = useState("");
   const [warranty, setWarranty] = useState("");
   const [mattressId, setMattressId] = useState("");
+  // sort — server-side, whitelisted in mattress/admin_views.INSTANCE_ORDERING
+  const [ordering, setOrdering] = useState("newest");
 
   // load stats + mattress models once
   useEffect(() => {
@@ -249,9 +251,9 @@ export default function DashboardPanel() {
   const params = useCallback(
     () =>
       tab === "instances"
-        ? { search, sold, warranty, mattress: mattressId }
+        ? { search, sold, warranty, mattress: mattressId, ordering }
         : { search },
-    [tab, search, sold, warranty, mattressId]
+    [tab, search, sold, warranty, mattressId, ordering]
   );
 
   // fetch rows (debounced on filter change)
@@ -272,6 +274,7 @@ export default function DashboardPanel() {
     setSold("");
     setWarranty("");
     setMattressId("");
+    setOrdering("newest");
   };
 
   const handleExport = () => {
@@ -363,6 +366,16 @@ export default function DashboardPanel() {
                   </option>
                 ))}
               </Select>
+              <Select value={ordering} onChange={setOrdering}>
+                <option value="newest">جدیدترین (زمان ثبت)</option>
+                <option value="oldest">قدیمی‌ترین (زمان ثبت)</option>
+                <option value="manufacture_desc">تاریخ تولید: جدید به قدیم</option>
+                <option value="manufacture_asc">تاریخ تولید: قدیم به جدید</option>
+                <option value="activation_desc">فعال‌سازی: جدید به قدیم</option>
+                <option value="activation_asc">فعال‌سازی: قدیم به جدید</option>
+                <option value="serial_asc">شماره سریال: صعودی</option>
+                <option value="serial_desc">شماره سریال: نزولی</option>
+              </Select>
             </>
           )}
 
@@ -439,6 +452,19 @@ function Th({ children, className = "" }) {
   );
 }
 
+// Creation instant down to the second — that precision is the point of sorting
+// by it, so show the time and not just the day. Gregorian + Latin digits to
+// match the raw manufacture_date column next to it.
+function fmtDateTime(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(
+    d.getHours()
+  )}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
 function InstanceTable({ rows, onSelect }) {
   return (
     <div className="overflow-x-auto">
@@ -451,6 +477,7 @@ function InstanceTable({ rows, onSelect }) {
             <Th>وضعیت فروش</Th>
             <Th>گارانتی</Th>
             <Th>تاریخ تولید</Th>
+            <Th>زمان ثبت</Th>
             <Th className="text-center">جزئیات</Th>
           </tr>
         </thead>
@@ -478,6 +505,9 @@ function InstanceTable({ rows, onSelect }) {
               </td>
               <td className="px-4 py-3 font-persian text-sm text-[#687173]">
                 {r.manufacture_date || "—"}
+              </td>
+              <td className="whitespace-nowrap px-4 py-3 text-xs text-[#687173] [font-feature-settings:'tnum']" dir="ltr">
+                {fmtDateTime(r.created_at)}
               </td>
               <td className="px-4 py-3 text-center">
                 <button

@@ -174,10 +174,17 @@ export default function OrdersPanel() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [methodFilter, setMethodFilter] = useState("");
+  // sort — server-side, whitelisted in orders/admin_views.ORDER_ORDERING
+  const [ordering, setOrdering] = useState("newest");
 
   const params = useCallback(
-    () => ({ search, status: statusFilter, method: methodFilter }),
-    [search, statusFilter, methodFilter]
+    () => ({
+      search,
+      status: statusFilter,
+      method: methodFilter,
+      ordering,
+    }),
+    [search, statusFilter, methodFilter, ordering]
   );
 
   const load = useCallback(() => {
@@ -222,6 +229,7 @@ export default function OrdersPanel() {
     setSearch("");
     setStatusFilter("");
     setMethodFilter("");
+    setOrdering("newest");
   };
 
   const hasFilters = search || statusFilter || methodFilter;
@@ -288,6 +296,19 @@ export default function OrdersPanel() {
             <option value="">روش (همه)</option>
             <option value="ONLINE">آنلاین</option>
             <option value="PHONE">تلفنی</option>
+          </select>
+
+          <select
+            value={ordering}
+            onChange={(e) => setOrdering(e.target.value)}
+            className="h-12 rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+          >
+            <option value="newest">جدیدترین (زمان ثبت)</option>
+            <option value="oldest">قدیمی‌ترین (زمان ثبت)</option>
+            <option value="amount_desc">مبلغ: بیشترین</option>
+            <option value="amount_asc">مبلغ: کمترین</option>
+            <option value="status">وضعیت</option>
+            <option value="recipient">نام تحویل‌گیرنده</option>
           </select>
 
           {hasFilters && (

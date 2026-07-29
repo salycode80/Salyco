@@ -57,10 +57,12 @@ class CartItem(models.Model):
 
     @property
     def unit_price(self) -> Decimal:
-        """Live price: the chosen size's price, else the base mattress price."""
+        """Live price: the chosen size's price, else the base mattress price —
+        with the mattress's active discount applied, so an on-sale product is
+        charged at the price the product page advertises."""
         if self.size_id is not None:
-            return self.size.price
-        return self.mattress.price
+            return self.size.final_price
+        return self.mattress.final_price
 
     @property
     def line_total(self) -> Decimal:

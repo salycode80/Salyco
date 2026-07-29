@@ -37,10 +37,6 @@ export function LoginForm({ onSwitchToRegister, onSuccess }) {
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSubmit();
-  };
-
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5" dir="rtl">
       <InputField
@@ -86,6 +82,18 @@ export function LoginForm({ onSwitchToRegister, onSuccess }) {
           </span>
         ) : "ورود به حساب"}
       </button>
+
+      <div className="text-center text-[13px] text-[#687173]">
+        <button
+          type="button"
+          onClick={() => {
+            setStatus({ loading: false, error: "ورود با کد تأیید هنوز فعال نشده است", success: "" });
+          }}
+          className="text-[#003087] hover:underline"
+        >
+          ورود با کد تأیید
+        </button>
+      </div>
 
       <p className="text-center text-[13px] text-[#687173]">
         حساب ندارید؟{" "}

@@ -96,6 +96,10 @@ class ReviewAdmin(admin.ModelAdmin):
 
     @admin.action(description="Approve selected reviews")
     def approve_reviews(self, request, queryset):
+        # .update() is a bulk SQL UPDATE and does not fire post_save, so the
+        # rating cache has to be refreshed by hand here. Deduplicated by
+        # mattress: approving ten reviews of one mattress needs one recompute.
+        mattress_ids = set(queryset.values_list("mattress_id", flat=True))
         queryset.update(is_approved=True)
-        for review in queryset:
-            review.mattress.update_rating_cache()
+        for mattress in Mattress.objects.filter(id__in=mattress_ids):
+            mattress.update_rating_cache()

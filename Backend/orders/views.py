@@ -39,6 +39,18 @@ def _get_cart(user) -> Cart:
     return cart
 
 
+def _location_error(province: str, city: str) -> str | None:
+    """Business rule: orders are only accepted for admin-defined allowed areas.
+    A blank-city allowed row covers the whole province. Returns a Persian error
+    message when the area is not serviceable, otherwise None."""
+    allowed = AllowedLocation.objects.filter(is_active=True, province=province)
+    province_wide = allowed.filter(city="").exists()
+    city_match = bool(city) and allowed.filter(city=city).exists()
+    if province_wide or city_match:
+        return None
+    return "متأسفانه ارسال به این منطقه امکان‌پذیر نیست."
+
+
 def _add_to_cart(cart: Cart, mattress, size, quantity: int) -> CartItem:
     """Add a line or bump its quantity if the (product, size) already exists."""
     item, created = CartItem.objects.get_or_create(
@@ -149,44 +161,54 @@ class OrderCreateView(APIView):
         call_time_preference = (request.data.get("call_time_preference") or "").strip()
         province = (request.data.get("province") or "").strip()
         city = (request.data.get("city") or "").strip()
+        postal_code = (request.data.get("postal_code") or "").strip()
+        address = (request.data.get("address") or "").strip()
+        recipient_name = (request.data.get("recipient_name") or "").strip() or (
+            f"{customer.first_name} {customer.last_name}".strip()
+        )
+        phone_number = (
+            request.data.get("phone_number") or ""
+        ).strip() or customer.phone_number
 
-        # Business rule: online orders are only accepted for admin-defined
-        # allowed areas. A blank-city allowed row covers the whole province.
-        if method == Order.ONLINE:
-            if not province:
-                return Response(
-                    {"detail": "لطفاً استان را انتخاب کنید."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            allowed = AllowedLocation.objects.filter(
-                is_active=True, province=province
+        # The checkout form collects the full delivery address before the order
+        # method is picked, so both ONLINE and PHONE orders carry the same
+        # required fields and go through the same allowed-area check.
+        errors = {}
+        for field, value, message in (
+            ("recipient_name", recipient_name, "نام تحویل‌گیرنده الزامی است."),
+            ("phone_number", phone_number, "شماره تماس الزامی است."),
+            ("province", province, "لطفاً استان را انتخاب کنید."),
+            ("city", city, "لطفاً شهر را وارد کنید."),
+            ("postal_code", postal_code, "کد پستی الزامی است."),
+            ("address", address, "نشانی کامل الزامی است."),
+        ):
+            if not value:
+                errors[field] = message
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        location_error = _location_error(province, city)
+        if location_error:
+            return Response(
+                {"detail": location_error}, status=status.HTTP_400_BAD_REQUEST
             )
-            province_wide = allowed.filter(city="").exists()
-            city_match = bool(city) and allowed.filter(city=city).exists()
-            if not (province_wide or city_match):
-                return Response(
-                    {"detail": "متأسفانه ارسال به این منطقه امکان‌پذیر نیست."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
         with transaction.atomic():
             order = Order.objects.create(
                 customer=customer,
                 method=method,
-                customer_phone=customer_phone if method == Order.PHONE else "",
-                call_time_preference=call_time_preference if method == Order.PHONE else "",
-                recipient_name=(request.data.get("recipient_name") or "").strip()
-                or f"{customer.first_name} {customer.last_name}".strip(),
-                phone_number=(request.data.get("phone_number") or "").strip()
-                or customer.phone_number,
-                province=province if method == Order.ONLINE else "",
-                city=city if method == Order.ONLINE else "",
-                postal_code=(request.data.get("postal_code") or "").strip()
-                if method == Order.ONLINE
-                else "",
-                address=(request.data.get("address") or "").strip()
-                if method == Order.ONLINE
-                else "",
+                # Phone orders are followed up by a sales call, so keep a
+                # dedicated contact number even when it matches phone_number.
+                customer_phone=(customer_phone or phone_number)
+                if method == Order.PHONE
+                else customer_phone,
+                call_time_preference=call_time_preference,
+                recipient_name=recipient_name,
+                phone_number=phone_number,
+                province=province,
+                city=city,
+                postal_code=postal_code,
+                address=address,
                 total_amount=cart.total,
             )
             OrderItem.objects.bulk_create(

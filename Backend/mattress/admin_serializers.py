@@ -32,6 +32,7 @@ class AdminInstanceSerializer(serializers.ModelSerializer):
             "is_warranty_active",
             "activation_date",
             "manufacture_date",
+            "created_at",
             "warranty_expiration_date",
             "warranty_remaining_days",
             "is_under_warranty",

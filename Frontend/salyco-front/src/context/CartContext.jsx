@@ -133,7 +133,13 @@ export function CartProvider({ children }) {
       size: size?.id || null,
       size_label: size?.label || "",
       quantity,
-      unit_price: Number(size ? size.price : mattress.price),
+      // Mirror the server's CartItem.unit_price: the discounted price when the
+      // mattress is on sale, so a local cart totals the same as a server one.
+      unit_price: Number(
+        size
+          ? size.discount_price ?? size.price
+          : mattress.discount_price ?? mattress.price
+      ),
     };
     const existing = local.find((i) => key(i) === key(incoming));
     const next = existing

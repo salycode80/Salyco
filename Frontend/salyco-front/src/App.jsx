@@ -1,8 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import ScrollToTop from "./components/ScrollToTop";
 import Navbar from "./components/Navbar";
 import AboutFooter from "./components/AboutFooter";
+import SessionTimeoutModal from "./components/SessionTimeoutModal";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Mattress from "./pages/Mattress";
@@ -24,87 +26,91 @@ import SuggestionsPanel from "./pages/admin/SuggestionsPanel";
 import UserInfo from "./pages/UserInfo";
 import SearchResults from "./pages/SearchResults";
 import CartPage from "./pages/CartPage";
-import CheckoutMethod from "./pages/checkout/CheckoutMethod";
-import CheckoutShipping from "./pages/checkout/CheckoutShipping";
-import CheckoutPhone from "./pages/checkout/CheckoutPhone";
+import CheckoutOrder from "./pages/checkout/CheckoutOrder";
 import OrdersPanel from "./pages/admin/OrdersPanel";
 import AllowedLocationsPanel from "./pages/admin/AllowedLocationsPanel";
 
 function App() {
   return (
-    <CartProvider>
-      <div>
-        <ScrollToTop />
-        <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/products/mattress" element={<Mattress />} />
-        <Route path="/products/mattress/:slug" element={<MattressDetail />} />
-        <Route path="/productregistration" element={<ProductRegistration />} />
-        <Route path="/articles" element={<Articles />} />
-        <Route path="/articles/:slug" element={<ArticleDetail />} />
-        <Route path="/dealers" element={<Dealers />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route
-          path="/warranty/mattress/:serialNumber"
-          element={<WarrantyStatusPage />}
-        />
-        <Route path="/user-info" element={<UserInfo />} />
-        <Route path="/search" element={<SearchResults />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route
-          path="/checkout"
-          element={
-            <ProtectedRoute>
-              <CheckoutMethod />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/checkout/shipping"
-          element={
-            <ProtectedRoute>
-              <CheckoutShipping />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/checkout/phone"
-          element={
-            <ProtectedRoute>
-              <CheckoutPhone />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/warranty/my"
-          element={
-            <ProtectedRoute>
-              <MyWarrantiesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminWorkspace />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<DashboardPanel />} />
-          <Route path="create" element={<CreateInstancePanel />} />
-          <Route path="reviews" element={<ReviewsPanel />} />
-          <Route path="suggestions" element={<SuggestionsPanel />} />
-          <Route path="orders" element={<OrdersPanel />} />
-          <Route path="locations" element={<AllowedLocationsPanel />} />
-        </Route>
-      </Routes>
-        <AboutFooter />
-      </div>
-    </CartProvider>
+    // AuthProvider is outermost so every consumer — including CartProvider, if it
+    // ever moves off its localStorage poll — sees the same session state.
+    <AuthProvider>
+      <CartProvider>
+        <div>
+          <ScrollToTop />
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/products/mattress" element={<Mattress />} />
+            <Route
+              path="/products/mattress/:slug"
+              element={<MattressDetail />}
+            />
+            <Route
+              path="/productregistration"
+              element={<ProductRegistration />}
+            />
+            <Route path="/articles" element={<Articles />} />
+            <Route path="/articles/:slug" element={<ArticleDetail />} />
+            <Route path="/dealers" element={<Dealers />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/warranty/mattress/:serialNumber"
+              element={<WarrantyStatusPage />}
+            />
+            <Route path="/user-info" element={<UserInfo />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route
+              path="/checkout"
+              element={
+                <ProtectedRoute>
+                  <CheckoutOrder />
+                </ProtectedRoute>
+              }
+            />
+            {/* Old two-step checkout routes — kept as redirects so existing links
+                and bookmarks land on the unified order form. */}
+            <Route
+              path="/checkout/shipping"
+              element={<Navigate to="/checkout" replace />}
+            />
+            <Route
+              path="/checkout/phone"
+              element={<Navigate to="/checkout" replace />}
+            />
+            <Route
+              path="/warranty/my"
+              element={
+                <ProtectedRoute>
+                  <MyWarrantiesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminWorkspace />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardPanel />} />
+              <Route path="create" element={<CreateInstancePanel />} />
+              <Route path="reviews" element={<ReviewsPanel />} />
+              <Route path="suggestions" element={<SuggestionsPanel />} />
+              <Route path="orders" element={<OrdersPanel />} />
+              <Route path="locations" element={<AllowedLocationsPanel />} />
+            </Route>
+          </Routes>
+          <AboutFooter />
+          {/* Rendered once; returns null unless the idle warning is up. */}
+          <SessionTimeoutModal />
+        </div>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

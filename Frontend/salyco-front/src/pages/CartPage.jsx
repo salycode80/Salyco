@@ -178,7 +178,7 @@ export default function CartPage() {
                   to="/checkout"
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
                 >
-                  ادامه و تسویه حساب
+                  ادامه و تکمیل اطلاعات سفارش
                   <ArrowLeft size={17} />
                 </Link>
                 <Link

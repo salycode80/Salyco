@@ -1,14 +1,34 @@
 from __future__ import annotations
 import calendar
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Avg, Count
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils import timezone
 from users.models import Customer
 
 User = get_user_model()
+
+# What a mattress is rated before anyone has reviewed it. A brand-new product
+# showing zero stars reads as "rated badly", not "not rated yet", so an
+# unreviewed mattress is presented at full marks instead.
+DEFAULT_RATING = Decimal("5.00")
+
+
+def apply_discount(price: Decimal, percentage: int) -> Decimal:
+    """Take `percentage` off `price`, rounded to whole cents.
+
+    The percentage is clamped to 0-100: `off_percentage` is only documented as
+    0-100 by help_text, nothing validates it, and an out-of-range value would
+    otherwise produce a negative price.
+    """
+    pct = min(max(int(percentage), 0), 100)
+    factor = (Decimal(100) - Decimal(pct)) / Decimal(100)
+    return (price * factor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def add_months(source_date: date, months: int) -> date:
@@ -33,8 +53,18 @@ class Mattress(models.Model):
     length = models.IntegerField(default=0)
     height = models.IntegerField(default=0, verbose_name="height (cm)")
     is_available = models.BooleanField(default=True, verbose_name="is available")
-    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0, verbose_name="average rating")
-    review_count = models.IntegerField(default=0, verbose_name="review count")
+    # Cache of the approved-review aggregate, refreshed by update_rating_cache().
+    # Read through the `rating` property rather than directly — that applies the
+    # unreviewed fallback. Not editable: it is derived from Review rows, so a
+    # hand-typed value here would be silently overwritten by the next review.
+    average_rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        default=DEFAULT_RATING,
+        editable=False,
+        verbose_name="average rating",
+    )
+    review_count = models.IntegerField(default=0, editable=False, verbose_name="review count")
     is_on_off = models.BooleanField(default=False, verbose_name="on sale")
     off_percentage = models.PositiveIntegerField(default=0, verbose_name="discount percentage", help_text="0-100")
 
@@ -46,12 +76,57 @@ class Mattress(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def update_rating_cache(self):
+    @property
+    def has_discount(self) -> bool:
+        return self.is_on_off and self.off_percentage > 0
+
+    @property
+    def discount_price(self) -> Optional[Decimal]:
+        """Base price after the active discount, or None when not on sale."""
+        if not self.has_discount:
+            return None
+        return apply_discount(self.price, self.off_percentage)
+
+    @property
+    def final_price(self) -> Decimal:
+        """What the base product actually costs — the single source of truth for
+        pricing, used by the cart and by orders as well as by the serializers."""
+        discounted = self.discount_price
+        return self.price if discounted is None else discounted
+
+    @property
+    def rating(self) -> Decimal:
+        """The score to display: the approved-review average, or DEFAULT_RATING
+        when nothing has been reviewed yet.
+
+        Reads the cache rather than re-aggregating, so listing a page of
+        mattresses stays one query. Pair with `review_count` to tell "5.00
+        because it is unreviewed" apart from "5.00 because every reviewer gave
+        five stars" — the two are deliberately indistinguishable in this value.
+        """
+        if self.review_count <= 0:
+            return DEFAULT_RATING
+        return self.average_rating
+
+    def update_rating_cache(self) -> None:
+        """Recompute average_rating/review_count from the approved reviews.
+
+        Called from the Review post_save/post_delete signals, so it runs on
+        every path that can change a review — the API, the Django admin, a
+        management command, or a shell session. Falls back to DEFAULT_RATING
+        when the last approved review goes away.
+        """
         stats = self.reviews.filter(is_approved=True).aggregate(
             avg=Avg("rating"), cnt=Count("id")
         )
-        self.average_rating = stats["avg"] or 0
-        self.review_count = stats["cnt"] or 0
+        count = stats["cnt"] or 0
+        average = stats["avg"]
+        self.review_count = count
+        self.average_rating = (
+            DEFAULT_RATING
+            if count == 0 or average is None
+            else Decimal(average).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        )
         self.save(update_fields=["average_rating", "review_count"])
 
 
@@ -86,6 +161,23 @@ class MattressSize(models.Model):
 
     def __str__(self):
         return f"{self.mattress.name} - {self.width}x{self.length}"
+
+    @property
+    def discount_price(self) -> Optional[Decimal]:
+        """This size's own price after the parent mattress's discount, or None.
+
+        Each size is priced independently, so the discount has to be applied to
+        the size's price — reusing the mattress's discount_price here would
+        quote a saving that has nothing to do with the size being bought.
+        """
+        if not self.mattress.has_discount:
+            return None
+        return apply_discount(self.price, self.mattress.off_percentage)
+
+    @property
+    def final_price(self) -> Decimal:
+        discounted = self.discount_price
+        return self.price if discounted is None else discounted
 
 
 class MattressSpecification(models.Model):
@@ -172,6 +264,27 @@ class Review(models.Model):
         return f"{self.customer} - {self.mattress.name} ({self.rating}/5)"
 
 
+# Keep Mattress.average_rating/review_count in step with the Review table from
+# a single place. Approving, editing the score of, un-approving, or deleting a
+# review all change the aggregate, and each of those happens from more than one
+# code path (REST API, Django admin, shell), so hooking the model is more
+# reliable than remembering to call update_rating_cache() at every call site.
+@receiver(post_save, sender=Review)
+def _review_saved(sender, instance: Review, **kwargs):
+    instance.mattress.update_rating_cache()
+
+
+@receiver(post_delete, sender=Review)
+def _review_deleted(sender, instance: Review, **kwargs):
+    # A cascade from Mattress.delete() removes its reviews too; skip the refresh
+    # in that case, since the parent row is on its way out.
+    try:
+        mattress = instance.mattress
+    except Mattress.DoesNotExist:
+        return
+    mattress.update_rating_cache()
+
+
 class MattressInstance(models.Model):
     serial_number = models.CharField(
         max_length=100,
@@ -212,11 +325,17 @@ class MattressInstance(models.Model):
         verbose_name="activation date",
     )
     manufacture_date = models.DateField(verbose_name="manufacture date")
+    # Real creation instant, to the second. manufacture_date is only day-precise
+    # and is entered by hand, so it can't order instances registered on the
+    # same day; this is what the admin list sorts by.
+    created_at = models.DateTimeField(
+        auto_now_add=True, db_index=True, verbose_name="created at"
+    )
 
     class Meta:
         verbose_name = "mattress instance"
         verbose_name_plural = "mattress instances"
-        ordering = ["-manufacture_date", "serial_number"]
+        ordering = ["-created_at", "serial_number"]
 
     def __str__(self) -> str:
         return self.serial_number

@@ -242,6 +242,8 @@ export default function UserInfo() {
             <Field icon={User} label="نام">
               {editing ? (
                 <TextInput
+                  name="given-name"
+                  autoComplete="given-name"
                   value={form.first_name}
                   onChange={(v) => setForm({ ...form, first_name: v })}
                 />
@@ -254,6 +256,8 @@ export default function UserInfo() {
             <Field icon={User} label="نام خانوادگی">
               {editing ? (
                 <TextInput
+                  name="family-name"
+                  autoComplete="family-name"
                   value={form.last_name}
                   onChange={(v) => setForm({ ...form, last_name: v })}
                 />
@@ -267,6 +271,8 @@ export default function UserInfo() {
               {editing ? (
                 <TextInput
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   dir="ltr"
                   value={form.email}
                   onChange={(v) => setForm({ ...form, email: v })}
@@ -281,6 +287,8 @@ export default function UserInfo() {
               {editing ? (
                 <TextInput
                   type="tel"
+                  name="tel"
+                  autoComplete="tel"
                   dir="ltr"
                   value={form.phone_number}
                   onChange={(v) => setForm({ ...form, phone_number: v })}
@@ -311,6 +319,8 @@ export default function UserInfo() {
             <Field icon={Hash} label="کد پستی">
               {editing ? (
                 <TextInput
+                  name="postal-code"
+                  autoComplete="postal-code"
                   dir="ltr"
                   value={form.postal_code}
                   onChange={(v) => setForm({ ...form, postal_code: v })}
@@ -366,6 +376,7 @@ export default function UserInfo() {
               تغییر رمز عبور
             </h2>
             <button
+              type="button"
               onClick={() => setShowPw((s) => !s)}
               className="flex items-center gap-1.5 text-xs font-medium text-[#687173] hover:text-[#1A1A2E] transition-colors"
             >
@@ -374,22 +385,47 @@ export default function UserInfo() {
             </button>
           </div>
 
-          <div className="px-6 py-5 space-y-4">
+          {/* A real <form> scopes password-manager autofill to these fields.
+              Unscoped password inputs make the manager treat the whole document
+              as one form and fill the navbar search box with the username. The
+              hidden username field gives it the correct target instead. */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleChangePassword();
+            }}
+            className="px-6 py-5 space-y-4"
+          >
+            <input
+              type="text"
+              name="username"
+              autoComplete="username"
+              value={user?.username || ""}
+              readOnly
+              hidden
+            />
+
             <PasswordInput
               label="رمز عبور فعلی"
               show={showPw}
+              name="old_password"
+              autoComplete="current-password"
               value={pwForm.old_password}
               onChange={(v) => setPwForm({ ...pwForm, old_password: v })}
             />
             <PasswordInput
               label="رمز عبور جدید"
               show={showPw}
+              name="new_password"
+              autoComplete="new-password"
               value={pwForm.new_password}
               onChange={(v) => setPwForm({ ...pwForm, new_password: v })}
             />
             <PasswordInput
               label="تکرار رمز عبور جدید"
               show={showPw}
+              name="confirm_password"
+              autoComplete="new-password"
               value={pwForm.confirm_password}
               onChange={(v) => setPwForm({ ...pwForm, confirm_password: v })}
             />
@@ -403,7 +439,7 @@ export default function UserInfo() {
             )}
 
             <button
-              onClick={handleChangePassword}
+              type="submit"
               disabled={
                 pwSaving ||
                 !pwForm.old_password ||
@@ -417,7 +453,7 @@ export default function UserInfo() {
               <Lock size={15} />
               {pwSaving ? "در حال تغییر..." : "تغییر رمز عبور"}
             </button>
-          </div>
+          </form>
         </div>
 
         {/* Orders Section */}
@@ -563,10 +599,12 @@ function ReadValue({ value }) {
   );
 }
 
-function TextInput({ value, onChange, type = "text", dir }) {
+function TextInput({ value, onChange, type = "text", dir, name, autoComplete }) {
   return (
     <input
       type={type}
+      name={name}
+      autoComplete={autoComplete}
       dir={dir}
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -576,12 +614,14 @@ function TextInput({ value, onChange, type = "text", dir }) {
   );
 }
 
-function PasswordInput({ label, value, onChange, show }) {
+function PasswordInput({ label, value, onChange, show, name, autoComplete }) {
   return (
     <div>
       <label className="block text-xs text-[#687173] mb-1">{label}</label>
       <input
         type={show ? "text" : "password"}
+        name={name}
+        autoComplete={autoComplete}
         dir="ltr"
         value={value}
         onChange={(e) => onChange(e.target.value)}

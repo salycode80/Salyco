@@ -23,6 +23,28 @@ from .permissions import IsAdminUser
 
 # ── shared query helpers ─────────────────────────────────────────────────────
 
+# Whitelist of sortable columns. Mapping the public param to real field names
+# keeps arbitrary ORM paths out of order_by(), and lets a single choice expand
+# to a tie-breaker so equal values come back in a stable order.
+INSTANCE_ORDERING = {
+    "newest": ["-created_at", "serial_number"],
+    "oldest": ["created_at", "serial_number"],
+    "manufacture_desc": ["-manufacture_date", "-created_at"],
+    "manufacture_asc": ["manufacture_date", "created_at"],
+    "activation_desc": ["-activation_date", "-created_at"],
+    "activation_asc": ["activation_date", "created_at"],
+    "serial_asc": ["serial_number"],
+    "serial_desc": ["-serial_number"],
+}
+
+DEFAULT_INSTANCE_ORDERING = "newest"
+
+
+def apply_ordering(qs, requested: str | None, allowed: dict, default: str):
+    """Order `qs` by a whitelisted key, falling back to `default`."""
+    return qs.order_by(*allowed.get(requested or default, allowed[default]))
+
+
 def filter_instances(request):
     """Build a filtered MattressInstance queryset from query params.
 
@@ -31,6 +53,7 @@ def filter_instances(request):
       sold     – "true" | "false"     (has a customer or not)
       warranty – "active" | "inactive"
       mattress – mattress id
+      ordering – one of INSTANCE_ORDERING (default: newest first)
     """
     qs = MattressInstance.objects.select_related("mattress", "customer")
 
@@ -62,7 +85,12 @@ def filter_instances(request):
     if mattress_id:
         qs = qs.filter(mattress_id=mattress_id)
 
-    return qs
+    return apply_ordering(
+        qs,
+        request.query_params.get("ordering"),
+        INSTANCE_ORDERING,
+        DEFAULT_INSTANCE_ORDERING,
+    )
 
 
 def filter_customers(request):
@@ -183,6 +211,7 @@ class AdminInstanceExportView(APIView):
                 "Warranty Active",
                 "Activation Date",
                 "Manufacture Date",
+                "Created At",
                 "Expiration Date",
                 "Under Warranty",
             ]
@@ -199,6 +228,9 @@ class AdminInstanceExportView(APIView):
                     "Yes" if i.is_warranty_active else "No",
                     i.activation_date or "",
                     i.manufacture_date or "",
+                    timezone.localtime(i.created_at).strftime("%Y-%m-%d %H:%M:%S")
+                    if i.created_at
+                    else "",
                     i.warranty_expiration_date or "",
                     "Yes" if i.is_under_warranty else "No",
                 ]
@@ -284,13 +316,6 @@ class AdminReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminReviewSerializer
     queryset = Review.objects.select_related("mattress", "customer")
 
-    def perform_update(self, serializer):
-        review = serializer.save()
-        # Refresh the cached rating + count on the parent mattress
-        review.mattress.update_rating_cache()
-
-    def perform_destroy(self, instance):
-        mattress = instance.mattress
-        instance.delete()
-        # Refresh the cached rating + count after removing the review
-        mattress.update_rating_cache()
+    # The parent mattress's cached rating is refreshed by the Review
+    # post_save/post_delete signals (mattress/models.py), so approving or
+    # deleting here needs no extra bookkeeping.

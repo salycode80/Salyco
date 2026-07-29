@@ -143,8 +143,18 @@ export default function SearchBar({
 
       <input
         type="text"
+        name="site-search"
         value={query}
         autoFocus={autoFocus}
+        // Password managers scan for a username field to pair with any password
+        // field on the page. Without these hints this box — the first unnamed
+        // text input in the document — gets filled with the saved username the
+        // moment a page with a password form mounts.
+        autoComplete="off"
+        data-form-type="other"
+        data-lpignore="true"
+        data-1p-ignore
+        enterKeyHint="search"
         placeholder="جست و جو در محصولات و مقالات ..."
         dir="rtl"
         onChange={(e) => {
