@@ -14,7 +14,7 @@ const LockIcon = () => (
   </svg>
 );
 
-export function LoginForm({ onSwitchToRegister, onSuccess }) {
+export function LoginForm({ onSwitchToRegister, onSwitchToOTP, onSuccess }) {
   const { login } = useAuth();
   const [form, setForm] = useState({ username: "", password: "" });
   const [status, setStatus] = useState({ loading: false, error: "", success: "" });
@@ -86,9 +86,7 @@ export function LoginForm({ onSwitchToRegister, onSuccess }) {
       <div className="text-center text-[13px] text-[#687173]">
         <button
           type="button"
-          onClick={() => {
-            setStatus({ loading: false, error: "ورود با کد تأیید هنوز فعال نشده است", success: "" });
-          }}
+          onClick={onSwitchToOTP}
           className="text-[#003087] hover:underline"
         >
           ورود با کد تأیید

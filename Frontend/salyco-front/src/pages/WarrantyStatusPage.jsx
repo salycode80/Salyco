@@ -37,13 +37,13 @@ export default function WarrantyStatusPage() {
 
       <div className="relative mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
         <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#009CDE]">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
             Warranty
           </p>
-          <h1 className="mt-2 font-persian text-4xl font-bold text-[#1A1A2E] md:text-5xl">
+          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
             وضعیت گارانتی
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#F5BA2E]" />
+          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
         </header>
 
         {loading && (

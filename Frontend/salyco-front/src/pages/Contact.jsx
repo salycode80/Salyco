@@ -100,7 +100,7 @@ export default function Contact() {
           <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
             Contact Us
           </p>
-          <h1 className="mt-2 font-persian text-4xl font-bold text-[#1A1A2E] md:text-5xl">
+          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
             تماس با ما
           </h1>
           <hr className="mt-4 w-24 border-t-2 border-[#003087]" />

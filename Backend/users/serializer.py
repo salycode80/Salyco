@@ -109,7 +109,7 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class VerifyOTPSerializer(serializers.Serializer):
-    """Redeem a registration code and activate the account."""
+    """Redeem a registration or login OTP code."""
 
     phone_number = PhoneField(max_length=20)
     code = serializers.CharField(max_length=8)
@@ -123,9 +123,10 @@ class VerifyOTPSerializer(serializers.Serializer):
                 {"phone_number": "ثبت‌نامی با این شماره یافت نشد."}
             )
 
+        # Look for OTP with any purpose (REGISTER or LOGIN)
         otp = (
             PhoneOTP.objects.filter(
-                phone_number=phone, purpose=PhoneOTP.PURPOSE_REGISTER, is_used=False
+                phone_number=phone, is_used=False
             )
             .order_by("-created_at")
             .first()
@@ -140,11 +141,14 @@ class VerifyOTPSerializer(serializers.Serializer):
             raise serializers.ValidationError({"code": error})
 
         attrs["user"] = user
+        attrs["otp"] = otp
         return attrs
 
     def save(self, **kwargs):
         user = self.validated_data["user"]
-        if not user.is_active:
+        # Only activate if this was a registration OTP
+        otp = self.validated_data.get("otp")
+        if otp and otp.purpose == PhoneOTP.PURPOSE_REGISTER and not user.is_active:
             user.is_active = True
             user.save(update_fields=["is_active"])
         return user

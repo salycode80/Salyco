@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -19,7 +20,7 @@ from .serializer import (
     UserSerializer,
     VerifyOTPSerializer,
 )
-# from .models import Note
+from .models import PhoneOTP
 
 
 # class NoteListCreate(generics.ListCreateAPIView):
@@ -67,11 +68,20 @@ class RegisterView(APIView):
         user = serializer.save()
         otp = serializer.otp
 
-        send_otp_sms(user.username, otp.code)
+        # Send OTP via SMS.ir
+        success, message = send_otp_sms(user.username, otp.code)
+
+        if not success:
+            # Delete the created user if SMS failed
+            user.delete()
+            return Response(
+                {"detail": message},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         return Response(
             {
-                "detail": "کد تأیید ارسال شد.",
+                "detail": message,
                 "phone_number": user.username,
                 "expires_in": otp.seconds_remaining(),
             },
@@ -80,10 +90,10 @@ class RegisterView(APIView):
 
 
 class VerifyOTPView(APIView):
-    """POST /api/user/verify-otp/ — redeem the registration code.
+    """POST /api/user/verify-otp/ — redeem the registration or login OTP.
 
-    On success the account is activated and tokens are returned, so the user
-    lands logged in rather than being bounced back to the login form.
+    On success for registration: the account is activated and tokens are returned.
+    On success for login: tokens are returned for passwordless login.
     """
 
     permission_classes = [AllowAny]
@@ -114,11 +124,18 @@ class ResendOTPView(APIView):
         serializer.is_valid(raise_exception=True)
         otp = serializer.save()
 
-        send_otp_sms(otp.phone_number, otp.code)
+        # Send OTP via SMS.ir
+        success, message = send_otp_sms(otp.phone_number, otp.code)
+
+        if not success:
+            return Response(
+                {"detail": message},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         return Response(
             {
-                "detail": "کد تأیید مجدداً ارسال شد.",
+                "detail": message,
                 "expires_in": otp.seconds_remaining(),
             },
             status=status.HTTP_200_OK,
@@ -126,11 +143,9 @@ class ResendOTPView(APIView):
 
 
 class LoginOTPRequestView(APIView):
-    """POST /api/user/login-otp/ — deliberately refuses while OTP is a stand-in.
+    """POST /api/user/login-otp/ — send OTP for passwordless login.
 
-    The request shape is validated so the frontend path is real, but no code is
-    issued and no tokens are ever returned: with STATIC_OTP_CODE in place,
-    anyone who knows a phone number could otherwise sign in as its owner.
+    Requires a valid phone number with an existing active account.
     """
 
     permission_classes = [AllowAny]
@@ -145,8 +160,51 @@ class LoginOTPRequestView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
-        # Unreachable until a real SMS provider is wired up; see users/otp.py.
-        raise NotImplementedError("OTP login requires an SMS provider")
+        phone_number = serializer.validated_data['phone_number']
+
+        # Check if user exists and is active
+        try:
+            user = User.objects.get(username=phone_number)
+            if not user.is_active:
+                return Response(
+                    {"detail": "این حساب هنوز فعال نشده است. لطفاً ثبت‌نام را تکمیل کنید."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "حساب کاربری با این شماره یافت نشد."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Issue OTP for login
+        otp = PhoneOTP.issue(phone_number=phone_number, purpose=PhoneOTP.PURPOSE_LOGIN)
+
+        # Send OTP via SMS.ir
+        success, message = send_otp_sms(phone_number, otp.code)
+
+        if not success:
+            return Response(
+                {"detail": message},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                "detail": message,
+                "phone_number": phone_number,
+                "expires_in": otp.seconds_remaining(),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+        return Response(
+            {
+                "detail": message,
+                "phone_number": phone_number,
+                "expires_in": otp.seconds_remaining(),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class CurrentUserView(generics.RetrieveUpdateAPIView):

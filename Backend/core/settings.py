@@ -199,6 +199,13 @@ STORAGES = {
     },
 }
 
+# ── SMS.ir Configuration ──────────────────────────────────────────────────────
+# SMS.ir API key from https://sms.ir/panel/settings
+SMS_IR_API_KEY = os.getenv('SMS_IR_API_KEY', 'JYhqBLNqO9Uk2f6s8ZYjbBJbyUXP14ws5cfSOhlc5zb5tkmA')
+
+# OTP template ID from SMS.ir panel (template must contain #code# placeholder)
+SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 389724))
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 

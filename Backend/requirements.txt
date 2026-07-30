@@ -12,3 +12,4 @@ python-dotenv
 qrcode[pil]
 gunicorn
 whitenoise
+requests

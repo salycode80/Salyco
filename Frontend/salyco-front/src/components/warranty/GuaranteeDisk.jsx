@@ -16,9 +16,10 @@ const GuaranteeDisk = ({ product }) => {
     : 0;
   const circumference = 276.46;
   const offset = circumference - (percentage / 100) * circumference;
+  const ariaLabel = `${percentage}% of warranty remaining, ${product.remainingMonths} months left`;
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4" role="img" aria-label={ariaLabel}>
       <div className="relative h-20 w-20">
         <svg className="-rotate-90 h-20 w-20" viewBox="0 0 100 100">
           <circle

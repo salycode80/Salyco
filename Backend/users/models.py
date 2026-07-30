@@ -77,11 +77,13 @@ class PhoneOTP(models.Model):
             phone_number=phone_number, purpose=purpose, is_used=False
         ).update(is_used=True)
 
+        # Generate a real OTP code using the new function
+        from .otp import generate_otp_code
+        code = generate_otp_code()
+
         return cls.objects.create(
             phone_number=phone_number,
-            # secrets, not random, because this becomes a real credential the
-            # day STATIC_OTP_CODE is dropped.
-            code=STATIC_OTP_CODE or f"{secrets.randbelow(10000):04d}",
+            code=code,
             purpose=purpose,
             expires_at=timezone.now() + OTP_TTL,
         )

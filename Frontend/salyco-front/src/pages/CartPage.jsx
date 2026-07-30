@@ -107,10 +107,15 @@ export default function CartPage() {
       <PageBackground />
 
       <div className="relative mx-auto max-w-[1120px] px-6 py-8 sm:py-10" dir="rtl">
-        <h1 className="mb-8 flex items-center gap-3 font-persian text-2xl font-bold text-[#1A1A2E] md:text-3xl">
-          <ShoppingCart size={26} className="text-[#003087]" />
-          سبد خرید
-        </h1>
+        <header className="mb-12" dir="rtl">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+            Shopping
+          </p>
+          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+            سبد خرید
+          </h1>
+          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
+        </header>
 
         {items.length === 0 ? (
           <div className={`${CARD} flex flex-col items-center justify-center p-12 text-center`}>

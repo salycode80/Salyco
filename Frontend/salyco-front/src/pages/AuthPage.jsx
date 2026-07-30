@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { AuthTabs } from "../components/auth/AuthTabs";
 import { AuthAlert } from "../components/auth/AuthAlert";
 import { LoginForm } from "../components/auth/LoginForm";
+import { LoginOTPForm } from "../components/auth/LoginOTPForm";
 import { RegisterForm } from "../components/auth/RegisterForm";
 
 // Why the user was sent here, when they didn't come on their own. Both cases mean
@@ -43,9 +44,15 @@ export default function AuthPage() {
             <AuthTabs active={tab} onChange={setTab} />
 
             <div className="overflow-hidden">
-              {tab === "login" ? (
+              {tab === "login-otp" ? (
+                <LoginOTPForm
+                  onSwitchToPassword={() => setTab("login")}
+                  onSwitchToRegister={() => setTab("register")}
+                />
+              ) : tab === "login" ? (
                 <LoginForm
                   onSwitchToRegister={() => setTab("register")}
+                  onSwitchToOTP={() => setTab("login-otp")}
                   onSuccess={handleLoginSuccess}
                 />
               ) : (

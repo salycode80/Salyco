@@ -28,47 +28,50 @@ export default function MyWarrantiesPage() {
       <PageBackground />
 
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
-        <header className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end" dir="rtl">
-          <div>
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#009CDE]">
-              My Warranties
-            </p>
-            <h1 className="mt-2 font-persian text-4xl font-bold text-[#1A1A2E] md:text-5xl">
-              گارانتی‌های من
-            </h1>
-            <hr className="mt-4 w-24 border-t-2 border-[#F5BA2E]" />
-          </div>
+        <header className="mb-12" dir="rtl">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+            My Warranties
+          </p>
+          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+            گارانتی‌های من
+          </h1>
+          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
+        </header>
 
+        <div className="mb-6 flex justify-end" dir="rtl">
           <Link
             to="/productregistration"
-            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
+            className="inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20"
           >
             <Plus size={18} strokeWidth={2} />
             ثبت گارانتی جدید
           </Link>
-        </header>
+        </div>
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
-            <svg
-              className="animate-spin h-10 w-10 text-[#003087]"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8z"
-              />
-            </svg>
+            <div className="flex h-14 w-14 items-center justify-center">
+              <svg
+                className="animate-spin h-12 w-12 text-[#003087]"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                />
+              </svg>
+            </div>
             <p className="mt-4 font-persian text-sm text-[#687173]">
               در حال بارگذاری...
             </p>
@@ -109,7 +112,7 @@ export default function MyWarrantiesPage() {
             </p>
             <Link
               to="/productregistration"
-              className="mt-6 inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
+              className="mt-6 inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20"
             >
               <Plus size={18} strokeWidth={2} />
               ثبت گارانتی
