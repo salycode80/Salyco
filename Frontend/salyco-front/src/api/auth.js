@@ -1,7 +1,8 @@
 import api from "../api";
 import { REFRESH_TOKEN } from "../constants";
 
-// POST /api/token/ — no auth header needed (public endpoint)
+// POST /api/token/ — no auth header needed (public endpoint).
+// `username` is the phone number: that is what the account is created with.
 export async function loginUser({ username, password }) {
   try {
     const res = await api.post("/api/token/", { username, password });
@@ -11,7 +12,7 @@ export async function loginUser({ username, password }) {
     const msg =
       data?.detail ||
       data?.non_field_errors?.[0] ||
-      "نام کاربری یا رمز عبور اشتباه است";
+      "شماره موبایل یا رمز عبور اشتباه است";
     throw new Error(msg);
   }
 }
@@ -30,60 +31,60 @@ function firstErrorMessage(err, fallback) {
   return fallback;
 }
 
-// POST /api/user/register/ — phone + password only (public endpoint).
-// Returns {detail, phone_number, expires_in}: no tokens, because the account is
-// inactive until the OTP is verified. `phone_number` is the server's normalised
-// form (09XXXXXXXXX) and is what the verify call must send back.
-export async function registerUser({ phone_number, password, password2 }) {
+// ── Unified login/registration ───────────────────────────────────────────────
+// One flow for both: post a phone number, then a code, and the server says
+// which of the two it turned out to be. Nothing here needs to know up front.
+
+// POST /api/user/auth/start/ — send a code, and find out what this number is.
+// Returns {detail, mode, phone_number, expires_in} where mode is "login" for a
+// registered number or "register" for a new one. `phone_number` comes back
+// normalised (09XXXXXXXXX) and is what the verify call must send.
+//
+// Also the resend call: the server retires the previous code when it issues a
+// new one, so calling this again is safe.
+export async function startAuth({ phone_number }) {
   try {
-    const res = await api.post("/api/user/register/", {
-      phone_number,
-      password,
-      password2,
-    });
+    const res = await api.post("/api/user/auth/start/", { phone_number });
     return res.data;
   } catch (err) {
-    throw new Error(firstErrorMessage(err, "خطا در ثبت‌ نام"));
+    throw new Error(firstErrorMessage(err, "ارسال کد تأیید ناموفق بود"));
   }
 }
 
-// POST /api/user/verify-otp/ — redeem the registration code.
-// Returns {access, refresh} so the user lands logged in.
-export async function verifyRegistrationOtp({ phone_number, code }) {
+// POST /api/user/auth/verify/ — redeem the code.
+// Returns {mode: "login", access, refresh} for an existing account, or
+// {mode: "register", phone_number, registration_token} for a new number, where
+// there is no account to issue tokens for yet. Callers must branch on `mode`.
+export async function verifyAuthOtp({ phone_number, code }) {
   try {
-    const res = await api.post("/api/user/verify-otp/", { phone_number, code });
+    const res = await api.post("/api/user/auth/verify/", { phone_number, code });
     return res.data;
   } catch (err) {
     throw new Error(firstErrorMessage(err, "کد تأیید نادرست است"));
   }
 }
 
-// POST /api/user/resend-otp/ — a fresh code for a signup awaiting verification.
-export async function resendRegistrationOtp({ phone_number }) {
+// POST /api/user/auth/complete/ — create the account and log in.
+// The phone number travels inside registration_token (signed by the server at
+// the verify step), not as a field, so it cannot be swapped for another one.
+export async function completeRegistration({
+  registration_token,
+  first_name,
+  last_name,
+  password,
+  password2,
+}) {
   try {
-    const res = await api.post("/api/user/resend-otp/", { phone_number });
-    return res.data; // { detail, expires_in }
+    const res = await api.post("/api/user/auth/complete/", {
+      registration_token,
+      first_name,
+      last_name,
+      password,
+      password2,
+    });
+    return res.data; // { detail, access, refresh }
   } catch (err) {
-    throw new Error(firstErrorMessage(err, "ارسال مجدد کد ناموفق بود"));
-  }
-}
-
-// POST /api/user/login-otp/ — always rejects for now.
-// The backend answers 503 while the OTP code is a static stand-in: issuing
-// tokens to anyone who types it would let a stranger sign in as the owner of
-// any phone number. Kept as a real call so the flow works unchanged the day an
-// SMS provider is added.
-export async function requestLoginOtp({ phone_number }) {
-  try {
-    const res = await api.post("/api/user/login-otp/", { phone_number });
-    return res.data;
-  } catch (err) {
-    throw new Error(
-      firstErrorMessage(
-        err,
-        "ورود با رمز یک‌بار مصرف هنوز فعال نشده است. لطفاً با رمز عبور وارد شوید.",
-      ),
-    );
+    throw new Error(firstErrorMessage(err, "تکمیل ثبت‌نام ناموفق بود"));
   }
 }
 

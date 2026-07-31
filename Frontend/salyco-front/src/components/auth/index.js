@@ -1,5 +1,4 @@
-export { LoginForm } from "./LoginForm";
-export { RegisterForm } from "./RegisterForm";
-export { AuthTabs } from "./AuthTabs";
+export { AuthFlow } from "./AuthFlow";
+export { OtpInput, OtpCountdown } from "./OtpInput";
 export { InputField } from "./InputField";
 export { AuthAlert } from "./AuthAlert";

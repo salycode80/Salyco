@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.core import signing
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
@@ -182,6 +183,191 @@ class LoginOTPRequestSerializer(serializers.Serializer):
     """
 
     phone_number = PhoneField(max_length=20)
+
+
+# ── Unified login/registration flow ──────────────────────────────────────────
+# Three serializers for the one-entry-point flow: the user types a phone number
+# and a code, and only *then* is told whether they just logged in or still need
+# to pick a name and password. The older RegisterSerializer above cannot express
+# that, because it needs the password before the OTP is even sent.
+
+# How long the signed registration token stays redeemable. Generous enough to
+# type a name and a password twice, short enough that a leaked token from a
+# browser history or a proxy log is worthless.
+REGISTRATION_TOKEN_MAX_AGE = 600  # seconds
+REGISTRATION_TOKEN_SALT = "users.auth.registration"
+
+MODE_LOGIN = "login"
+MODE_REGISTER = "register"
+
+
+def classify_phone(phone: str):
+    """Decide what an incoming phone number means. Returns (mode, user).
+
+    `user` is the existing row when there is one worth reusing, else None. The
+    inactive-with-a-login-history case is neither: that is an account an admin
+    switched off, and letting a signup overwrite it would be a way to take it
+    over, so it is refused by the caller.
+    """
+    user = User.objects.filter(username=phone).first()
+    if user is None:
+        return MODE_REGISTER, None
+    if user.is_active:
+        return MODE_LOGIN, user
+    if user.last_login is None:
+        # Abandoned signup — someone closed the tab at the OTP step. Reuse it
+        # rather than telling them their own number is taken.
+        return MODE_REGISTER, user
+    return None, user
+
+
+class AuthStartSerializer(serializers.Serializer):
+    """Step 1: a phone number, and nothing else."""
+
+    phone_number = PhoneField(max_length=20)
+
+
+class AuthVerifySerializer(serializers.Serializer):
+    """Step 2: redeem the code.
+
+    Deliberately not VerifyOTPSerializer, which rejects any phone without a
+    User row — for a new signup that row does not exist yet and is not supposed
+    to. The purpose recorded on the OTP is not re-checked here: `mode` is
+    re-derived from the database, so a code issued for one flow cannot be spent
+    to reach the other.
+    """
+
+    phone_number = PhoneField(max_length=20)
+    code = serializers.CharField(max_length=8)
+
+    def validate(self, attrs):
+        phone = attrs["phone_number"]
+
+        otp = (
+            PhoneOTP.objects.filter(phone_number=phone, is_used=False)
+            .order_by("-created_at")
+            .first()
+        )
+        if otp is None:
+            raise serializers.ValidationError(
+                {"code": "کد تأییدی برای این شماره وجود ندارد. کد جدید درخواست کنید."}
+            )
+
+        mode, user = classify_phone(phone)
+        if mode is None:
+            raise serializers.ValidationError(
+                {"phone_number": "این حساب غیرفعال شده است. با پشتیبانی تماس بگیرید."}
+            )
+
+        # Burn the code only after the account state is known to be usable, so a
+        # 403 doesn't also cost the user their code.
+        ok, error = otp.verify(attrs["code"])
+        if not ok:
+            raise serializers.ValidationError({"code": error})
+
+        attrs["mode"] = mode
+        attrs["user"] = user
+        return attrs
+
+
+class AuthCompleteSerializer(serializers.Serializer):
+    """Step 3: name + password for a phone that was just verified.
+
+    The phone number arrives inside `registration_token` rather than as a field
+    of its own. That token is a signed, timestamped value this server minted at
+    the end of step 2, and it is the only proof that the number was verified —
+    the OTP itself is already burned by now, so it cannot be re-checked. Taking
+    the phone from the request body instead would let anyone create an account
+    on any number by skipping straight to this endpoint.
+    """
+
+    registration_token = serializers.CharField()
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    password = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
+
+    def validate_registration_token(self, value):
+        try:
+            phone = signing.loads(
+                value,
+                salt=REGISTRATION_TOKEN_SALT,
+                max_age=REGISTRATION_TOKEN_MAX_AGE,
+            )
+        except signing.SignatureExpired as exc:
+            raise serializers.ValidationError(
+                "زمان ثبت‌نام به پایان رسید. لطفاً دوباره شماره خود را وارد کنید."
+            ) from exc
+        except signing.BadSignature as exc:
+            raise serializers.ValidationError(
+                "درخواست ثبت‌نام معتبر نیست. لطفاً دوباره تلاش کنید."
+            ) from exc
+        self._phone = phone
+        return value
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password2"]:
+            raise serializers.ValidationError(
+                {"password2": "رمز عبور و تکرار آن یکسان نیستند."}
+            )
+
+        # Set by validate_registration_token, which DRF runs first. If the token
+        # was bad, this method is never reached.
+        phone = self._phone
+        mode, existing = classify_phone(phone)
+        if mode == MODE_LOGIN:
+            # Someone finished a signup on this number while this form sat open.
+            raise serializers.ValidationError(
+                {"phone_number": "این شماره قبلاً ثبت شده است. وارد شوید."}
+            )
+        if mode is None:
+            raise serializers.ValidationError(
+                {"phone_number": "این حساب غیرفعال شده است. با پشتیبانی تماس بگیرید."}
+            )
+
+        # Same reason as RegisterSerializer: stop the phone number from doubling
+        # as the password (UserAttributeSimilarityValidator needs the username).
+        validate_password(attrs["password"], User(username=phone))
+
+        attrs["phone_number"] = phone
+        self._existing = existing
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        phone = validated_data["phone_number"]
+
+        user = self._existing or User(username=phone)
+        user.first_name = validated_data["first_name"]
+        user.last_name = validated_data["last_name"]
+        user.set_password(validated_data["password"])
+        # Active immediately: the number is already verified by the time this
+        # endpoint is reachable, which is what `is_active = False` was guarding
+        # against in the older two-step signup.
+        user.is_active = True
+        user.save()
+
+        Customer.objects.update_or_create(
+            user=user,
+            defaults={
+                "phone_number": phone,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+            },
+            create_defaults={
+                "phone_number": phone,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "address": "",
+                "postal_code": "",
+            },
+        )
+        return user
+
+
+def make_registration_token(phone: str) -> str:
+    """Sign a just-verified phone number for AuthCompleteSerializer to redeem."""
+    return signing.dumps(phone, salt=REGISTRATION_TOKEN_SALT)
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/UseAuth";
 import { useCart } from "../context/CartContext";
+import { useToast } from "../context/ToastContext";
 import { toPersianNumber } from "../utils/persian";
 import api from "../api";
 import SearchBar from "./SearchBar";
@@ -34,6 +35,7 @@ const categories = [
 export default function Navbar() {
   const { isAuthenticated, logout } = useAuth();
   const { count: cartCount } = useCart();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -66,6 +68,7 @@ export default function Navbar() {
     logout();
     setMenuOpen(false);
     setIsUserMenuOpen(false);
+    showToast("با موفقیت خارج شدید", "success");
     navigate("/");
   };
 
@@ -73,9 +76,18 @@ export default function Navbar() {
   const toggleUserMenu = () => setIsUserMenuOpen((o) => !o);
   const closeUserMenu = () => setIsUserMenuOpen(false);
 
-  const getUserInitials = (username) => {
-    if (!username) return "?";
-    return username.charAt(0).toUpperCase();
+  // Show first + last name when available, else the username, else a placeholder.
+  // For phone-registered accounts, username is the phone number, which is a poor
+  // display choice — first_name + last_name is filled in at signup or profile edit.
+  const displayName = (u) =>
+    [u?.first_name, u?.last_name].filter(Boolean).join(" ") ||
+    u?.username ||
+    "کاربر";
+
+  const getUserInitials = (u) => {
+    // First letter of the first name if available, else first letter of username.
+    const initial = u?.first_name?.charAt(0) || u?.username?.charAt(0) || "?";
+    return initial.toUpperCase();
   };
 
   // Shared dropdown menu content (used by both desktop + mobile avatar buttons)
@@ -85,15 +97,15 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-[#003087]/10 flex items-center justify-center border border-[#CBD2D6] flex-shrink-0">
             <span className="text-lg font-bold text-[#003087]">
-              {getUserInitials(user?.username)}
+              {getUserInitials(user)}
             </span>
           </div>
           <div className="min-w-0">
             <p className="font-persian text-sm font-medium text-[#1A1A2E] truncate">
-              {user?.username}
+              {displayName(user)}
             </p>
-            <p className="text-xs text-[#687173] truncate">
-              {user?.email || "کاربر"}
+            <p className="text-xs text-[#687173] truncate" dir="ltr">
+              {user?.phone_number || user?.username || ""}
             </p>
           </div>
         </div>
@@ -207,7 +219,7 @@ export default function Navbar() {
                   >
                     <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
                       <span className="font-persian text-sm font-bold text-white">
-                        {getUserInitials(user?.username)}
+                        {getUserInitials(user)}
                       </span>
                     </div>
                     <ChevronDown
@@ -228,7 +240,7 @@ export default function Navbar() {
                            text-[#003087] bg-white hover:bg-[#F5F7FA] rounded-lg px-4 h-12 tracking-wide transition-colors"
               >
                 <UserCircle size={18} />
-                <span>ورود / ثبت‌نام</span>
+                <span>ورود به حساب کاربری</span>
               </Link>
             )}
           </div>
@@ -349,15 +361,15 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 py-3">
                   <div className="w-9 h-9 rounded-full bg-[#003087]/10 flex items-center justify-center border border-[#CBD2D6] flex-shrink-0">
                     <span className="font-persian text-sm font-bold text-[#003087]">
-                      {getUserInitials(user?.username)}
+                      {getUserInitials(user)}
                     </span>
                   </div>
                   <div className="min-w-0">
                     <p className="font-persian text-sm font-medium text-[#1A1A2E] truncate">
-                      {user?.username}
+                      {displayName(user)}
                     </p>
-                    <p className="text-xs text-[#687173] truncate">
-                      {user?.email || "کاربر"}
+                    <p className="text-xs text-[#687173] truncate" dir="ltr">
+                      {user?.phone_number || user?.username || ""}
                     </p>
                   </div>
                 </div>
@@ -387,7 +399,7 @@ export default function Navbar() {
                 className="flex items-center gap-2 py-3 font-persian text-sm font-medium text-[#1A1A2E] hover:text-[#003087] transition-colors"
               >
                 <UserCircle size={18} className="text-[#687173]" />
-                <span>ورود / ثبت‌نام</span>
+                <span>ورود به حساب کاربری</span>
               </Link>
             )}
           </div>

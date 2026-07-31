@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { loginUser, registerUser } from "../api/auth";
+import { loginUser } from "../api/auth";
 import { AuthContext } from "../auth/authContext";
 import {
   ACCESS_TOKEN,
@@ -81,7 +81,18 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
-  const register = useCallback((userInfo) => registerUser(userInfo), []);
+  // Enter a session from a token pair the server already issued. The OTP flows
+  // get theirs from /api/user/verify-otp/, so there are no credentials left to
+  // post to loginUser() — and for a phone signup there never were any that would
+  // work, since the account's username is the phone number, not anything the
+  // user typed. Same bookkeeping as login(), minus the credential exchange.
+  const loginWithTokens = useCallback((data) => {
+    saveTokens(data);
+    markActivity();
+    markKeepAlive();
+    setTokens({ access: data.access, refresh: data.refresh });
+    return data;
+  }, []);
 
   const logout = useCallback(() => {
     clearTokens();
@@ -257,7 +268,7 @@ export function AuthProvider({ children }) {
       tokens,
       isAuthenticated,
       login,
-      register,
+      loginWithTokens,
       refresh,
       logout,
       idleWarningOpen,
@@ -268,7 +279,7 @@ export function AuthProvider({ children }) {
       tokens,
       isAuthenticated,
       login,
-      register,
+      loginWithTokens,
       refresh,
       logout,
       idleWarningOpen,

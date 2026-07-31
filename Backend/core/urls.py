@@ -19,6 +19,9 @@ from django.urls import path ,include
 from django.conf import settings
 from django.conf.urls.static import static
 from users.views import (
+    AuthCompleteView,
+    AuthStartView,
+    AuthVerifyView,
     ChangePasswordView,
     CurrentUserView,
     LoginOTPRequestView,
@@ -30,6 +33,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Unified login/registration: one phone number in, the server decides which
+    # of the two it was. See users/views.py.
+    path("api/user/auth/start/", AuthStartView.as_view(), name="auth-start"),
+    path("api/user/auth/verify/", AuthVerifyView.as_view(), name="auth-verify"),
+    path("api/user/auth/complete/", AuthCompleteView.as_view(), name="auth-complete"),
+    # Older split flow. Still routed, no longer called by the frontend.
     path("api/user/register/", RegisterView.as_view(), name="register"),
     path("api/user/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
     path("api/user/resend-otp/", ResendOTPView.as_view(), name="resend-otp"),

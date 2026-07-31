@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.http import HttpResponse
+from django.utils import timezone
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -19,6 +20,8 @@ from .serializers import (
     WarrantyRegistrationSerializer,
 )
 from .utils import generate_qr_code_base64, get_warranty_public_url
+
+from users.notifications import send_warranty_activated_sms
 
 
 class MattressViewSet(viewsets.ModelViewSet):
@@ -116,6 +119,20 @@ class WarrantyRegistrationView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+
+        # Confirmation SMS, best-effort: the warranty is already active and
+        # committed by this point, so a gateway failure must not surface as an
+        # error. Prefer the buyer phone recorded for this sale over the
+        # account's, since they can differ (a dealer registering for a customer).
+        now = timezone.localtime()
+        send_warranty_activated_sms(
+            phone_number=instance.buyer_phone_number
+            or (instance.customer.phone_number if instance.customer_id else ""),
+            customer_name=f"{instance.buyer_first_name} {instance.buyer_last_name}".strip(),
+            activation_date=str(instance.activation_date or now.date()),
+            activation_time=now.strftime("%H:%M"),
+        )
+
         return Response(
             MattressInstanceSerializer(instance).data,
             status=status.HTTP_201_CREATED,

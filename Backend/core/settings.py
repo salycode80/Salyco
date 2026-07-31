@@ -64,8 +64,18 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",  
+        "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        # Applies to views that set throttle_scope = "otp": the unauthenticated
+        # start/verify endpoints. Every start call spends money at SMS.ir and
+        # answers "is this number registered?", so it is rate-limited per IP.
+        # Generous enough for a mistyped number and a resend or two.
+        "otp": "12/hour",
+    },
 }
 
 SIMPLE_JWT = {
@@ -205,6 +215,16 @@ SMS_IR_API_KEY = os.getenv('SMS_IR_API_KEY', 'JYhqBLNqO9Uk2f6s8ZYjbBJbyUXP14ws5c
 
 # OTP template ID from SMS.ir panel (template must contain #code# placeholder)
 SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 389724))
+
+# Transactional (non-OTP) template IDs — see users/notifications.py. Each is
+# sent through the same /send/verify pattern endpoint as the OTP above, and the
+# parameter names sent for each are the #placeholders# that template must use:
+#   welcome  → #name#              (first-time registration only)
+#   warranty → #product#, #serial# (warranty activation)
+#   order    → #order#, #amount#   (order placed)
+SMS_IR_TEMPLATE_WELCOME = int(os.getenv('SMS_IR_TEMPLATE_WELCOME', 596133))
+SMS_IR_TEMPLATE_WARRANTY = int(os.getenv('SMS_IR_TEMPLATE_WARRANTY', 475048))
+SMS_IR_TEMPLATE_ORDER = int(os.getenv('SMS_IR_TEMPLATE_ORDER', 248731))
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

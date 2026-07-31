@@ -1,12 +1,19 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.core import signing
+from django.core.cache import cache
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.utils import aware_utcnow
+
+from .models import Customer, PhoneOTP
+from .serializer import REGISTRATION_TOKEN_SALT
 
 
 # The inactivity window enforced by the frontend (IDLE_TIMEOUT_MS in
@@ -167,3 +174,306 @@ class AuthenticatedEndpointTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
         response = self.client.get(reverse("current-user"))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+# ── Unified login/registration flow ──────────────────────────────────────────
+# The endpoints under /api/user/auth/. `send_otp_sms` is patched throughout:
+# these tests are about the state machine, not SMS.ir, and an unpatched call
+# would try to reach the network.
+
+PHONE = "09121110001"
+STRONG_PASSWORD = "salyco-unified-pw-7719"
+
+
+class ThrottleFreeMixin:
+    """Reset the throttle counters between tests.
+
+    ScopedRateThrottle keeps its per-IP history in the cache, which outlives a
+    single test — without this, the suite starts 429ing partway through and the
+    failures point at whatever test happened to be twelfth.
+    """
+
+    def setUp(self):
+        super().setUp()
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+
+@patch("users.views.send_otp_sms", return_value=(True, "کد ارسال شد"))
+class AuthStartTests(ThrottleFreeMixin, APITestCase):
+    """Step 1 classifies the number without writing anything."""
+
+    def start(self, phone=PHONE):
+        return self.client.post(
+            reverse("auth-start"), {"phone_number": phone}, format="json"
+        )
+
+    def test_unknown_phone_is_register_mode_and_creates_no_user(self, _sms):
+        response = self.start()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["mode"], "register")
+        # The whole point of the new flow: no half-made account exists until a
+        # password and a name have actually been supplied.
+        self.assertFalse(User.objects.filter(username=PHONE).exists())
+        self.assertTrue(PhoneOTP.objects.filter(phone_number=PHONE).exists())
+
+    def test_active_phone_is_login_mode(self, _sms):
+        User.objects.create_user(username=PHONE, password=STRONG_PASSWORD)
+
+        response = self.start()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["mode"], "login")
+        otp = PhoneOTP.objects.filter(phone_number=PHONE).first()
+        self.assertEqual(otp.purpose, PhoneOTP.PURPOSE_LOGIN)
+
+    def test_abandoned_signup_is_register_mode(self, _sms):
+        # Inactive with no login history: someone closed the tab at the OTP step.
+        User.objects.create_user(
+            username=PHONE, password=STRONG_PASSWORD, is_active=False
+        )
+
+        response = self.start()
+
+        self.assertEqual(response.data["mode"], "register")
+
+    def test_deactivated_account_is_refused(self, _sms):
+        # Inactive *with* a login history is an account an admin switched off.
+        # Letting a signup reuse the row would be a way to take it over.
+        user = User.objects.create_user(
+            username=PHONE, password=STRONG_PASSWORD, is_active=False
+        )
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+
+        response = self.start()
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_phone_is_normalised(self, _sms):
+        response = self.start("+98 912 111 0001")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["phone_number"], PHONE)
+
+    def test_resending_retires_the_previous_code(self, _sms):
+        self.start()
+        first = PhoneOTP.objects.filter(phone_number=PHONE).first()
+
+        self.start()
+
+        first.refresh_from_db()
+        self.assertTrue(first.is_used, "issuing a new code must retire the old one")
+        self.assertEqual(
+            PhoneOTP.objects.filter(phone_number=PHONE, is_used=False).count(), 1
+        )
+
+
+@patch("users.views.send_otp_sms", return_value=(True, "کد ارسال شد"))
+class AuthVerifyTests(ThrottleFreeMixin, APITestCase):
+    """Step 2 branches on what the phone number turned out to be."""
+
+    def start_and_get_code(self, phone=PHONE):
+        self.client.post(reverse("auth-start"), {"phone_number": phone}, format="json")
+        return PhoneOTP.objects.filter(phone_number=phone, is_used=False).first().code
+
+    def verify(self, code, phone=PHONE):
+        return self.client.post(
+            reverse("auth-verify"),
+            {"phone_number": phone, "code": code},
+            format="json",
+        )
+
+    def test_new_phone_returns_a_registration_token_and_no_jwt(self, _sms):
+        code = self.start_and_get_code()
+
+        response = self.verify(code)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["mode"], "register")
+        self.assertIn("registration_token", response.data)
+        # No account exists yet, so there is nothing to issue tokens for.
+        self.assertNotIn("access", response.data)
+        self.assertEqual(
+            signing.loads(
+                response.data["registration_token"], salt=REGISTRATION_TOKEN_SALT
+            ),
+            PHONE,
+        )
+
+    def test_existing_phone_returns_tokens(self, _sms):
+        User.objects.create_user(username=PHONE, password=STRONG_PASSWORD)
+        code = self.start_and_get_code()
+
+        response = self.verify(code)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["mode"], "login")
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        self.assertNotIn("registration_token", response.data)
+
+    def test_wrong_code_is_rejected(self, _sms):
+        code = self.start_and_get_code()
+        wrong = "0000" if code != "0000" else "1111"
+
+        response = self.verify(wrong)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_code_is_single_use(self, _sms):
+        code = self.start_and_get_code()
+        self.assertEqual(self.verify(code).status_code, status.HTTP_200_OK)
+
+        # The duplicate-submit case the frontend's submittedRef latch guards
+        # against — the server has to refuse it regardless.
+        self.assertEqual(self.verify(code).status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_expired_code_is_rejected(self, _sms):
+        code = self.start_and_get_code()
+        otp = PhoneOTP.objects.filter(phone_number=PHONE).first()
+        otp.expires_at = timezone.now() - timedelta(seconds=1)
+        otp.save(update_fields=["expires_at"])
+
+        response = self.verify(code)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_verify_without_a_code_on_record_is_rejected(self, _sms):
+        response = self.verify("1234")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+@patch("users.views.send_otp_sms", return_value=(True, "کد ارسال شد"))
+class AuthCompleteTests(ThrottleFreeMixin, APITestCase):
+    """Step 3 creates the account, and only accepts a token this server signed."""
+
+    def registration_token(self, phone=PHONE):
+        self.client.post(reverse("auth-start"), {"phone_number": phone}, format="json")
+        code = PhoneOTP.objects.filter(phone_number=phone, is_used=False).first().code
+        response = self.client.post(
+            reverse("auth-verify"),
+            {"phone_number": phone, "code": code},
+            format="json",
+        )
+        return response.data["registration_token"]
+
+    def complete(self, token, **overrides):
+        payload = {
+            "registration_token": token,
+            "first_name": "امیر",
+            "last_name": "رضایی",
+            "password": STRONG_PASSWORD,
+            "password2": STRONG_PASSWORD,
+        }
+        payload.update(overrides)
+        return self.client.post(reverse("auth-complete"), payload, format="json")
+
+    def test_creates_an_active_user_with_both_names(self, _sms):
+        response = self.complete(self.registration_token())
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("access", response.data)
+
+        user = User.objects.get(username=PHONE)
+        self.assertTrue(user.is_active, "the number is already verified by now")
+        self.assertEqual(user.first_name, "امیر")
+        self.assertEqual(user.last_name, "رضایی")
+        self.assertTrue(user.check_password(STRONG_PASSWORD))
+
+    def test_mirrors_the_names_onto_the_customer_profile(self, _sms):
+        self.complete(self.registration_token())
+
+        customer = Customer.objects.get(user__username=PHONE)
+        self.assertEqual(customer.first_name, "امیر")
+        self.assertEqual(customer.last_name, "رضایی")
+        self.assertEqual(customer.phone_number, PHONE)
+
+    def test_resulting_account_can_log_in_with_the_password(self, _sms):
+        self.complete(self.registration_token())
+
+        response = self.client.post(
+            reverse("get_token"),
+            {"username": PHONE, "password": STRONG_PASSWORD},
+            format="json",
+        )
+
+        # This is the bug the old flow had: it posted the *typed name* as the
+        # username, which no account was ever created under.
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+
+    def test_mismatched_passwords_are_rejected(self, _sms):
+        response = self.complete(
+            self.registration_token(), password2="something-else-entirely"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(username=PHONE).exists())
+
+    def test_weak_password_is_rejected(self, _sms):
+        response = self.complete(
+            self.registration_token(), password="1234", password2="1234"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_password_may_not_be_the_phone_number(self, _sms):
+        response = self.complete(
+            self.registration_token(), password=PHONE, password2=PHONE
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_forged_token_is_rejected(self, _sms):
+        # Without this, anyone could create an account on any phone number by
+        # calling this endpoint directly and skipping the OTP entirely.
+        response = self.complete(signing.dumps(PHONE, salt="not-the-real-salt"))
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(username=PHONE).exists())
+
+    def test_tampered_token_is_rejected(self, _sms):
+        token = self.registration_token()
+
+        response = self.complete(token[:-1] + ("a" if token[-1] != "a" else "b"))
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_stale_token_is_rejected(self, _sms):
+        token = self.registration_token()
+
+        # max_age is read from the module at call time, so shrinking it is
+        # equivalent to letting the clock run past the window — and avoids
+        # patching time.time(), which the signer and the ORM both rely on.
+        with patch("users.serializer.REGISTRATION_TOKEN_MAX_AGE", -1):
+            response = self.complete(token)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(username=PHONE).exists())
+
+    def test_abandoned_signup_row_is_reused_not_duplicated(self, _sms):
+        User.objects.create_user(
+            username=PHONE, password="old-abandoned-pw-991", is_active=False
+        )
+
+        response = self.complete(self.registration_token())
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(User.objects.filter(username=PHONE).count(), 1)
+        user = User.objects.get(username=PHONE)
+        self.assertTrue(user.is_active)
+        self.assertTrue(user.check_password(STRONG_PASSWORD))
+
+    def test_token_cannot_be_redeemed_twice(self, _sms):
+        token = self.registration_token()
+        self.assertEqual(self.complete(token).status_code, status.HTTP_201_CREATED)
+
+        # The account now exists and is active, so the second attempt is a
+        # "already registered" conflict rather than a second account.
+        response = self.complete(token)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(User.objects.filter(username=PHONE).count(), 1)

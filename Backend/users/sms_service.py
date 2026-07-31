@@ -21,14 +21,27 @@ class SMSService:
             'x-api-key': self.api_key
         }
 
-    def send_otp(self, phone_number: str, code: str, template_id: int) -> tuple[bool, str]:
+    def send_template(
+        self,
+        phone_number: str,
+        template_id: int,
+        parameters: dict,
+        success_message: str = "پیامک با موفقیت ارسال شد.",
+    ) -> tuple[bool, str]:
         """
-        Send OTP code via SMS.ir
+        Send one templated ("pattern") message via SMS.ir.
+
+        This is the transport for both the OTP and the transactional
+        notifications in notifications.py — SMS.ir's /send/verify endpoint is
+        template-based and not OTP-specific, so the only thing that differs
+        between them is the template ID and the parameter names.
 
         Args:
             phone_number: Recipient phone number (format: 09120000000)
-            code: 4-digit OTP code
             template_id: SMS template ID from SMS.ir panel
+            parameters: {placeholder_name: value} — each key must match a
+                #placeholder# in that template, or SMS.ir drops it silently.
+            success_message: User-facing text returned on success.
 
         Returns:
             tuple(success: bool, message: str)
@@ -37,16 +50,13 @@ class SMSService:
             # Clean and format phone number
             cleaned_phone = self._normalize_phone(phone_number)
 
-            # Prepare request payload
             payload = {
                 "mobile": cleaned_phone,
                 "templateId": template_id,
                 "parameters": [
-                    {
-                        "name": "code",  # Matches template parameter #code#
-                        "value": code
-                    }
-                ]
+                    {"name": name, "value": "" if value is None else str(value)}
+                    for name, value in parameters.items()
+                ],
             }
 
             # Send request to SMS.ir
@@ -60,8 +70,8 @@ class SMSService:
             if response.status_code == 200:
                 data = response.json()
                 if data.get("status") == 1:
-                    logger.info(f"OTP sent successfully to {phone_number}, messageId: {data.get('data', {}).get('messageId')}")
-                    return True, "کد تأیید با موفقیت ارسال شد."
+                    logger.info(f"SMS template {template_id} sent to {phone_number}, messageId: {data.get('data', {}).get('messageId')}")
+                    return True, success_message
                 else:
                     error_msg = data.get("message", "خطای نامشخص از سرویس پیامک")
                     logger.error(f"SMS.ir error for {phone_number}: {error_msg}")
@@ -72,14 +82,33 @@ class SMSService:
                 return False, "خطا در ارتباط با سرویس پیامک"
 
         except requests.exceptions.Timeout:
-            logger.error(f"Timeout sending OTP to {phone_number}")
+            logger.error(f"Timeout sending SMS to {phone_number}")
             return False, "تایم‌اوت در ارسال پیامک"
         except requests.exceptions.ConnectionError:
-            logger.error(f"Connection error sending OTP to {phone_number}")
+            logger.error(f"Connection error sending SMS to {phone_number}")
             return False, "خطا در اتصال به سرویس پیامک"
         except Exception as e:
-            logger.error(f"Unexpected error sending OTP to {phone_number}: {str(e)}")
+            logger.error(f"Unexpected error sending SMS to {phone_number}: {str(e)}")
             return False, "خطای داخلی در ارسال پیامک"
+
+    def send_otp(self, phone_number: str, code: str, template_id: int) -> tuple[bool, str]:
+        """
+        Send OTP code via SMS.ir
+
+        Args:
+            phone_number: Recipient phone number (format: 09120000000)
+            code: 4-digit OTP code
+            template_id: SMS template ID from SMS.ir panel
+
+        Returns:
+            tuple(success: bool, message: str)
+        """
+        return self.send_template(
+            phone_number,
+            template_id,
+            {"code": code},  # Matches template parameter #code#
+            success_message="کد تأیید با موفقیت ارسال شد.",
+        )
 
     def _normalize_phone(self, phone: str) -> str:
         """

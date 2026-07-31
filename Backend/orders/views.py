@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -7,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import Customer
+from users.notifications import send_order_registered_sms
 
 from .models import AllowedLocation, Cart, CartItem, Order, OrderItem
 from .serializers import (
@@ -37,6 +39,20 @@ def _get_customer(user) -> Customer:
 def _get_cart(user) -> Cart:
     cart, _ = Cart.objects.get_or_create(customer=_get_customer(user))
     return cart
+
+
+def _order_public_url(request=None) -> str:
+    """Where the order-confirmation SMS points the customer.
+
+    Same precedence as get_warranty_public_url() in mattress/utils.py: the
+    explicit FRONTEND_BASE_URL first, since the SPA is served from a different
+    origin than this API and request.build_absolute_uri() would hand the
+    customer the backend host, where /user-info does not exist.
+    """
+    base = (settings.FRONTEND_BASE_URL or "").rstrip("/")
+    if not base and request is not None:
+        base = request.build_absolute_uri("/").rstrip("/")
+    return f"{base}/user-info"
 
 
 def _location_error(province: str, city: str) -> str | None:
@@ -226,6 +242,17 @@ class OrderCreateView(APIView):
             )
             # Clear the cart now that the order is recorded.
             cart.items.all().delete()
+
+        # Confirmation SMS, sent after the atomic block has committed so the
+        # order is durable before the customer is told about it, and so the
+        # request is not made while the transaction is open. Best-effort: a
+        # gateway failure must not fail an order that is already recorded.
+        send_order_registered_sms(
+            phone_number=order.phone_number or customer.phone_number,
+            customer_name=order.recipient_name,
+            order_number=str(order.pk),
+            order_link=_order_public_url(request),
+        )
 
         return Response(
             OrderSerializer(order, context={"request": request}).data,

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { ToastProvider } from "./context/ToastContext";
 import ScrollToTop from "./components/ScrollToTop";
 import Navbar from "./components/Navbar";
 import AboutFooter from "./components/AboutFooter";
@@ -36,10 +37,11 @@ function App() {
     // ever moves off its localStorage poll — sees the same session state.
     <AuthProvider>
       <CartProvider>
-        <div>
-          <ScrollToTop />
-          <Navbar />
-          <Routes>
+        <ToastProvider>
+          <div>
+            <ScrollToTop />
+            <Navbar />
+            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/products/mattress" element={<Mattress />} />
             <Route
@@ -108,7 +110,8 @@ function App() {
           <AboutFooter />
           {/* Rendered once; returns null unless the idle warning is up. */}
           <SessionTimeoutModal />
-        </div>
+          </div>
+        </ToastProvider>
       </CartProvider>
     </AuthProvider>
   );

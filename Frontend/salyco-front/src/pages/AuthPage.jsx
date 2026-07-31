@@ -1,10 +1,6 @@
-import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { AuthTabs } from "../components/auth/AuthTabs";
 import { AuthAlert } from "../components/auth/AuthAlert";
-import { LoginForm } from "../components/auth/LoginForm";
-import { LoginOTPForm } from "../components/auth/LoginOTPForm";
-import { RegisterForm } from "../components/auth/RegisterForm";
+import { AuthFlow } from "../components/auth/AuthFlow";
 
 // Why the user was sent here, when they didn't come on their own. Both cases mean
 // the same thing to the user: the session is gone and they need to sign in again.
@@ -16,13 +12,12 @@ const REASON_MESSAGES = {
 };
 
 export default function AuthPage() {
-  const [tab, setTab] = useState("login");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirect = searchParams.get("redirect");
   const reasonMessage = REASON_MESSAGES[searchParams.get("reason")];
 
-  const handleLoginSuccess = () => {
+  const handleSuccess = () => {
     if (redirect) {
       navigate(redirect, { replace: true });
     } else {
@@ -41,24 +36,10 @@ export default function AuthPage() {
               </div>
             )}
 
-            <AuthTabs active={tab} onChange={setTab} />
-
-            <div className="overflow-hidden">
-              {tab === "login-otp" ? (
-                <LoginOTPForm
-                  onSwitchToPassword={() => setTab("login")}
-                  onSwitchToRegister={() => setTab("register")}
-                />
-              ) : tab === "login" ? (
-                <LoginForm
-                  onSwitchToRegister={() => setTab("register")}
-                  onSwitchToOTP={() => setTab("login-otp")}
-                  onSuccess={handleLoginSuccess}
-                />
-              ) : (
-                <RegisterForm onSwitchToLogin={() => setTab("login")} />
-              )}
-            </div>
+            {/* No login/register tabs: the flow is linear now, and which of the
+                two it turns out to be is decided by the server after the code
+                is verified. See AuthFlow. */}
+            <AuthFlow onSuccess={handleSuccess} />
           </div>
 
           <p
