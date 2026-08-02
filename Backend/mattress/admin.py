@@ -53,10 +53,10 @@ class CustomerAdmin(admin.ModelAdmin):
 
 @admin.register(Mattress)
 class MattressAdmin(admin.ModelAdmin):
-    list_display = ("name", "brand", "slug", "price", "is_available", "average_rating", "review_count")
-    list_filter = ("is_available", "brand")
+    list_display = ("name", "category", "brand", "slug", "price", "is_available", "average_rating", "review_count")
+    list_filter = ("category", "is_available", "brand")
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = ("name", "slug", "brand")
+    search_fields = ("name", "slug", "brand", "material")
     inlines = [
         MattressImageInline,
         MattressSizeInline,
@@ -77,7 +77,7 @@ class MattressInstanceAdmin(admin.ModelAdmin):
         "activation_date",
         "manufacture_date",
     )
-    list_filter = ("is_warranty_active", "mattress")
+    list_filter = ("is_warranty_active", "mattress__category", "mattress")
     search_fields = ("serial_number", "customer__first_name", "customer__last_name")
     raw_id_fields = ("customer",)
     readonly_fields = (

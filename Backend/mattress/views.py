@@ -19,7 +19,7 @@ from .serializers import (
     WarrantyCheckSerializer,
     WarrantyRegistrationSerializer,
 )
-from .utils import generate_qr_code_base64, get_warranty_public_url
+from .utils import format_jalali, generate_qr_code_base64, get_warranty_public_url
 
 from users.notifications import send_warranty_activated_sms
 
@@ -42,6 +42,13 @@ class MattressViewSet(viewsets.ModelViewSet):
                 "images", "sizes", "specifications", "features",
                 "faqs", "pros_cons", "reviews__customer",
             )
+        # Opt-in category filter for the per-category listing pages. Absent means
+        # "every product", which is what the home page carousel and the combined
+        # /products index want — and what every existing caller already expects.
+        # `retrieve` is unaffected: slugs are unique across categories.
+        category = self.request.query_params.get("category")
+        if category:
+            qs = qs.filter(category=category)
         return qs
 
     def get_permissions(self):
@@ -124,13 +131,14 @@ class WarrantyRegistrationView(APIView):
         # committed by this point, so a gateway failure must not surface as an
         # error. Prefer the buyer phone recorded for this sale over the
         # account's, since they can differ (a dealer registering for a customer).
-        now = timezone.localtime()
         send_warranty_activated_sms(
             phone_number=instance.buyer_phone_number
             or (instance.customer.phone_number if instance.customer_id else ""),
             customer_name=f"{instance.buyer_first_name} {instance.buyer_last_name}".strip(),
-            activation_date=str(instance.activation_date or now.date()),
-            activation_time=now.strftime("%H:%M"),
+            activation_date=format_jalali(
+                instance.activation_date or timezone.localdate()
+            ),
+            product_name=instance.mattress.name,
         )
 
         return Response(

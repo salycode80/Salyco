@@ -219,9 +219,12 @@ SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 389724))
 # Transactional (non-OTP) template IDs — see users/notifications.py. Each is
 # sent through the same /send/verify pattern endpoint as the OTP above, and the
 # parameter names sent for each are the #placeholders# that template must use:
-#   welcome  → #name#              (first-time registration only)
-#   warranty → #product#, #serial# (warranty activation)
-#   order    → #order#, #amount#   (order placed)
+#   welcome  → #PHONE#, #NAME#                     (first-time registration only)
+#   warranty → #NAME#, #TIME#, #DATE#, #PHONE#     (warranty activation)
+#   order    → #ORDER_NUMBER#, #LINK#              (order placed)
+# The order template hard-codes the link origin ("https://salyco.ir/#LINK#")
+# because SMS.ir rejects a parameter value containing a URL, so #LINK# receives
+# a root-relative path and FRONTEND_BASE_URL does not apply to it.
 SMS_IR_TEMPLATE_WELCOME = int(os.getenv('SMS_IR_TEMPLATE_WELCOME', 596133))
 SMS_IR_TEMPLATE_WARRANTY = int(os.getenv('SMS_IR_TEMPLATE_WARRANTY', 475048))
 SMS_IR_TEMPLATE_ORDER = int(os.getenv('SMS_IR_TEMPLATE_ORDER', 248731))

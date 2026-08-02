@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin } from "lucide-react";
 
 const footerLinks = [
-  { label: "محصولات", href: "/products/mattress" },
+  { label: "محصولات", href: "/products" },
   { label: "مقالات", href: "/articles" },
   { label: "تماس با ما", href: "/contact" },
   { label: "درباره ما", href: "/about" },
@@ -88,13 +88,13 @@ export default function AboutFooter() {
             <ul className="mt-5 space-y-4">
               <li>
                 <a
-                  href="tel:+982112345678"
+                  href="tel:+985142222687"
                   className="flex items-center gap-3 font-persian text-sm text-white/75 transition-colors hover:text-white"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5">
                     <Phone size={16} className="text-[#009CDE]" />
                   </span>
-                  051-42222687
+                  <span dir="ltr">051-42222687</span>
                 </a>
               </li>
               <li>

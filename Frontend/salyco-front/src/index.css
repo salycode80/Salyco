@@ -18,13 +18,55 @@
    value so content never sits behind the bar. It grows on desktop where the
    navbar switches to its two-row layout. */
 :root {
-  --navbar-height: 112px;
+  --navbar-height: 108px;
 }
 
 @media (min-width: 1024px) {
   :root {
-    --navbar-height: 120px;
+    --navbar-height: 112px;
   }
+}
+
+/* Anchor links and in-page jumps land below the fixed navbar instead of behind
+   it. Applies to the FAQ accordion, footer #contact link and any hash target. */
+html {
+  scroll-padding-top: calc(var(--navbar-height) + 1rem);
+}
+
+/* Vazirmatn as the document default. Persian glyphs render correctly even where
+   a `font-persian` class was missed, and Latin digits/words fall back cleanly.
+   Persian has tall ascenders and deep descenders, so the browser's `normal`
+   leading crowds body copy; 1.75 opens it up without touching per-component
+   sizing. Headings keep the tighter leading they were designed with. */
+body {
+  font-family: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.4;
+}
+
+/* Visible keyboard focus ring, brand-tinted. Several components clear the
+   default outline for aesthetics; this keeps them reachable by keyboard.
+   :focus-visible means mouse clicks stay clean. */
+:focus-visible {
+  outline: 2px solid #003087;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Persian digits are proportional in Vazirmatn, so a figure that updates in
+   place (size picker, cart quantity) makes the whole row jitter. Replaces the
+   ad-hoc [font-feature-settings:'tnum'] repeated across the price components. */
+.tnum {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
 }
 
 /* Hide the scrollbar on the horizontally-scrollable category row while keeping
@@ -64,5 +106,16 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .toast-enter {
     animation: none;
+  }
+
+  /* Honour the OS setting site-wide: card lifts, image zooms, carousel easing
+     and skeleton pulses all collapse to instant instead of animating. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

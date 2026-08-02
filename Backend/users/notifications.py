@@ -33,6 +33,12 @@ from .sms_service import get_sms_service
 logger = logging.getLogger(__name__)
 
 
+# SMS.ir refuses a pattern parameter whose value exceeds this, with
+# "طول رشته مقدار پارامتر، بیش از حد مجاز (25 کاراکتر) میباشد". The rejection is
+# per-request and total, so one long value costs the whole message.
+MAX_PARAMETER_LENGTH = 25
+
+
 def _send(event: str, phone_number: str, template_setting: str, parameters: dict) -> bool:
     """Send one template message. Never raises."""
     if not phone_number:
@@ -43,6 +49,23 @@ def _send(event: str, phone_number: str, template_setting: str, parameters: dict
     if not template_id:
         logger.warning("%s SMS skipped: %s not configured", event, template_setting)
         return False
+
+    # Log the over-long value rather than let SMS.ir reject the send silently.
+    # This is what made the order SMS fail invisibly: the gateway's complaint
+    # was only ever visible in the SMS.ir panel, never in our own logs. Still
+    # attempts the send — a template may legitimately allow more one day, and
+    # the gateway, not this constant, is the authority on that.
+    for name, value in parameters.items():
+        if value is not None and len(str(value)) > MAX_PARAMETER_LENGTH:
+            logger.error(
+                "%s SMS parameter %s is %d chars, over SMS.ir's %d-char limit; "
+                "the gateway will likely reject this message: %r",
+                event,
+                name,
+                len(str(value)),
+                MAX_PARAMETER_LENGTH,
+                value,
+            )
 
     try:
         service = get_sms_service()
@@ -75,11 +98,22 @@ def send_warranty_activated_sms(
     phone_number: str,
     customer_name: str = "",
     activation_date: str = "",
-    activation_time: str = "",
+    product_name: str = "",
 ) -> bool:
     """Sent when a product's warranty is activated.
 
     Template 475048 parameters: #NAME#, #TIME#, #DATE#, #PHONE#
+
+    The parenthesised slot in the template body is #TIME#, which used to receive
+    the activation clock time — the message read "گارانتی محصول شما (15:39)",
+    naming an hour where a customer expects to see which mattress. It now carries
+    the mattress name instead. The placeholder keeps its old name because it is
+    fixed in the approved SMS.ir template and cannot be renamed from here;
+    `product_name` is what it actually means. Renaming it to #PRODUCT# in the
+    panel and updating this dict would be the tidier end state.
+
+    activation_date must already be Shamsi — see format_jalali() in
+    mattress/utils.py. A Gregorian date reads as wrong in a Persian message.
     """
     return _send(
         "warranty",
@@ -87,7 +121,9 @@ def send_warranty_activated_sms(
         "SMS_IR_TEMPLATE_WARRANTY",
         {
             "NAME": customer_name or "کاربر",
-            "TIME": activation_time,
+            # Mattress names can exceed the gateway's 25-char parameter ceiling,
+            # so trim rather than let the whole send be refused.
+            "TIME": (product_name or "")[:MAX_PARAMETER_LENGTH],
             "DATE": activation_date,
             "PHONE": phone_number,
         },
@@ -103,6 +139,11 @@ def send_order_registered_sms(
     """Sent when an order is recorded.
 
     Template 248731 parameters: #NAME#, #ORDER_NUMBER#, #LINK#
+
+    #LINK# is a *root-relative path*, not a URL — the template supplies the
+    origin ("https://salyco.ir/#LINK#") because SMS.ir refuses a pattern
+    parameter containing a URL. See order_public_link_path() in
+    orders/notifications.py.
     """
     return _send(
         "order",

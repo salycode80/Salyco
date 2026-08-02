@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import PageBackground from "../components/PageBackground";
 
@@ -27,8 +28,8 @@ function truncate(text, max = 100) {
 function HeroCard({ article }) {
   if (!article) return null;
   return (
-    <a
-      href={`/articles/${article.slug}`}
+    <Link
+      to={`/articles/${article.slug}`}
       className="group relative flex h-full min-h-[340px] flex-col justify-end overflow-hidden rounded-xl"
     >
       {/* background image */}
@@ -69,7 +70,7 @@ function HeroCard({ article }) {
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -79,8 +80,8 @@ function HeroCard({ article }) {
 function SmallHeroCard({ article }) {
   if (!article) return null;
   return (
-    <a
-      href={`/articles/${article.slug}`}
+    <Link
+      to={`/articles/${article.slug}`}
       className="group relative flex flex-row overflow-hidden rounded-xl bg-[#003087] transition hover:brightness-110"
     >
       {/* thumbnail */}
@@ -116,7 +117,7 @@ function SmallHeroCard({ article }) {
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -125,8 +126,8 @@ function SmallHeroCard({ article }) {
  */
 function ArticleCard({ article }) {
   return (
-    <a
-      href={`/articles/${article.slug}`}
+    <Link
+      to={`/articles/${article.slug}`}
       className="group flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6] transition hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)] hover:-translate-y-0.5"
     >
       {/* thumbnail */}
@@ -186,7 +187,7 @@ function ArticleCard({ article }) {
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -196,8 +197,8 @@ function ArticleCard({ article }) {
 function FeaturedSidebarItem({ article, index }) {
   const colors = ["bg-[#009CDE]", "bg-[#003087]", "bg-[#00246B]"];
   return (
-    <a
-      href={`/articles/${article.slug}`}
+    <Link
+      to={`/articles/${article.slug}`}
       className="group flex items-start gap-3 rounded-xl p-3 transition hover:bg-[#F5F7FA]"
       dir="rtl"
     >
@@ -219,7 +220,7 @@ function FeaturedSidebarItem({ article, index }) {
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -403,7 +404,7 @@ export default function ArticlesPage() {
                   {articles.length > 9 && (
                     <div className="mt-8 flex justify-center">
                       <a
-                        href="/articles/archive"
+                        to="/articles/archive"
                         className="rounded-lg border-2 border-[#003087] px-6 py-2 font-persian text-sm font-medium text-[#003087] transition hover:bg-[#003087] hover:text-white"
                       >
                         مشاهده همه مقالات
@@ -414,7 +415,10 @@ export default function ArticlesPage() {
 
                 {/* sidebar */}
                 <aside>
-                  <div className="sticky top-24 rounded-xl bg-white p-5 shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6]">
+                  <div
+                    className="sticky rounded-xl bg-white p-5 shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6]"
+                    style={{ top: "calc(var(--navbar-height) + 1rem)" }}
+                  >
                     <h3 className="font-persian mb-4 text-base font-bold text-[#003087]">
                       مقالات برگزیده
                     </h3>

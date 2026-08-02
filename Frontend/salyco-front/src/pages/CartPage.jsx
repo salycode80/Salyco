@@ -10,6 +10,7 @@ import {
 import { useCart } from "../context/CartContext";
 import { getProductImageUrl } from "../utils/productImage";
 import { toPersianNumber, formatPersianPrice } from "../utils/persian";
+import { productUrl } from "../config/productCategories";
 import PageBackground from "../components/PageBackground";
 
 const CARD =
@@ -17,10 +18,17 @@ const CARD =
 
 // A single cart line rendered as an order card.
 function OrderCard({ item, onQty, onRemove }) {
+  // Cart lines carry the product's category (mattress_category from the server
+  // serializer, or the local-cart mirror), so a pillow links to its own page.
+  const href = productUrl({
+    category: item.mattress_category,
+    slug: item.mattress_slug,
+  });
+
   return (
     <div className={`${CARD} flex gap-4 p-4`}>
       <Link
-        to={`/products/mattress/${item.mattress_slug}`}
+        to={href}
         className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-[#CBD2D6] bg-[#F5F7FA]"
       >
         <img
@@ -36,7 +44,7 @@ function OrderCard({ item, onQty, onRemove }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
           <Link
-            to={`/products/mattress/${item.mattress_slug}`}
+            to={href}
             className="font-persian text-base font-semibold text-[#003087] hover:text-[#009CDE]"
           >
             {item.mattress_name}
@@ -127,7 +135,7 @@ export default function CartPage() {
               محصولات مورد نظر خود را به سبد اضافه کنید.
             </p>
             <Link
-              to="/products/mattress"
+              to="/products"
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
             >
               مشاهده محصولات
@@ -149,7 +157,12 @@ export default function CartPage() {
 
             {/* Invoice summary */}
             <div className="lg:col-span-1">
-              <div className={`${CARD} sticky top-24 p-6`}>
+              {/* top-24 (96px) was shorter than the navbar, so the summary slid
+                  under the fixed bar when the page scrolled. */}
+              <div
+                className={`${CARD} sticky p-6`}
+                style={{ top: "calc(var(--navbar-height) + 1rem)" }}
+              >
                 <h2 className="mb-4 font-persian text-lg font-semibold text-[#003087]">
                   فاکتور سفارش
                 </h2>
@@ -187,7 +200,7 @@ export default function CartPage() {
                   <ArrowLeft size={17} />
                 </Link>
                 <Link
-                  to="/products/mattress"
+                  to="/products"
                   className="mt-3 block text-center font-persian text-sm font-medium text-[#003087] hover:text-[#009CDE]"
                 >
                   افزودن محصول دیگر

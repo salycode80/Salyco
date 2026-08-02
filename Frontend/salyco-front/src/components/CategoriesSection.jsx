@@ -1,28 +1,11 @@
-import { BedDouble, Layers, Shield, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { PRODUCT_CATEGORIES } from "../config/productCategories";
 
-const categories = [
-  {
-    title: "تشک های سالیکو",
-    subtitle: "Mattresses",
-    icon: BedDouble,
-  },
-  {
-    title: "تاپر تشک",
-    subtitle: "Toppers",
-    icon: Layers,
-  },
-  {
-    title: "تشک طبی",
-    subtitle: "Orthopedic",
-    icon: Shield,
-  },
-  {
-    title: "بالش و ملحفه",
-    subtitle: "Bedding",
-    icon: Sparkles,
-  },
-];
-
+/**
+ * Home-page category grid. Every category is now a live product line, so these
+ * are real links — the greyscale treatment and "به زودی" overlay they used to
+ * carry are gone.
+ */
 export default function CategoriesSection() {
   return (
     <section className="relative overflow-hidden bg-white py-16">
@@ -37,14 +20,17 @@ export default function CategoriesSection() {
           <hr className="mt-4 w-20 border-t-2 border-[#CBD2D6]" />
         </header>
 
-        <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
-          {categories.map(({ title, subtitle, icon: Icon }) => (
-            <div
-              key={title}
-              className="group relative flex flex-col overflow-hidden rounded-xl border border-[#CBD2D6] bg-white grayscale transition-all duration-300 hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+        <div
+          className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-5"
+          dir="rtl"
+        >
+          {PRODUCT_CATEGORIES.map(({ key, label, en, icon: Icon }) => (
+            <Link
+              key={key}
+              to={`/products/${key}`}
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#009CDE] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
             >
-              {/* icon panel — muted greyscale */}
-              <div className="relative flex h-24 items-center justify-center bg-[#687173]">
+              <div className="relative flex h-24 items-center justify-center bg-[#003087] transition-colors duration-300 group-hover:bg-[#00246B]">
                 <Icon
                   size={30}
                   strokeWidth={1.5}
@@ -52,23 +38,15 @@ export default function CategoriesSection() {
                 />
               </div>
 
-              {/* label */}
-              <div className="flex flex-col p-3.5" dir="rtl">
+              <div className="flex flex-col p-3.5">
                 <p className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-[#687173]">
-                  {subtitle}
+                  {en}
                 </p>
-                <h3 className="mt-1 font-persian text-sm font-bold text-[#1A1A2E]">
-                  {title}
+                <h3 className="mt-1 font-persian text-sm font-bold text-[#1A1A2E] transition-colors duration-300 group-hover:text-[#003087]">
+                  {label}
                 </h3>
               </div>
-
-              {/* ── Coming soon overlay ── */}
-              <div className="absolute inset-0 flex items-center justify-center bg-white/55 backdrop-blur-[1px]">
-                <span className="rounded-full border border-[#CBD2D6] bg-white/90 px-4 py-1.5 font-persian text-sm font-bold text-[#1A1A2E] shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-                  به زودی
-                </span>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

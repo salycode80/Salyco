@@ -200,7 +200,7 @@ export default function About() {
             </p>
 
             <Link
-              to="/products/mattress"
+              to="/products"
               className="group mt-8 inline-flex items-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
             >
               مشاهده محصولات

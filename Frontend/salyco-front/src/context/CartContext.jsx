@@ -129,6 +129,9 @@ export function CartProvider({ children }) {
       mattress: mattress.id,
       mattress_name: mattress.name,
       mattress_slug: mattress.slug,
+      // Mirrors the server serializer's mattress_category so a logged-out cart
+      // row links to /products/<category>/<slug> like a logged-in one does.
+      mattress_category: mattress.category || "mattress",
       mattress_image: mattress.image || null,
       size: size?.id || null,
       size_label: size?.label || "",

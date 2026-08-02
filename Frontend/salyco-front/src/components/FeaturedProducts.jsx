@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import api from "../api";
-import MattressCard from "./product/MattressCard";
+import ProductCard from "./product/ProductCard";
 
 /**
  * FeaturedProducts — a short, user-friendly preview of the catalogue shown on
- * the home page. Pulls the first few mattresses from the API and drops them into
- * the same MattressCard used on the products page so the look stays consistent.
+ * the home page. Pulls the first few products from the API (unfiltered, so the
+ * mix spans every category) and drops them into the same ProductCard used on the
+ * products pages so the look stays consistent.
  */
 export default function FeaturedProducts() {
   const [mattresses, setMattresses] = useState([]);
@@ -76,17 +77,17 @@ export default function FeaturedProducts() {
               Products
             </p>
             <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
-              منتخب تشک‌های سالیکو
+              منتخب محصولات سالیکو
             </h2>
             <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
             <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
-              گلچینی از محبوب‌ترین تشک‌های ما؛ برای دیدن همه محصولات وارد گالری
+              گلچینی از محبوب‌ترین محصولات ما؛ برای دیدن همه محصولات وارد گالری
               شوید.
             </p>
           </div>
 
           <Link
-            to="/products/mattress"
+            to="/products"
             className="inline-flex shrink-0 items-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-5 py-2.5 font-persian text-sm font-semibold text-[#003087] transition-colors hover:bg-[#003087]/5"
           >
             مشاهده همه
@@ -113,7 +114,7 @@ export default function FeaturedProducts() {
                 key={mattress.slug}
                 className="w-[calc((100%-1.5rem)/2)] shrink-0 snap-start sm:w-[calc((100%-4.5rem)/4)]"
               >
-                <MattressCard mattress={mattress} />
+                <ProductCard product={mattress} />
               </div>
             ))}
           </div>

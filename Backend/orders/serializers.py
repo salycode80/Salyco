@@ -10,6 +10,9 @@ from .models import AllowedLocation, Cart, CartItem, Order, OrderItem
 class CartItemSerializer(serializers.ModelSerializer):
     mattress_name = serializers.CharField(source="mattress.name", read_only=True)
     mattress_slug = serializers.CharField(source="mattress.slug", read_only=True)
+    # Cart rows link back to the product page, which is /products/<category>/<slug>.
+    # Without the category a pillow in the cart would link to a mattress URL.
+    mattress_category = serializers.CharField(source="mattress.category", read_only=True)
     mattress_image = serializers.ImageField(source="mattress.image", read_only=True)
     size_label = serializers.CharField(source="size.label", read_only=True, default="")
     unit_price = serializers.DecimalField(
@@ -26,6 +29,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             "mattress",
             "mattress_name",
             "mattress_slug",
+            "mattress_category",
             "mattress_image",
             "size",
             "size_label",
@@ -111,6 +115,41 @@ class OrderSerializer(serializers.ModelSerializer):
             "phone_number",
             "customer_phone",
             "call_time_preference",
+            "province",
+            "city",
+            "postal_code",
+            "address",
+            "total_amount",
+            "created_at",
+            "items",
+        ]
+        read_only_fields = fields
+
+
+class PublicOrderSerializer(serializers.ModelSerializer):
+    """One order, as shown on the tokenless public page linked from the SMS.
+
+    Anyone holding the link can read this, so it deliberately omits the token
+    itself and anything about the account behind the order. The delivery
+    details it does expose are what the recipient already knows — they are on
+    the parcel — and are what makes the page useful for checking an address
+    before dispatch.
+    """
+
+    items = OrderItemSerializer(many=True, read_only=True)
+    method_display = serializers.CharField(source="get_method_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "method",
+            "method_display",
+            "status",
+            "status_display",
+            "recipient_name",
+            "phone_number",
             "province",
             "city",
             "postal_code",

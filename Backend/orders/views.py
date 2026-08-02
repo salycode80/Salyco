@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from django.conf import settings
 from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -8,15 +7,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import Customer
-from users.notifications import send_order_registered_sms
 
 from .models import AllowedLocation, Cart, CartItem, Order, OrderItem
+from .notifications import send_order_confirmation
 from .serializers import (
     AddCartItemSerializer,
     AllowedLocationSerializer,
     CartSerializer,
     MergeCartSerializer,
     OrderSerializer,
+    PublicOrderSerializer,
 )
 
 
@@ -39,20 +39,6 @@ def _get_customer(user) -> Customer:
 def _get_cart(user) -> Cart:
     cart, _ = Cart.objects.get_or_create(customer=_get_customer(user))
     return cart
-
-
-def _order_public_url(request=None) -> str:
-    """Where the order-confirmation SMS points the customer.
-
-    Same precedence as get_warranty_public_url() in mattress/utils.py: the
-    explicit FRONTEND_BASE_URL first, since the SPA is served from a different
-    origin than this API and request.build_absolute_uri() would hand the
-    customer the backend host, where /user-info does not exist.
-    """
-    base = (settings.FRONTEND_BASE_URL or "").rstrip("/")
-    if not base and request is not None:
-        base = request.build_absolute_uri("/").rstrip("/")
-    return f"{base}/user-info"
 
 
 def _location_error(province: str, city: str) -> str | None:
@@ -243,16 +229,12 @@ class OrderCreateView(APIView):
             # Clear the cart now that the order is recorded.
             cart.items.all().delete()
 
-        # Confirmation SMS, sent after the atomic block has committed so the
-        # order is durable before the customer is told about it, and so the
-        # request is not made while the transaction is open. Best-effort: a
-        # gateway failure must not fail an order that is already recorded.
-        send_order_registered_sms(
-            phone_number=order.phone_number or customer.phone_number,
-            customer_name=order.recipient_name,
-            order_number=str(order.pk),
-            order_link=_order_public_url(request),
-        )
+        # Tell the customer their order is in. Sent after the atomic block has
+        # committed, so the order is durable before the SMS goes out and the
+        # request is not made while a transaction is open. Best-effort: a dead
+        # gateway must not fail an order that is already recorded — and if it
+        # does fail here, confirming the order in the admin panel retries it.
+        send_order_confirmation(order)
 
         return Response(
             OrderSerializer(order, context={"request": request}).data,
@@ -270,6 +252,64 @@ class OrderListView(generics.ListAPIView):
         if customer is None:
             return Order.objects.none()
         return Order.objects.filter(customer=customer).prefetch_related("items")
+
+
+class PublicOrderDetailView(generics.RetrieveAPIView):
+    """GET /api/orders/public/<token>/ — the order behind an SMS link.
+
+    Unauthenticated by design: the customer opens this from a text message on a
+    phone that is usually not signed in, and requiring auth would put a login
+    wall in front of their own confirmation. The token in the URL is the
+    credential — 32 hex chars, unique per order, never exposed by any other
+    endpoint — so it is looked up by that and nothing else.
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = PublicOrderSerializer
+    lookup_field = "public_token"
+    lookup_url_kwarg = "token"
+    queryset = Order.objects.prefetch_related("items")
+
+
+class PublicOrderCancelView(APIView):
+    """POST /api/orders/public/<token>/cancel — cancel via the SMS link.
+
+    Same auth model as PublicOrderDetailView: the token in the URL is the
+    credential, so this is deliberately unauthenticated. A customer who holds
+    the link can cancel the order it names, with two guardrails:
+
+      1. Only PENDING and CONFIRMED orders may be cancelled. Once SHIPPED, the
+         parcel is in motion and the customer must contact support instead.
+      2. An order that is already CANCELLED does nothing (idempotent).
+
+    Returns the updated order on success, or 400 when the status does not
+    permit cancellation.
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, token):
+        try:
+            order = Order.objects.prefetch_related("items").get(public_token=token)
+        except Order.DoesNotExist:
+            return Response(
+                {"detail": "سفارش یافت نشد"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if order.status == Order.CANCELLED:
+            # Already cancelled, nothing to do. Return the current state rather
+            # than an error, so retrying an already-cancelled link is harmless.
+            return Response(PublicOrderSerializer(order).data)
+
+        if order.status == Order.SHIPPED:
+            return Response(
+                {"detail": "سفارش ارسال شده قابل لغو نیست. لطفاً با پشتیبانی تماس بگیرید."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        order.status = Order.CANCELLED
+        order.save(update_fields=["status"])
+        return Response(PublicOrderSerializer(order).data)
 
 
 class AllowedLocationPublicView(generics.ListAPIView):

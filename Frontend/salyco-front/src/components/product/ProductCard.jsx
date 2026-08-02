@@ -1,22 +1,46 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Moon, Star, Plus, Check, Tag } from "lucide-react";
+import { ShieldCheck, Star, Plus, Check, Tag, Droplets } from "lucide-react";
 import { getProductImageUrl } from "../../utils/productImage";
-import { useCart } from "../../context/CartContext";
 import { toPersianNumber, formatPersianPrice } from "../../utils/persian";
+import { CATEGORY_BY_KEY, productUrl } from "../../config/productCategories";
+import { useCart } from "../../context/CartContext";
 
-export default function MattressCard({ mattress }) {
-  const warrantyYears = Math.round(mattress.warranty_months / 12);
+/**
+ * Grid/carousel card for any product category.
+ *
+ * Shared by the per-category listing pages, the combined /products index, and
+ * the home-page featured carousel, so it has to stay category-agnostic: the
+ * link, corner icon, warranty wording, and price prefix all derive from the
+ * product's own `category` rather than assuming a mattress.
+ */
+export default function ProductCard({ product }) {
+  const meta = CATEGORY_BY_KEY[product.category] ?? CATEGORY_BY_KEY.mattress;
+  const CategoryIcon = meta.icon;
+
+  // Warranty is authored in months. Rounding to years reads as "۰ سال گارانتی"
+  // for anything under 18 months (a pillow ships with 12), so show months until
+  // a full year divides cleanly.
+  const warrantyMonths = Number(product.warranty_months ?? 0);
+  const showYears = warrantyMonths >= 12 && warrantyMonths % 12 === 0;
+  const warrantyText = showYears
+    ? `${toPersianNumber(warrantyMonths / 12)} سال گارانتی`
+    : `${toPersianNumber(warrantyMonths)} ماه گارانتی`;
+
   // `rating` is the server-side display score: the approved-review average, or
   // 5 for a product nobody has reviewed yet. Fall back to 5 here too, so an
   // older cached API response can't render an unrated product as zero stars.
-  const stars = Math.round(Number(mattress.rating ?? 5));
-  const [imageSrc, setImageSrc] = useState(getProductImageUrl(mattress.image));
+  const stars = Math.round(Number(product.rating ?? 5));
+  const [imageSrc, setImageSrc] = useState(getProductImageUrl(product.image));
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
-  const discountPrice = mattress.discount_price ?? null;
+  const discountPrice = product.discount_price ?? null;
   const isOnSale =
-    mattress.is_on_off && mattress.off_percentage > 0 && discountPrice != null;
+    product.is_on_off && product.off_percentage > 0 && discountPrice != null;
+
+  // "از" (from) only makes sense when sizes are priced separately. A pillow has
+  // one price, so the prefix would be misleading.
+  const hasVariablePricing = meta.sizeMode !== "none";
 
   // Quick-add the base product (no size chosen) straight from the gallery card.
   const handleAdd = async (e) => {
@@ -28,7 +52,7 @@ export default function MattressCard({ mattress }) {
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
     try {
-      await addItem(mattress, null, 1);
+      await addItem(product, null, 1);
     } catch {
       setAdded(false);
     }
@@ -36,7 +60,7 @@ export default function MattressCard({ mattress }) {
 
   return (
     <Link
-      to={`/products/mattress/${mattress.slug}`}
+      to={productUrl(product)}
       // Inline by default, so the card didn't fill its grid cell and the focus
       // ring hugged the text rather than the card. h-full evens out row heights.
       className="block h-full rounded-xl"
@@ -49,7 +73,7 @@ export default function MattressCard({ mattress }) {
         <div className="relative aspect-[4/3] overflow-hidden bg-[#003087]">
           <img
             src={imageSrc}
-            alt={mattress.name}
+            alt={product.name}
             loading="lazy"
             decoding="async"
             onError={() => setImageSrc("/matress.png")}
@@ -57,11 +81,11 @@ export default function MattressCard({ mattress }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#003087]/60 via-[#003087]/5 to-transparent" />
 
-          {/* Quick add-to-cart */}
+          {/* Quick add-to-cart — 44px so it clears the minimum touch target. */}
           <button
             type="button"
             onClick={handleAdd}
-            aria-label="افزودن به سبد خرید"
+            aria-label={`افزودن ${product.name} به سبد خرید`}
             className={`absolute left-2 bottom-2 flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_16px_rgba(0,48,135,0.1)] transition-all @[280px]:left-4 @[280px]:bottom-4 ${
               added
                 ? "bg-[#019C34] text-white"
@@ -76,7 +100,7 @@ export default function MattressCard({ mattress }) {
             <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-[#D20000] px-2 py-1 shadow-lg @[280px]:right-4 @[280px]:top-4 @[280px]:gap-1.5 @[280px]:px-3 @[280px]:py-1.5">
               <Tag size={12} className="shrink-0 text-white @[280px]:size-4" />
               <span className="font-persian text-[9px] font-bold text-white @[280px]:text-xs">
-                {toPersianNumber(mattress.off_percentage)}٪ تخفیف
+                {toPersianNumber(product.off_percentage)}٪ تخفیف
               </span>
             </div>
           )}
@@ -88,26 +112,28 @@ export default function MattressCard({ mattress }) {
               className="shrink-0 text-[#019C34] @[280px]:size-4"
             />
             <span className="font-persian text-[10px] font-medium tracking-wide text-white @[280px]:text-xs">
-              {toPersianNumber(warrantyYears)} سال گارانتی
+              {warrantyText}
             </span>
           </div>
 
+          {/* Category marker — replaces the old hardcoded moon icon so a pillow
+              no longer wears a mattress badge. */}
           <span className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white/90 backdrop-blur-sm @[280px]:left-4 @[280px]:top-4 @[280px]:h-8 @[280px]:w-8">
-            <Moon size={14} strokeWidth={1.75} />
+            <CategoryIcon size={14} strokeWidth={1.75} />
           </span>
         </div>
 
         {/* Content */}
         <div className="flex flex-1 flex-col px-3 py-3 @[280px]:px-6 @[280px]:py-6">
           <h3 className="line-clamp-2 mb-1 font-persian text-sm font-semibold leading-snug text-[#003087] @[280px]:mb-2 @[280px]:text-[1.35rem]">
-            {mattress.name}
+            {product.name}
           </h3>
 
           {/* min-height, not a fixed height: two clamped lines of Vazirmatn are
               taller than the old 2.8rem box, so descenders were being clipped.
               The floor still keeps every card in a row the same height. */}
           <p className="line-clamp-2 mb-2 min-h-[2.9rem] font-persian text-xs leading-[1.7] text-[#687173] @[280px]:line-clamp-3 @[280px]:mb-3 @[280px]:min-h-[4rem] @[280px]:text-[0.925rem] @[280px]:leading-[1.9]">
-            {mattress.subtitle}
+            {product.subtitle}
           </p>
 
           {/* Divider row — half-width line on the right, stars fill the left */}
@@ -147,7 +173,7 @@ export default function MattressCard({ mattress }) {
             {isOnSale ? (
               <div className="flex flex-col items-center -mt-0.5">
                 <p className="tnum truncate font-persian text-xs font-medium text-[#687173] line-through decoration-[#D20000] @[280px]:text-sm">
-                  {formatPersianPrice(mattress.price)}
+                  {formatPersianPrice(product.price)}
                   <span className="mr-1 text-[10px] @[280px]:text-xs">
                     تومان
                   </span>
@@ -162,10 +188,12 @@ export default function MattressCard({ mattress }) {
             ) : (
               <div className="mt-0.5">
                 <p className="tnum truncate font-persian text-base font-bold text-[#003087] @[280px]:text-2xl">
-                  <span className="ml-1 text-xs font-normal text-[#687173] @[280px]:text-base">
-                    از
-                  </span>
-                  {formatPersianPrice(mattress.price)}
+                  {hasVariablePricing && (
+                    <span className="ml-1 text-xs font-normal text-[#687173] @[280px]:text-base">
+                      از
+                    </span>
+                  )}
+                  {formatPersianPrice(product.price)}
                   <span className="mr-1 text-xs font-normal text-[#687173] @[280px]:text-base">
                     تومان
                   </span>
@@ -173,6 +201,23 @@ export default function MattressCard({ mattress }) {
               </div>
             )}
           </div>
+
+          {/* Category-specific quick signals, shown only when authored. */}
+          {(product.material || product.is_washable) && (
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5">
+              {product.material && (
+                <span className="rounded-full bg-[#F5F7FA] px-2 py-0.5 font-persian text-[9px] font-medium text-[#687173] @[280px]:text-[11px]">
+                  {product.material}
+                </span>
+              )}
+              {product.is_washable && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#E6F4EA] px-2 py-0.5 font-persian text-[9px] font-medium text-[#019C34] @[280px]:text-[11px]">
+                  <Droplets size={9} className="shrink-0" />
+                  قابل شستشو
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </article>
     </Link>

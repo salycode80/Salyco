@@ -1,18 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/UseAuth";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { toPersianNumber } from "../utils/persian";
 import api from "../api";
 import SearchBar from "./SearchBar";
+import ProductsMenu, { ProductsMenuMobile } from "./ProductsMenu";
 import {
   Phone,
   UserCircle,
   User,
-  BedDouble,
   BookOpen,
-  Image,
   Info,
   LogOut,
   ClipboardList,
@@ -24,8 +23,11 @@ import {
   ShoppingCart,
 } from "lucide-react";
 
+// The products entry is a hover/click dropdown listing all five categories, so
+// it is flagged rather than given a `to` — the category row renders it as
+// <ProductsMenu /> instead of a NavLink.
 const categories = [
-  { label: "تشک", icon: BedDouble, to: "/products/mattress" },
+  { type: "menu", key: "products" },
   { label: "مقالات", icon: BookOpen, to: "/articles" },
   { label: "نمایندگی", icon: MapPin, to: "/dealers" },
   { label: "تماس با ما", icon: Phone, to: "/contact" },
@@ -37,6 +39,7 @@ export default function Navbar() {
   const { count: cartCount } = useCart();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -63,6 +66,33 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // A tap on a category in the mobile sheet navigates but leaves the panel open,
+  // covering the page that was just opened. Close both menus on every route
+  // change so navigation from anywhere (including the search dropdown) is clean.
+  //
+  // Adjusted during render rather than in an effect: React re-runs the render
+  // immediately without committing the stale open panel to the DOM, so the menu
+  // never paints over the new page for a frame.
+  const routeKey = `${location.pathname}${location.search}`;
+  const [prevRouteKey, setPrevRouteKey] = useState(routeKey);
+  if (prevRouteKey !== routeKey) {
+    setPrevRouteKey(routeKey);
+    setMenuOpen(false);
+    setIsUserMenuOpen(false);
+  }
+
+  // Escape closes whichever menu is open — expected for any dismissible overlay.
+  useEffect(() => {
+    if (!menuOpen && !isUserMenuOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      setMenuOpen(false);
+      setIsUserMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen, isUserMenuOpen]);
 
   const handleLogout = () => {
     logout();
@@ -140,18 +170,18 @@ export default function Navbar() {
     <header className="fixed top-0 inset-x-0 z-50 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
       {/* ── TOP ROW ── navy surface (contrast against white category row) */}
       <div className="bg-[#003087] border-b border-[#00246B]" dir="rtl">
-        <div className="mx-auto flex h-16 max-w-9xl items-center gap-3 px-4 sm:px-6 lg:h-[72px] lg:gap-4">
+        <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:h-[68px] lg:gap-4">
           <div className="flex items-center gap-6">
             <Link
               to="/"
               onClick={closeMenu}
-              className="flex h-16 lg:h-[72px] flex-shrink-0 items-center overflow-hidden"
+              className="flex h-16 lg:h-[68px] flex-shrink-0 items-center overflow-hidden"
             >
-              <div className="rounded-2xl border-t-indigo-700 p-1 shadow-md sm:p-2">
+              <div className="rounded-xl border-t-indigo-700 p-1 shadow-md sm:p-1.5">
                 <img
                   src="/navbar-logo2.png"
                   alt="سالیکو"
-                  className="h-20 sm:h-20 lg:h-28 w-auto rounded-2xl object-contain"
+                  className="h-14 sm:h-16 lg:h-20 w-auto rounded-xl object-contain"
                   style={{
                     imageRendering: "-webkit-optimize-contrast",
                     filter: "drop-shadow(0 0 1px rgba(255,255,255,0.08))",
@@ -188,7 +218,7 @@ export default function Navbar() {
               <>
                 <Link
                   to="/warranty/my"
-                  className="flex items-center gap-1.5 font-persian text-sm font-persian font-medium
+                  className="flex items-center gap-1.5 font-persian text-sm font-medium
                              text-white/90 hover:text-white tracking-wide transition-colors"
                 >
                   <ClipboardList size={16} className="text-white/70" />
@@ -215,7 +245,10 @@ export default function Navbar() {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={toggleUserMenu}
-                    className="flex items-center gap-2 font-persian text-sm font-medium text-white/90 hover:text-white transition-colors"
+                    aria-haspopup="menu"
+                    aria-expanded={isUserMenuOpen}
+                    aria-label="منوی حساب کاربری"
+                    className="flex items-center gap-2 rounded-lg font-persian text-sm font-medium text-white/90 hover:text-white transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
                       <span className="font-persian text-sm font-bold text-white">
@@ -268,6 +301,7 @@ export default function Navbar() {
             onClick={() => setMenuOpen((o) => !o)}
             aria-label={menuOpen ? "بستن منو" : "باز کردن منو"}
             aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg
                        border border-white/20 bg-white/10 text-white
                        transition-colors hover:bg-white/20 lg:hidden"
@@ -280,37 +314,33 @@ export default function Navbar() {
       {/* ── CATEGORY ROW ── */}
       <nav
         dir="rtl"
+        // lg:overflow-visible lets the products dropdown escape this row. Below
+        // lg the row still scrolls horizontally, and ProductsMenu renders a plain
+        // link there instead of a clipped panel.
         className="flex h-11 max-w-full items-center justify-start gap-0.5
                    overflow-x-auto scrollbar-none border-t border-[#CBD2D6]
-                   bg-white px-3 shadow-[0_1px_4px_rgba(0,48,135,0.06)] sm:px-6 lg:px-16"
+                   bg-white px-3 shadow-[0_1px_4px_rgba(0,48,135,0.06)] sm:px-6
+                   lg:overflow-visible lg:px-16"
       >
-        {categories.map(({ label, icon: Icon, to, href }) => {
-          const classes = `flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
-               font-persian text-sm font-semibold tracking-wide whitespace-nowrap
-               transition-all duration-200
-               text-[#1A1A2E] hover:text-[#003087] hover:bg-[#F5F7FA]`;
-
-          if (href) {
-            return (
-              <a key={href} href={href} className={classes}>
-                <Icon size={15} strokeWidth={2} />
-                <span>{label}</span>
-              </a>
-            );
-          }
+        {categories.map(({ type, key, label, icon: Icon, to }) => {
+          if (type === "menu") return <ProductsMenu key={key} />;
 
           return (
             <NavLink
               key={to}
               to={to}
+              // `aria-current="page"` is what tells a screen reader which section
+              // the visitor is in; the colour change alone is invisible to it.
               className={({ isActive }) =>
-                `flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
+                `relative flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
                font-persian text-sm font-semibold tracking-wide whitespace-nowrap
                transition-all duration-200
+               after:absolute after:inset-x-3 after:-bottom-px after:h-0.5
+               after:rounded-full after:transition-colors sm:after:inset-x-4
                ${
                  isActive
-                   ? "bg-[#F5F7FA] text-[#003087]"
-                   : "text-[#1A1A2E] hover:text-[#003087] hover:bg-[#F5F7FA]"
+                   ? "bg-[#F5F7FA] text-[#003087] after:bg-[#003087]"
+                   : "text-[#1A1A2E] after:bg-transparent hover:bg-[#F5F7FA] hover:text-[#003087] hover:after:bg-[#003087]/30"
                }`
               }
             >
@@ -323,6 +353,9 @@ export default function Navbar() {
 
       {/* ── MOBILE MENU ── */}
       <div
+        id="mobile-menu"
+        role="region"
+        aria-label="منوی موبایل"
         className={`bg-white border-t border-[#CBD2D6] px-4 lg:hidden overflow-hidden transition-all duration-300 ease-in-out shadow-[0_8px_16px_rgba(0,48,135,0.12)] ${
           menuOpen ? "max-h-[600px] pb-4 pt-3 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
         }`}
@@ -336,6 +369,10 @@ export default function Navbar() {
           </div>
 
           <div className="flex flex-col divide-y divide-[#CBD2D6]">
+            {/* Full category list — the desktop hover dropdown can't render in
+                the horizontally-scrolling category row on narrow viewports. */}
+            <ProductsMenuMobile onNavigate={closeMenu} />
+
             {isAuthenticated ? (
               <>
                 <Link

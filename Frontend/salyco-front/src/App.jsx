@@ -8,8 +8,9 @@ import AboutFooter from "./components/AboutFooter";
 import SessionTimeoutModal from "./components/SessionTimeoutModal";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
-import Mattress from "./pages/Mattress";
-import MattressDetail from "./pages/MattressDetail";
+import ProductsIndex from "./pages/ProductsIndex";
+import ProductList from "./pages/ProductList";
+import ProductDetail from "./pages/ProductDetail";
 import ProductRegistration from "./pages/ProductRegistration";
 import Articles from "./pages/Articles";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -28,6 +29,7 @@ import UserInfo from "./pages/UserInfo";
 import SearchResults from "./pages/SearchResults";
 import CartPage from "./pages/CartPage";
 import CheckoutOrder from "./pages/checkout/CheckoutOrder";
+import OrderPublicPage from "./pages/OrderPublicPage";
 import OrdersPanel from "./pages/admin/OrdersPanel";
 import AllowedLocationsPanel from "./pages/admin/AllowedLocationsPanel";
 
@@ -43,10 +45,14 @@ function App() {
             <Navbar />
             <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/products/mattress" element={<Mattress />} />
+            {/* Product catalogue. `mattress` is just one :category value, so the
+                pre-existing /products/mattress and /products/mattress/:slug URLs
+                keep resolving here — no redirects needed. */}
+            <Route path="/products" element={<ProductsIndex />} />
+            <Route path="/products/:category" element={<ProductList />} />
             <Route
-              path="/products/mattress/:slug"
-              element={<MattressDetail />}
+              path="/products/:category/:slug"
+              element={<ProductDetail />}
             />
             <Route
               path="/productregistration"
@@ -65,6 +71,10 @@ function App() {
             <Route path="/user-info" element={<UserInfo />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/cart" element={<CartPage />} />
+            {/* Public order page, opened from the confirmation SMS. Not behind
+                ProtectedRoute on purpose: the link is tapped on phones that are
+                usually not signed in, and the URL token is the credential. */}
+            <Route path="/orders/:token" element={<OrderPublicPage />} />
             <Route
               path="/checkout"
               element={

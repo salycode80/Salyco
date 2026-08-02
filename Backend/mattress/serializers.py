@@ -39,6 +39,11 @@ class MattressSerializer(serializers.ModelSerializer):
     discount_price = serializers.SerializerMethodField()
     is_on_off = serializers.BooleanField()
     off_percentage = serializers.IntegerField()
+    # The frontend builds every product URL as /products/<category>/<slug>, so
+    # `category` has to travel with each row in list responses too — cards, cart
+    # lines, and search results all need it to link to the right page.
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
+    is_warranty_registrable = serializers.BooleanField(read_only=True)
     # The score to render. Equals average_rating once reviews exist, and the
     # unreviewed default (5.00) before that — see Mattress.rating. Clients should
     # read this and use review_count to decide whether to caption it.
@@ -48,17 +53,24 @@ class MattressSerializer(serializers.ModelSerializer):
         model = Mattress
         fields = [
             "id",
+            "category",
+            "category_label",
             "name",
             "brand",
             "subtitle",
             "description",
             "slug",
             "warranty_months",
+            "is_warranty_registrable",
             "price",
             "discount_price",
             "width",
             "length",
             "height",
+            "firmness",
+            "material",
+            "is_washable",
+            "trial_nights",
             "image",
             "is_available",
             "rating",
@@ -170,11 +182,15 @@ class MattressDetailSerializer(serializers.ModelSerializer):
     reviews = serializers.SerializerMethodField()
     discount_price = serializers.SerializerMethodField()
     rating = serializers.DecimalField(max_digits=3, decimal_places=2, read_only=True)
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
+    is_warranty_registrable = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Mattress
         fields = [
             "id",
+            "category",
+            "category_label",
             "name",
             "brand",
             "subtitle",
@@ -182,11 +198,16 @@ class MattressDetailSerializer(serializers.ModelSerializer):
             "long_description",
             "slug",
             "warranty_months",
+            "is_warranty_registrable",
             "price",
             "discount_price",
             "width",
             "length",
             "height",
+            "firmness",
+            "material",
+            "is_washable",
+            "trial_nights",
             "image",
             "is_available",
             "rating",
@@ -256,6 +277,14 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
         if instance.is_warranty_active:
             raise serializers.ValidationError(
                 {"serial_number": "Warranty has already been activated for this mattress."}
+            )
+        # Pillows and duvets are not tracked per unit. An instance for one should
+        # never exist (MattressInstanceCreateSerializer refuses to mint it), but
+        # check here too so a row created before this rule — or straight from the
+        # Django admin, which bypasses the API serializers — can't be activated.
+        if not instance.mattress.is_warranty_registrable:
+            raise serializers.ValidationError(
+                {"serial_number": "برای این دسته از محصولات ثبت گارانتی انجام نمی‌شود."}
             )
         attrs["instance"] = instance
         return attrs
@@ -367,6 +396,22 @@ class MattressInstanceCreateSerializer(serializers.ModelSerializer):
         if MattressInstance.objects.filter(serial_number=normalized).exists():
             raise serializers.ValidationError("This serial number already exists.")
         return normalized
+
+    def validate(self, attrs: dict) -> dict:
+        # Only serial-numbered product lines get instances. Minting one for a
+        # pillow would produce a QR code and a warranty page for a unit the
+        # business does not track, so refuse it at the source.
+        mattress = attrs.get("mattress")
+        if mattress is not None and not mattress.is_warranty_registrable:
+            raise serializers.ValidationError(
+                {
+                    "mattress_id": (
+                        f"برای دسته «{mattress.get_category_display()}» "
+                        "نمونه سریال‌دار ساخته نمی‌شود."
+                    )
+                }
+            )
+        return attrs
 
     def create(self, validated_data) -> MattressInstance:
         serial_number = validated_data.get("serial_number", "").strip()

@@ -34,17 +34,23 @@ class MattressSearchProvider(SearchProvider):
                 | Q(brand__icontains=query)
                 | Q(subtitle__icontains=query)
                 | Q(description__icontains=query)
+                | Q(material__icontains=query)
             )
-            .order_by("name")[:limit]
+            .order_by("category", "name")[:limit]
         )
         return [
             SearchResult(
                 type=self.key,
                 type_label=self.label,
                 id=m.pk,
-                title=m.name,
+                # Say which product line a hit belongs to — a bare name is
+                # ambiguous once five categories share one result group.
+                title=f"{m.name} ({m.get_category_display()})",
                 subtitle=m.subtitle or _truncate(m.description, 90),
-                url=f"/products/mattress/{m.slug}",
+                # Must track the product's own category: a pillow linked at
+                # /products/mattress/<slug> lands on a page that renders a size
+                # grid the product has no sizes for.
+                url=f"/products/{m.category}/{m.slug}",
                 image=self.absolute_media_url(request, m.image),
             )
             for m in qs

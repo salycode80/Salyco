@@ -21,9 +21,23 @@ export default function CreateInstancePanel() {
 
   useEffect(() => {
     listMattresses()
-      .then((d) => setMattresses(Array.isArray(d) ? d : d.results || []))
+      .then((d) => {
+        const all = Array.isArray(d) ? d : d.results || [];
+        // Only serial-numbered lines get instances. Pillows and duvets carry a
+        // stated guarantee but are not tracked per unit, and the server rejects
+        // them — so don't offer an option that cannot succeed.
+        setMattresses(all.filter((m) => m.is_warranty_registrable));
+      })
       .catch(() => {});
   }, []);
+
+  // Group the dropdown by category — a flat mixed list of mattresses, boxes,
+  // and toppers is hard to scan once the catalogue grows.
+  const groupedMattresses = mattresses.reduce((groups, m) => {
+    const label = m.category_label || "سایر";
+    (groups[label] ||= []).push(m);
+    return groups;
+  }, {});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,7 +82,9 @@ export default function CreateInstancePanel() {
         </h1>
         <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
         <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
-          نوع تشک و تاریخ تولید را انتخاب کنید تا شماره سریال و QR کد تولید شود.
+          نوع محصول و تاریخ تولید را انتخاب کنید تا شماره سریال و QR کد تولید
+          شود. تنها محصولات سریال‌دار (تشک، باکس تخت خواب و تاپر) در این لیست
+          نمایش داده می‌شوند.
         </p>
       </header>
 
@@ -78,7 +94,7 @@ export default function CreateInstancePanel() {
             <div dir="rtl">
               <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[#1A1A2E]">
                 <ShieldCheck size={16} className="text-[#003087]" strokeWidth={2} />
-                <span className="font-persian">نوع تشک</span>
+                <span className="font-persian">نوع محصول</span>
               </label>
               <select
                 value={mattressId}
@@ -87,10 +103,14 @@ export default function CreateInstancePanel() {
                 className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
               >
                 <option value="">انتخاب کنید...</option>
-                {mattresses.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
+                {Object.entries(groupedMattresses).map(([label, items]) => (
+                  <optgroup key={label} label={label}>
+                    {items.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>

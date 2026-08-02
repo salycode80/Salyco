@@ -1,11 +1,29 @@
 from __future__ import annotations
 
+import secrets
 from decimal import Decimal
 
 from django.db import models
 
 from mattress.models import Mattress, MattressSize
 from users.models import Customer
+
+
+def generate_order_token() -> str:
+    """Unguessable identifier for an order's public page. Module-level (not a
+    lambda) so migrations can reference it.
+
+    Length is dictated by SMS.ir, not by taste: a pattern parameter value may be
+    at most 25 characters, and the confirmation SMS sends "orders/<token>" as
+    one parameter (see order_public_link_path in notifications.py). That leaves
+    18 for the token, so this is token_urlsafe(13) rather than the token_hex(16)
+    it started as — 104 bits of entropy in 18 chars instead of 128 in 32.
+
+    Do not lengthen without also re-checking that 25-character budget; going
+    over it makes SMS.ir reject the send outright, with no SMS and no error the
+    customer can see.
+    """
+    return secrets.token_urlsafe(13)
 
 
 class Cart(models.Model):
@@ -108,6 +126,29 @@ class Order(models.Model):
 
     total_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Capability token for the public order page linked from the confirmation
+    # SMS. The customer taps that link on a phone that is often not signed in,
+    # so the page cannot require auth; the token is the credential instead, in
+    # the same spirit as the warranty QR URL. 32 hex chars of os.urandom —
+    # unguessable, and scoped to exactly one order.
+    public_token = models.CharField(
+        max_length=64,
+        unique=True,
+        default=generate_order_token,
+        editable=False,
+        verbose_name="public token",
+    )
+
+    # Latch so the confirmation SMS is sent once per order. Staff re-saving a
+    # CONFIRMED order, or moving it SHIPPED → CONFIRMED again, must not spend
+    # another SMS credit or re-notify the customer.
+    confirmation_sms_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="confirmation SMS sent at",
+    )
 
     class Meta:
         verbose_name = "order"

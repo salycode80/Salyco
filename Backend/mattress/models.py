@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg, Count
 from django.db.models.signals import post_delete, post_save
@@ -40,6 +41,46 @@ def add_months(source_date: date, months: int) -> date:
 
 
 class Mattress(models.Model):
+    """A sellable sleep product.
+
+    Despite the name — kept because cart, orders, warranty instances, and reviews
+    all foreign-key to it — this model backs every product line, discriminated by
+    `category`. A pillow is just a row with no MattressSize children; everything
+    else (sizes, images, specs, features, FAQs, pros/cons) is shared machinery.
+    """
+
+    CATEGORY_MATTRESS = "mattress"
+    CATEGORY_BEDBOX = "bedbox"
+    CATEGORY_PILLOW = "pillow"
+    CATEGORY_DUVET = "duvet"
+    CATEGORY_TOPPER = "topper"
+    CATEGORY_CHOICES = [
+        (CATEGORY_MATTRESS, "تشک"),
+        (CATEGORY_BEDBOX, "باکس تخت خواب"),
+        (CATEGORY_PILLOW, "بالش"),
+        (CATEGORY_DUVET, "روتختی"),
+        (CATEGORY_TOPPER, "محافظ تشک و تاپر"),
+    ]
+
+    # Categories whose units are serial-numbered and individually warranty-
+    # registrable. Pillows and duvets still carry a stated guarantee period
+    # (warranty_months, rendered as a badge) but are not tracked per unit, so
+    # there is no MattressInstance and no QR code for them.
+    WARRANTY_REGISTRABLE_CATEGORIES = {
+        CATEGORY_MATTRESS,
+        CATEGORY_BEDBOX,
+        CATEGORY_TOPPER,
+    }
+
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        # Every row that existed before this field was added is a mattress, so
+        # the default is what keeps the back catalogue correct through migration.
+        default=CATEGORY_MATTRESS,
+        db_index=True,
+        verbose_name="category",
+    )
     name = models.CharField(max_length=255, verbose_name="name")
     brand = models.CharField(max_length=100, blank=True, default="", verbose_name="brand")
     subtitle = models.CharField(max_length=255, blank=True, default="", verbose_name="subtitle")
@@ -53,6 +94,33 @@ class Mattress(models.Model):
     length = models.IntegerField(default=0)
     height = models.IntegerField(default=0, verbose_name="height (cm)")
     is_available = models.BooleanField(default=True, verbose_name="is available")
+
+    # ── Sleep-brand properties ──
+    # Only the four that drive dedicated UI live here (a firmness scale bar and
+    # three badges). Everything else a sleep brand lists — loft, TOG rating, fill
+    # weight, cover fabric, density, certifications — belongs in
+    # MattressSpecification rows, which already render as a spec table and need
+    # no migration to extend per category.
+    firmness = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        verbose_name="firmness (1-10)",
+        help_text="۱ = بسیار نرم، ۱۰ = بسیار سخت. Leave empty to hide the scale.",
+    )
+    material = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        verbose_name="material",
+        help_text="e.g. مموری فوم، الیاف میکروفایبر",
+    )
+    is_washable = models.BooleanField(default=False, verbose_name="washable")
+    trial_nights = models.PositiveIntegerField(
+        default=0,
+        verbose_name="trial nights",
+        help_text="0 hides the trial badge.",
+    )
     # Cache of the approved-review aggregate, refreshed by update_rating_cache().
     # Read through the `rating` property rather than directly — that applies the
     # unreviewed fallback. Not editable: it is derived from Review rows, so a
@@ -107,6 +175,13 @@ class Mattress(models.Model):
         if self.review_count <= 0:
             return DEFAULT_RATING
         return self.average_rating
+
+    @property
+    def is_warranty_registrable(self) -> bool:
+        """True when this product line supports per-unit serial-numbered warranty
+        registration. Pillows and duvets carry a stated guarantee period but are
+        not individually tracked."""
+        return self.category in self.WARRANTY_REGISTRABLE_CATEGORIES
 
     def update_rating_cache(self) -> None:
         """Recompute average_rating/review_count from the approved reviews.

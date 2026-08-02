@@ -3,9 +3,66 @@ from __future__ import annotations
 import base64
 import io
 import secrets
+from datetime import date
 
 import qrcode
 from django.conf import settings
+
+
+def to_jalali(value: date) -> tuple[int, int, int]:
+    """Convert a Gregorian date to the Jalali (Shamsi) calendar.
+
+    Hand-rolled rather than pulled from jdatetime/persiantools, to avoid adding a
+    dependency for the one thing this project needs from one: formatting a date
+    for a Persian-language SMS. The algorithm is the standard division-based
+    conversion and is exact for the Gregorian range 1901-2099, which covers every
+    date this system can hold (activation dates are "today" at registration and
+    manufacture dates are recent).
+    """
+    gy, gm, gd = value.year, value.month, value.day
+
+    g_days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    gy2 = gy - 1600
+    gm2 = gm - 1
+    gd2 = gd - 1
+
+    g_day_no = 365 * gy2 + (gy2 + 3) // 4 - (gy2 + 99) // 100 + (gy2 + 399) // 400
+    for i in range(gm2):
+        g_day_no += g_days_in_month[i]
+    # March-onward dates in a Gregorian leap year fall after 29 February.
+    if gm2 > 1 and ((gy % 4 == 0 and gy % 100 != 0) or (gy % 400 == 0)):
+        g_day_no += 1
+    g_day_no += gd2
+
+    # 1600-03-21 Gregorian == 979-01-01 Jalali, the epoch this offset encodes.
+    j_day_no = g_day_no - 79
+    j_np = j_day_no // 12053
+    j_day_no %= 12053
+    jy = 979 + 33 * j_np + 4 * (j_day_no // 1461)
+    j_day_no %= 1461
+    if j_day_no >= 366:
+        jy += (j_day_no - 1) // 365
+        j_day_no = (j_day_no - 1) % 365
+
+    # First six Jalali months have 31 days, the next five have 30.
+    for i in range(11):
+        month_length = 31 if i < 6 else 30
+        if j_day_no < month_length:
+            return jy, i + 1, j_day_no + 1
+        j_day_no -= month_length
+    return jy, 12, j_day_no + 1
+
+
+def format_jalali(value: date | None) -> str:
+    """Render a date as a Shamsi 'YYYY/MM/DD' string, or "" when absent.
+
+    Used for customer-facing SMS text, where a Gregorian date reads as wrong to
+    an Iranian customer even though it names the same day.
+    """
+    if value is None:
+        return ""
+    jy, jm, jd = to_jalali(value)
+    return f"{jy:04d}/{jm:02d}/{jd:02d}"
 
 
 def get_warranty_public_url(serial_number: str, request=None) -> str:

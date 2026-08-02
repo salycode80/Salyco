@@ -10,6 +10,19 @@ urlpatterns = [
     path("cart/merge/", views.CartMergeView.as_view(), name="cart-merge"),
     path("orders/", views.OrderCreateView.as_view(), name="order-create"),
     path("orders/my/", views.OrderListView.as_view(), name="order-my-list"),
+    # Public, token-authorised order page linked from the confirmation SMS.
+    # Declared after "orders/my/" so that literal path is never shadowed by the
+    # token pattern.
+    path(
+        "orders/public/<str:token>/",
+        views.PublicOrderDetailView.as_view(),
+        name="order-public-detail",
+    ),
+    path(
+        "orders/public/<str:token>/cancel/",
+        views.PublicOrderCancelView.as_view(),
+        name="order-public-cancel",
+    ),
     path("locations/allowed/", views.AllowedLocationPublicView.as_view(), name="locations-allowed"),
 
     # ── admin ──

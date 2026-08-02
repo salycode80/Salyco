@@ -277,7 +277,7 @@ export default function CheckoutOrder() {
               {SALES_PHONE}
             </div>
             <Link
-              to="/products/mattress"
+              to="/products"
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
             >
               ادامه خرید

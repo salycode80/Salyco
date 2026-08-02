@@ -7,6 +7,7 @@ export default function BannerCarousel() {
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     async function loadBanners() {
@@ -17,14 +18,17 @@ export default function BannerCarousel() {
   }, []);
 
   useEffect(() => {
-    if (!isAutoPlaying || banners.length <= 1) return;
+    if (!isAutoPlaying || isPaused || banners.length <= 1) return;
+    // Auto-advancing content must be stoppable (WCAG 2.2.2). Visitors who ask
+    // the OS for reduced motion get a static first slide and the arrows/dots.
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % banners.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, banners.length]);
+  }, [isAutoPlaying, isPaused, banners.length]);
 
   const goToSlide = (index) => {
     setCurrentIndex(index);
@@ -43,8 +47,20 @@ export default function BannerCarousel() {
   if (banners.length === 0) return null;
 
   return (
-    <section className="relative w-full py-6">
-      <div className="relative mx-auto max-w-7xl px-[10vw]">
+    <section
+      className="relative w-full py-6"
+      aria-roledescription="carousel"
+      aria-label="پیشنهادهای ویژه"
+      // Hold position while the visitor is reading or tabbing through a slide.
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={() => setIsPaused(false)}
+    >
+      {/* px-[10vw] inside a max-w-7xl container ate ~20% of the viewport on
+          every screen, so the banner shrank as the window grew. Match the
+          page's standard gutters instead. */}
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         {/* Announcement-style banner container */}
         <div
           className="relative overflow-hidden rounded-2xl border-4 border-[#003087]/20 bg-gradient-to-r from-[#003087] via-[#00246B] to-[#003087] shadow-2xl"
@@ -90,7 +106,10 @@ export default function BannerCarousel() {
                 <div className="relative z-10 hidden w-1/2 md:block">
                   <img
                     src={banner.image_url || banner.image}
-                    alt={banner.title}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover pr-8"
                   />
                   {/* Decorative elements */}
@@ -99,18 +118,24 @@ export default function BannerCarousel() {
                 </div>
 
                 {/* Right side - Text Content */}
-                <div className="relative z-10 flex flex-col items-start justify-center px-8 pb-8 pt-12 md:w-1/2 md:pl-12 lg:px-16 lg:py-16">
-                  <span className="mb-4 inline-flex items-center rounded-full bg-[#003087]/20 px-4 py-1 text-sm font-semibold text-[#003087]">
+                <div
+                  dir="rtl"
+                  className="relative z-10 flex flex-col items-start justify-center px-8 pb-8 pt-12 md:w-1/2 md:pl-12 lg:px-16 lg:py-16"
+                >
+                  {/* Was navy text on the navy gradient — the label was very
+                      nearly invisible. White on a translucent white pill keeps
+                      the same shape and reads at a glance. */}
+                  <span className="mb-4 inline-flex items-center rounded-full bg-white/15 px-4 py-1 font-persian text-sm font-semibold text-white ring-1 ring-white/25">
                     🎉 پیشنهاد ویژه
                   </span>
-                  <h2 className="mb-4 text-3xl font-bold leading-tight text-white md:text-4xl lg:text-5xl">
+                  <h2 className="mb-4 font-persian text-2xl font-bold leading-tight text-white md:text-4xl lg:text-5xl">
                     {banner.title}
                   </h2>
                   <Link
                     to={banner.link}
-                    className="inline-flex items-center gap-2 rounded-lg bg-white px-8 py-3 font-persian text-base font-semibold text-[#003087] transition-all hover:bg-[#f5f7ff] hover:shadow-lg"
+                    className="relative z-30 inline-flex items-center gap-2 rounded-lg bg-white px-8 py-3 font-persian text-base font-semibold text-[#003087] transition-all hover:bg-[#f5f7ff] hover:shadow-lg"
                   >
-                    ... ادامه
+                    ادامه مطلب
                     <ChevronLeft size={18} />
                   </Link>
                 </div>
@@ -130,17 +155,21 @@ export default function BannerCarousel() {
           {/* Navigation arrows - bold style */}
           {banners.length > 1 && (
             <>
+              {/* RTL: "previous" lives on the right and points right; "next"
+                  lives on the left and points left. The icons were already
+                  correct but the two buttons sat on the wrong sides, so the
+                  right-pointing chevron advanced the carousel backwards. */}
               <button
                 onClick={goToPrevious}
-                className="absolute left-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#003087] shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:left-8"
+                className="absolute right-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#003087] shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:right-8"
                 aria-label="اسلاید قبلی"
               >
                 <ChevronRight size={24} strokeWidth={2.5} />
               </button>
               <button
                 onClick={goToNext}
-                className="absolute right-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#003087] shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:right-8"
-                aria-label="aslاید بعدی"
+                className="absolute left-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#003087] shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:left-8"
+                aria-label="اسلاید بعدی"
               >
                 <ChevronLeft size={24} strokeWidth={2.5} />
               </button>
@@ -150,17 +179,24 @@ export default function BannerCarousel() {
           {/* Dots indicator - bold style */}
           {banners.length > 1 && (
             <div className="absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 gap-3">
+              {/* The visible dot stays 6px, but the button gets a transparent
+                  py-2 band so the tap target clears the 24px minimum. */}
               {banners.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => goToSlide(index)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    index === currentIndex
-                      ? "w-8 bg-white"
-                      : "w-1.5 bg-white/40 hover:bg-white/60"
-                  }`}
+                  className="group flex items-center py-2"
                   aria-label={`رفتن به اسلاید ${index + 1}`}
-                />
+                  aria-current={index === currentIndex}
+                >
+                  <span
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      index === currentIndex
+                        ? "w-8 bg-white"
+                        : "w-1.5 bg-white/40 group-hover:bg-white/60"
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           )}

@@ -8,6 +8,7 @@ from mattress.admin_views import apply_ordering
 
 from .admin_serializers import AdminAllowedLocationSerializer, AdminOrderSerializer
 from .models import AllowedLocation, Order
+from .notifications import send_order_confirmation
 
 # Whitelisted sort options, same shape as the instance list. Every choice ends
 # in a unique-ish tie-breaker so equal values don't shuffle between requests.
@@ -67,6 +68,17 @@ class AdminOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = AdminOrderSerializer
     queryset = Order.objects.select_related("customer").prefetch_related("items")
+
+    def perform_update(self, serializer):
+        """Retry the order SMS if checkout's attempt never landed.
+
+        The customer is normally notified at checkout, in OrderCreateView. This
+        is the backstop for when that send failed — a gateway outage, say —
+        since send_order_confirmation() latches on success and so does nothing
+        here for the overwhelming majority of orders.
+        """
+        order = serializer.save()
+        send_order_confirmation(order)
 
 
 class AdminAllowedLocationListView(generics.ListCreateAPIView):
