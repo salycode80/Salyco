@@ -4,8 +4,8 @@ import { Phone, Mail, MapPin } from "lucide-react";
 // Enamad (نماد اعتماد الکترونیکی) seal credentials. Kept as constants so the
 // query strings are built in JS — a raw "&Code=" inside a JSX attribute string
 // reads as an HTML entity sequence and is easy to mangle on a later edit.
-const ENAMAD_ID = "7415585";
-const ENAMAD_CODE = "HpNAQ4zPLtAaN48QS9Usi0lwagPEszdC";
+const ENAMAD_ID = "7423184";
+const ENAMAD_CODE = "H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4";
 
 const footerLinks = [
   { label: "محصولات", href: "/products" },
@@ -137,19 +137,17 @@ export default function AboutFooter() {
               background and reads as a dark smudge on the blue footer. */}
           <div className="flex justify-center">
             <a
-              href={`https://trustseal.enamad.ir/?id=${ENAMAD_ID}&Code=${ENAMAD_CODE}`}
+              referrerpolicy="origin"
               target="_blank"
-              rel="noopener"
-              referrerPolicy="origin"
-              className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-lg transition-transform hover:scale-105"
+              href="https://trustseal.enamad.ir/?id=7423184&Code=H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
             >
               <img
-                src={`https://trustseal.enamad.ir/logo.aspx?id=${ENAMAD_ID}&Code=${ENAMAD_CODE}`}
-                alt="نماد اعتماد الکترونیکی"
-                referrerPolicy="origin"
-                code={ENAMAD_CODE}
-                className="h-24 w-auto cursor-pointer"
-              />
+                referrerpolicy="origin"
+                src="https://trustseal.enamad.ir/logo.aspx?id=7423184&Code=H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
+                alt=""
+                style="cursor:pointer"
+                code="H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
+              ></img>
             </a>
           </div>
 
