@@ -137,17 +137,19 @@ export default function AboutFooter() {
               background and reads as a dark smudge on the blue footer. */}
           <div className="flex justify-center">
             <a
-              referrerpolicy="origin"
+              href={`https://trustseal.enamad.ir/?id=${ENAMAD_ID}&Code=${ENAMAD_CODE}`}
               target="_blank"
-              href="https://trustseal.enamad.ir/?id=7423184&Code=H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
+              rel="noopener"
+              referrerPolicy="origin"
+              className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-lg transition-transform hover:scale-105"
             >
               <img
-                referrerpolicy="origin"
-                src="https://trustseal.enamad.ir/logo.aspx?id=7423184&Code=H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
-                alt=""
-                style="cursor:pointer"
-                code="H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
-              ></img>
+                src={`https://trustseal.enamad.ir/logo.aspx?id=${ENAMAD_ID}&Code=${ENAMAD_CODE}`}
+                alt="نماد اعتماد الکترونیکی"
+                referrerPolicy="origin"
+                code={ENAMAD_CODE}
+                className="h-24 w-auto cursor-pointer"
+              />
             </a>
           </div>
 
