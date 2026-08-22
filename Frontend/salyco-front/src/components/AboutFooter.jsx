@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin } from "lucide-react";
 
+// Enamad (نماد اعتماد الکترونیکی) seal credentials. Kept as constants so the
+// query strings are built in JS — a raw "&Code=" inside a JSX attribute string
+// reads as an HTML entity sequence and is easy to mangle on a later edit.
+const ENAMAD_ID = "7415585";
+const ENAMAD_CODE = "HpNAQ4zPLtAaN48QS9Usi0lwagPEszdC";
+
 const footerLinks = [
   { label: "محصولات", href: "/products" },
   { label: "مقالات", href: "/articles" },
@@ -118,13 +124,43 @@ export default function AboutFooter() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/15 pt-8 sm:flex-row">
-          <p className="font-sans text-xs tracking-wide text-white/60">
-            © {new Date().getFullYear()} Salyco. All rights reserved.
-          </p>
-          <p className="font-persian text-xs text-white/60" dir="rtl">
-            طراحی و تولید توسط مهندس امیررضا سلامت
-          </p>
+        <div className="mt-14 border-t border-white/15 pt-8">
+          {/* Enamad trust seal. Three details are load-bearing for their
+              automated check, so don't "clean them up":
+                • referrerPolicy="origin" — Enamad reads the Referer header to
+                  confirm the seal is served from salyco.ir. rel must stay
+                  "noopener"; adding "noreferrer" strips the header and fails it.
+                • the `code` attribute — read by Enamad's own validator script.
+                • no loading="lazy" — a headless checker that never scrolls the
+                  footer into view would not fetch the image.
+              The white card is needed because the seal artwork assumes a light
+              background and reads as a dark smudge on the blue footer. */}
+          <div className="flex justify-center">
+            <a
+              href={`https://trustseal.enamad.ir/?id=${ENAMAD_ID}&Code=${ENAMAD_CODE}`}
+              target="_blank"
+              rel="noopener"
+              referrerPolicy="origin"
+              className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-lg transition-transform hover:scale-105"
+            >
+              <img
+                src={`https://trustseal.enamad.ir/logo.aspx?id=${ENAMAD_ID}&Code=${ENAMAD_CODE}`}
+                alt="نماد اعتماد الکترونیکی"
+                referrerPolicy="origin"
+                code={ENAMAD_CODE}
+                className="h-24 w-auto cursor-pointer"
+              />
+            </a>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <p className="font-sans text-xs tracking-wide text-white/60">
+              © {new Date().getFullYear()} Salyco. All rights reserved.
+            </p>
+            <p className="font-persian text-xs text-white/60" dir="rtl">
+              طراحی و تولید توسط مهندس امیررضا سلامت
+            </p>
+          </div>
         </div>
       </div>
     </footer>
