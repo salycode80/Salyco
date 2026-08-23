@@ -163,7 +163,9 @@ class CustomerWarrantyListView(generics.ListAPIView):
         if customer is None:
             return MattressInstance.objects.none()
         return (
-            MattressInstance.objects.filter(customer=customer, is_warranty_active=True)
+            MattressInstance.objects.filter(
+                customer=customer, warranty_status=MattressInstance.APPROVED
+            )
             .select_related("mattress", "customer")
             .order_by("-activation_date")
         )

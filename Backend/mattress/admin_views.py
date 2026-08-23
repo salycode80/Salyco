@@ -77,9 +77,9 @@ def filter_instances(request):
 
     warranty = request.query_params.get("warranty")
     if warranty == "active":
-        qs = qs.filter(is_warranty_active=True)
+        qs = qs.filter(warranty_status=MattressInstance.APPROVED)
     elif warranty == "inactive":
-        qs = qs.filter(is_warranty_active=False)
+        qs = qs.exclude(warranty_status=MattressInstance.APPROVED)
 
     mattress_id = request.query_params.get("mattress")
     if mattress_id:
@@ -98,7 +98,7 @@ def filter_customers(request):
         total_products=Count("mattress_instances", distinct=True),
         active_warranties=Count(
             "mattress_instances",
-            filter=Q(mattress_instances__is_warranty_active=True),
+            filter=Q(mattress_instances__warranty_status=MattressInstance.APPROVED),
             distinct=True,
         ),
     )
@@ -124,11 +124,12 @@ class AdminStatsView(APIView):
         instances = MattressInstance.objects.all()
         total = instances.count()
         sold = instances.filter(customer__isnull=False).count()
-        active = instances.filter(is_warranty_active=True).count()
+        active = instances.filter(warranty_status=MattressInstance.APPROVED).count()
 
         today = timezone.localdate()
         active_qs = instances.filter(
-            is_warranty_active=True, activation_date__isnull=False
+            warranty_status=MattressInstance.APPROVED,
+            activation_date__isnull=False,
         ).select_related("mattress")
         under_warranty = sum(1 for i in active_qs if i.is_under_warranty)
         expired = active - under_warranty

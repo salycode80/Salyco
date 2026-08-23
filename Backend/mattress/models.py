@@ -361,6 +361,22 @@ def _review_deleted(sender, instance: Review, **kwargs):
 
 
 class MattressInstance(models.Model):
+    # Warranty lifecycle. A submission no longer activates the warranty — it
+    # creates a PENDING request for an admin to approve or reject, so a
+    # mistyped serial or a mismatched product is caught before coverage
+    # starts. REJECTED is not terminal: the customer corrects the details and
+    # resubmits, returning the row to PENDING.
+    UNREGISTERED = "UNREGISTERED"
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    WARRANTY_STATUS_CHOICES = [
+        (UNREGISTERED, "Unregistered"),
+        (PENDING, "Pending review"),
+        (APPROVED, "Approved"),
+        (REJECTED, "Rejected"),
+    ]
+
     serial_number = models.CharField(
         max_length=100,
         primary_key=True,
@@ -390,9 +406,32 @@ class MattressInstance(models.Model):
     buyer_phone_number = models.CharField(max_length=20, blank=True, default="", verbose_name="buyer phone number")
     buyer_address = models.TextField(blank=True, default="", verbose_name="buyer address")
     buyer_postal_code = models.CharField(max_length=20, blank=True, default="", verbose_name="buyer postal code")
-    is_warranty_active = models.BooleanField(
-        default=False,
-        verbose_name="warranty active",
+    warranty_status = models.CharField(
+        max_length=12,
+        choices=WARRANTY_STATUS_CHOICES,
+        default=UNREGISTERED,
+        db_index=True,
+        verbose_name="warranty status",
+    )
+    # Second-precision claim time. created_at records when we minted the
+    # serial, not when a customer claimed it, and activation_date is only
+    # day-precise — neither can order the review queue.
+    warranty_submitted_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="warranty submitted at"
+    )
+    warranty_reviewed_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="warranty reviewed at"
+    )
+    warranty_reviewed_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="reviewed_warranties",
+        verbose_name="warranty reviewed by",
+    )
+    warranty_rejection_reason = models.TextField(
+        blank=True, default="", verbose_name="warranty rejection reason"
     )
     activation_date = models.DateField(
         null=True,
@@ -428,6 +467,18 @@ class MattressInstance(models.Model):
         if self.customer_id is not None:
             return f"{self.customer.first_name} {self.customer.last_name}".strip()
         return ""
+
+    @property
+    def is_warranty_active(self) -> bool:
+        """True only for an admin-approved warranty.
+
+        This was a stored BooleanField before the approval flow existed. It is
+        kept as a property so serializers, the CSV export, and the admin
+        dashboard keep reading the same name while `warranty_status` is the
+        only stored truth. It cannot be used in a queryset filter — use
+        `warranty_status=MattressInstance.APPROVED` there.
+        """
+        return self.warranty_status == self.APPROVED
 
     @property
     def warranty_expiration_date(self) -> Optional[date]:

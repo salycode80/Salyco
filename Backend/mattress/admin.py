@@ -73,11 +73,11 @@ class MattressInstanceAdmin(admin.ModelAdmin):
         "serial_number",
         "mattress",
         "customer",
-        "is_warranty_active",
+        "warranty_status",
         "activation_date",
         "manufacture_date",
     )
-    list_filter = ("is_warranty_active", "mattress__category", "mattress")
+    list_filter = ("warranty_status", "mattress__category", "mattress")
     search_fields = ("serial_number", "customer__first_name", "customer__last_name")
     raw_id_fields = ("customer",)
     readonly_fields = (

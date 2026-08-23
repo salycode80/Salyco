@@ -237,6 +237,7 @@ class MattressInstanceSerializer(serializers.ModelSerializer):
     warranty_expiration_date = serializers.DateField(read_only=True)
     warranty_remaining_days = serializers.IntegerField(read_only=True)
     is_under_warranty = serializers.BooleanField(read_only=True)
+    is_warranty_active = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = MattressInstance
@@ -329,7 +330,7 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
         instance.buyer_address = self.validated_data.get("address", "") or customer.address
         instance.buyer_postal_code = self.validated_data.get("postal_code", "") or customer.postal_code
         instance.activation_date = timezone.localdate()
-        instance.is_warranty_active = True
+        instance.warranty_status = MattressInstance.APPROVED
         instance.save(
             update_fields=[
                 "customer",
@@ -339,7 +340,7 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
                 "buyer_address",
                 "buyer_postal_code",
                 "activation_date",
-                "is_warranty_active",
+                "warranty_status",
             ]
         )
         return instance
@@ -351,6 +352,7 @@ class WarrantyCheckSerializer(serializers.ModelSerializer):
     warranty_expiration_date = serializers.DateField(read_only=True)
     warranty_remaining_days = serializers.IntegerField(read_only=True)
     is_under_warranty = serializers.BooleanField(read_only=True)
+    is_warranty_active = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = MattressInstance

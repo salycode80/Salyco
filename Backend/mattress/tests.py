@@ -48,14 +48,14 @@ class MattressInstanceWarrantyPropertyTests(TestCase):
         self,
         serial_number: str,
         activation_date: date | None = None,
-        is_warranty_active: bool = False,
+        warranty_status: str = MattressInstance.UNREGISTERED,
     ) -> MattressInstance:
         return MattressInstance.objects.create(
             serial_number=serial_number,
             mattress=self.mattress,
             manufacture_date=date(2024, 1, 1),
             activation_date=activation_date,
-            is_warranty_active=is_warranty_active,
+            warranty_status=warranty_status,
         )
 
     def test_warranty_expiration_date_when_not_activated(self):
@@ -67,7 +67,7 @@ class MattressInstanceWarrantyPropertyTests(TestCase):
         instance = self._create_instance(
             "SN-002",
             activation_date=activation_date,
-            is_warranty_active=True,
+            warranty_status=MattressInstance.APPROVED,
         )
         self.assertEqual(
             instance.warranty_expiration_date,
@@ -79,7 +79,7 @@ class MattressInstanceWarrantyPropertyTests(TestCase):
         instance = self._create_instance(
             "SN-003",
             activation_date=today,
-            is_warranty_active=True,
+            warranty_status=MattressInstance.APPROVED,
         )
         expected_days = (instance.warranty_expiration_date - today).days
         self.assertEqual(instance.warranty_remaining_days, expected_days)
@@ -88,7 +88,7 @@ class MattressInstanceWarrantyPropertyTests(TestCase):
         instance = self._create_instance(
             "SN-004",
             activation_date=timezone.localdate(),
-            is_warranty_active=True,
+            warranty_status=MattressInstance.APPROVED,
         )
         self.assertTrue(instance.is_under_warranty)
 
@@ -96,7 +96,7 @@ class MattressInstanceWarrantyPropertyTests(TestCase):
         instance = self._create_instance(
             "SN-005",
             activation_date=date(2010, 1, 1),
-            is_warranty_active=True,
+            warranty_status=MattressInstance.APPROVED,
         )
         self.assertFalse(instance.is_under_warranty)
 
@@ -126,7 +126,7 @@ class WarrantyAPITests(APITestCase):
             mattress=cls.mattress,
             manufacture_date=date(2024, 1, 1),
             activation_date=date(2024, 2, 1),
-            is_warranty_active=True,
+            warranty_status=MattressInstance.APPROVED,
         )
         cls.user = User.objects.create_user(
             username="warrantyuser",
@@ -187,3 +187,62 @@ class WarrantyAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["serial_number"], "API-SN-002")
+
+
+class WarrantyStatusModelTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.mattress = Mattress.objects.create(
+            name="Status Probe",
+            description="Status probe mattress",
+            slug="status-probe",
+            warranty_months=120,
+            price=Decimal("799.00"),
+            image=create_test_image("status.jpg"),
+        )
+
+    def _instance(self, serial_number: str, **kwargs) -> MattressInstance:
+        return MattressInstance.objects.create(
+            serial_number=serial_number,
+            mattress=self.mattress,
+            manufacture_date=date(2024, 1, 1),
+            **kwargs,
+        )
+
+    def test_default_status_is_unregistered(self):
+        instance = self._instance("ST-001")
+        self.assertEqual(instance.warranty_status, MattressInstance.UNREGISTERED)
+        self.assertFalse(instance.is_warranty_active)
+
+    def test_is_warranty_active_true_only_when_approved(self):
+        approved = self._instance("ST-002", warranty_status=MattressInstance.APPROVED)
+        pending = self._instance("ST-003", warranty_status=MattressInstance.PENDING)
+        rejected = self._instance("ST-004", warranty_status=MattressInstance.REJECTED)
+        self.assertTrue(approved.is_warranty_active)
+        self.assertFalse(pending.is_warranty_active)
+        self.assertFalse(rejected.is_warranty_active)
+
+    def test_pending_has_expiration_date_but_is_not_under_warranty(self):
+        """activation_date is set at submission, so the expiration properties
+        return real dates while review is still pending. Only is_under_warranty
+        gates actual validity — see the spec's "Known sharp edge"."""
+        instance = self._instance(
+            "ST-005",
+            warranty_status=MattressInstance.PENDING,
+            activation_date=timezone.localdate(),
+        )
+        self.assertIsNotNone(instance.warranty_expiration_date)
+        self.assertGreater(instance.warranty_remaining_days, 0)
+        self.assertFalse(instance.is_under_warranty)
+
+    def test_is_warranty_active_is_read_only(self):
+        instance = self._instance("ST-006")
+        with self.assertRaises(AttributeError):
+            instance.is_warranty_active = True
+
+    def test_review_fields_default_empty(self):
+        instance = self._instance("ST-007")
+        self.assertIsNone(instance.warranty_submitted_at)
+        self.assertIsNone(instance.warranty_reviewed_at)
+        self.assertIsNone(instance.warranty_reviewed_by)
+        self.assertEqual(instance.warranty_rejection_reason, "")

@@ -19,6 +19,7 @@ class AdminInstanceSerializer(serializers.ModelSerializer):
     warranty_expiration_date = serializers.DateField(read_only=True)
     warranty_remaining_days = serializers.IntegerField(read_only=True)
     is_under_warranty = serializers.BooleanField(read_only=True)
+    is_warranty_active = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = MattressInstance
