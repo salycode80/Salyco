@@ -6,6 +6,7 @@ import logging
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
@@ -383,11 +384,16 @@ class AdminWarrantyRequestDetailView(generics.RetrieveUpdateAPIView):
         # Lock the row and re-check inside the transaction: two admins clicking
         # approve at the same moment, or a customer resubmitting mid-review,
         # would otherwise both pass the status check and double-send the SMS.
+        # get_object_or_404, not a bare .get(): DoesNotExist does not reach DRF's
+        # exception handler, so a bare .get() answers an unknown serial with a
+        # 500. GET on this same view already 404s via DRF's get_object(), and the
+        # two verbs must not disagree.
         with transaction.atomic():
-            instance = (
-                MattressInstance.objects.select_for_update()
-                .select_related("mattress", "customer")
-                .get(serial_number=self.kwargs["serial_number"])
+            instance = get_object_or_404(
+                MattressInstance.objects.select_for_update().select_related(
+                    "mattress", "customer"
+                ),
+                serial_number=self.kwargs["serial_number"],
             )
             if instance.warranty_status != MattressInstance.PENDING:
                 raise ValidationError({"detail": "این درخواست قبلاً بررسی شده است."})

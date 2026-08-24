@@ -550,3 +550,18 @@ class WarrantyApprovalTests(APITestCase):
         self.assertIn("mattress_image", row)
         self.assertIn("buyer_address", row)
         self.assertIn("buyer_postal_code", row)
+
+    @patch("mattress.admin_views.send_warranty_activated_sms")
+    def test_patch_unknown_serial_returns_404(self, mock_sms):
+        """A missing serial must 404, not 500. `DoesNotExist` never reaches
+        DRF's exception handler, so a bare `.get()` in `update()` would surface
+        as a server error — and GET on this same view already 404s, so the two
+        verbs would disagree."""
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            reverse("admin-warranty-request-detail", args=["NO-SUCH-SERIAL"]),
+            {"action": "approve"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        mock_sms.assert_not_called()
