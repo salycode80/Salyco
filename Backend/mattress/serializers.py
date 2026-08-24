@@ -275,9 +275,18 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
         instance = MattressInstance.objects.select_related("mattress").get(
             serial_number=attrs["serial_number"]
         )
-        if instance.is_warranty_active:
+        if instance.warranty_status == MattressInstance.APPROVED:
             raise serializers.ValidationError(
-                {"serial_number": "Warranty has already been activated for this mattress."}
+                {"serial_number": "گارانتی این محصول قبلاً فعال شده است."}
+            )
+        if instance.warranty_status == MattressInstance.PENDING:
+            raise serializers.ValidationError(
+                {
+                    "serial_number": (
+                        "درخواست ثبت گارانتی این محصول قبلاً ارسال شده و "
+                        "در انتظار تأیید است."
+                    )
+                }
             )
         # Pillows and duvets are not tracked per unit. An instance for one should
         # never exist (MattressInstanceCreateSerializer refuses to mint it), but
@@ -330,7 +339,13 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
         instance.buyer_address = self.validated_data.get("address", "") or customer.address
         instance.buyer_postal_code = self.validated_data.get("postal_code", "") or customer.postal_code
         instance.activation_date = timezone.localdate()
-        instance.warranty_status = MattressInstance.APPROVED
+        # A resubmission after rejection must not carry the old verdict
+        # forward — clear the review fields as well as setting PENDING.
+        instance.warranty_status = MattressInstance.PENDING
+        instance.warranty_submitted_at = timezone.now()
+        instance.warranty_rejection_reason = ""
+        instance.warranty_reviewed_at = None
+        instance.warranty_reviewed_by = None
         instance.save(
             update_fields=[
                 "customer",
@@ -341,6 +356,10 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
                 "buyer_postal_code",
                 "activation_date",
                 "warranty_status",
+                "warranty_submitted_at",
+                "warranty_rejection_reason",
+                "warranty_reviewed_at",
+                "warranty_reviewed_by",
             ]
         )
         return instance

@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from io import BytesIO
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -149,7 +150,7 @@ class WarrantyAPITests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.instance.refresh_from_db()
-        self.assertTrue(self.instance.is_warranty_active)
+        self.assertEqual(self.instance.warranty_status, MattressInstance.PENDING)
         self.assertEqual(self.instance.customer.user, self.user)
         self.assertEqual(self.instance.activation_date, timezone.localdate())
 
@@ -246,3 +247,105 @@ class WarrantyStatusModelTests(TestCase):
         self.assertIsNone(instance.warranty_reviewed_at)
         self.assertIsNone(instance.warranty_reviewed_by)
         self.assertEqual(instance.warranty_rejection_reason, "")
+
+
+class WarrantyRegistrationPendingTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.mattress = Mattress.objects.create(
+            name="Pending Probe",
+            description="Pending probe mattress",
+            slug="pending-probe",
+            warranty_months=24,
+            price=Decimal("499.00"),
+            image=create_test_image("pending.jpg"),
+        )
+        cls.user = User.objects.create_user(
+            username="pendinguser", password="testpass123"
+        )
+
+    def setUp(self):
+        self.instance = MattressInstance.objects.create(
+            serial_number="PEND-001",
+            mattress=self.mattress,
+            manufacture_date=date(2024, 1, 1),
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def _register(self, serial_number="PEND-001"):
+        return self.client.post(
+            reverse("warranty-register"),
+            {
+                "serial_number": serial_number,
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "address": "123 Main St",
+                "phone_number": "555-0100",
+                "postal_code": "12345",
+            },
+            format="json",
+        )
+
+    @patch("mattress.views.send_warranty_activated_sms")
+    def test_registration_creates_pending_request_without_sms(self, mock_sms):
+        response = self._register()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("detail", response.data)
+
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.warranty_status, MattressInstance.PENDING)
+        self.assertFalse(self.instance.is_warranty_active)
+        self.assertFalse(self.instance.is_under_warranty)
+        mock_sms.assert_not_called()
+
+    @patch("mattress.views.send_warranty_activated_sms")
+    def test_registration_records_submission_time_and_activation_date(self, _mock_sms):
+        self._register()
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.activation_date, timezone.localdate())
+        self.assertIsNotNone(self.instance.warranty_submitted_at)
+
+    @patch("mattress.views.send_warranty_activated_sms")
+    def test_registration_still_records_buyer_snapshot(self, _mock_sms):
+        self._register()
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.buyer_first_name, "Jane")
+        self.assertEqual(self.instance.buyer_phone_number, "555-0100")
+        self.assertEqual(self.instance.customer.user, self.user)
+
+    @patch("mattress.views.send_warranty_activated_sms")
+    def test_second_submission_while_pending_is_rejected(self, _mock_sms):
+        self._register()
+        response = self._register()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("serial_number", response.data)
+
+    @patch("mattress.views.send_warranty_activated_sms")
+    def test_submission_for_approved_instance_is_rejected(self, _mock_sms):
+        self.instance.warranty_status = MattressInstance.APPROVED
+        self.instance.save(update_fields=["warranty_status"])
+        response = self._register()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("serial_number", response.data)
+
+    @patch("mattress.views.send_warranty_activated_sms")
+    def test_rejected_instance_accepts_resubmission(self, _mock_sms):
+        self.instance.warranty_status = MattressInstance.REJECTED
+        self.instance.warranty_rejection_reason = "تصویر فاکتور ناخوانا بود"
+        self.instance.warranty_reviewed_at = timezone.now()
+        self.instance.save(
+            update_fields=[
+                "warranty_status",
+                "warranty_rejection_reason",
+                "warranty_reviewed_at",
+            ]
+        )
+
+        response = self._register()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.warranty_status, MattressInstance.PENDING)
+        self.assertEqual(self.instance.warranty_rejection_reason, "")
+        self.assertIsNone(self.instance.warranty_reviewed_at)
+        self.assertIsNone(self.instance.warranty_reviewed_by)

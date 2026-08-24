@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from django.http import HttpResponse
-from django.utils import timezone
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -19,9 +18,13 @@ from .serializers import (
     WarrantyCheckSerializer,
     WarrantyRegistrationSerializer,
 )
-from .utils import format_jalali, generate_qr_code_base64, get_warranty_public_url
+from .utils import generate_qr_code_base64, get_warranty_public_url
 
-from users.notifications import send_warranty_activated_sms
+# `send_warranty_activated_sms` is no longer called here — Task 4 sends it on
+# admin approval. The import stays so the tests can patch
+# `mattress.views.send_warranty_activated_sms` and catch a regression that
+# re-adds the send to registration.
+from users.notifications import send_warranty_activated_sms  # noqa: F401
 
 
 class MattressViewSet(viewsets.ModelViewSet):
@@ -127,22 +130,14 @@ class WarrantyRegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        # Confirmation SMS, best-effort: the warranty is already active and
-        # committed by this point, so a gateway failure must not surface as an
-        # error. Prefer the buyer phone recorded for this sale over the
-        # account's, since they can differ (a dealer registering for a customer).
-        send_warranty_activated_sms(
-            phone_number=instance.buyer_phone_number
-            or (instance.customer.phone_number if instance.customer_id else ""),
-            customer_name=f"{instance.buyer_first_name} {instance.buyer_last_name}".strip(),
-            activation_date=format_jalali(
-                instance.activation_date or timezone.localdate()
-            ),
-            product_name=instance.mattress.name,
-        )
-
         return Response(
-            MattressInstanceSerializer(instance).data,
+            {
+                **MattressInstanceSerializer(instance).data,
+                "detail": (
+                    "درخواست ثبت گارانتی شما ارسال شد و پس از تأیید کارشناسان "
+                    "فعال می‌شود."
+                ),
+            },
             status=status.HTTP_201_CREATED,
         )
 
