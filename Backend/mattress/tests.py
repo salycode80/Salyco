@@ -349,3 +349,51 @@ class WarrantyRegistrationPendingTests(APITestCase):
         self.assertEqual(self.instance.warranty_rejection_reason, "")
         self.assertIsNone(self.instance.warranty_reviewed_at)
         self.assertIsNone(self.instance.warranty_reviewed_by)
+
+
+class WarrantyCheckProductDetailTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.mattress = Mattress.objects.create(
+            name="Check Probe",
+            brand="سالیکو",
+            description="Check probe mattress",
+            slug="check-probe",
+            category="mattress",
+            warranty_months=120,
+            price=Decimal("999.00"),
+            width=180,
+            length=200,
+            height=25,
+            image=create_test_image("check.jpg"),
+        )
+        cls.instance = MattressInstance.objects.create(
+            serial_number="CHK-001",
+            mattress=cls.mattress,
+            manufacture_date=date(2024, 1, 1),
+        )
+
+    def test_check_returns_product_matching_fields_unauthenticated(self):
+        response = self.client.get(reverse("warranty-check", args=["CHK-001"]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(response.data["mattress_brand"], "سالیکو")
+        self.assertEqual(response.data["mattress_width"], 180)
+        self.assertEqual(response.data["mattress_length"], 200)
+        self.assertEqual(response.data["mattress_height"], 25)
+        self.assertTrue(response.data["mattress_image"].startswith("http"))
+        self.assertIn("mattress_category_label", response.data)
+
+    def test_check_returns_warranty_status(self):
+        response = self.client.get(reverse("warranty-check", args=["CHK-001"]))
+        self.assertEqual(
+            response.data["warranty_status"], MattressInstance.UNREGISTERED
+        )
+        self.assertEqual(response.data["warranty_rejection_reason"], "")
+
+    def test_check_does_not_leak_pricing_to_anonymous_callers(self):
+        """This endpoint is AllowAny. It must not nest the full mattress
+        serializer, which would ship price and rating aggregates."""
+        response = self.client.get(reverse("warranty-check", args=["CHK-001"]))
+        for leaked in ("price", "discount_price", "average_rating", "review_count"):
+            self.assertNotIn(leaked, response.data)

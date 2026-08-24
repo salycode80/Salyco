@@ -366,8 +366,23 @@ class WarrantyRegistrationSerializer(serializers.Serializer):
 
 
 class WarrantyCheckSerializer(serializers.ModelSerializer):
+    # Deliberately NOT nesting MattressSerializer the way
+    # MattressInstanceSerializer does: this endpoint is AllowAny, and nesting
+    # would ship price, discount_price and the rating aggregates to an
+    # unauthenticated scan. Only the fields the customer needs in order to
+    # confirm they scanned the right unit are exposed.
     mattress_name = serializers.CharField(source="mattress.name", read_only=True)
-    warranty_months = serializers.IntegerField(source="mattress.warranty_months", read_only=True)
+    mattress_brand = serializers.CharField(source="mattress.brand", read_only=True)
+    mattress_category_label = serializers.CharField(
+        source="mattress.get_category_display", read_only=True
+    )
+    mattress_width = serializers.IntegerField(source="mattress.width", read_only=True)
+    mattress_length = serializers.IntegerField(source="mattress.length", read_only=True)
+    mattress_height = serializers.IntegerField(source="mattress.height", read_only=True)
+    mattress_image = serializers.SerializerMethodField()
+    warranty_months = serializers.IntegerField(
+        source="mattress.warranty_months", read_only=True
+    )
     warranty_expiration_date = serializers.DateField(read_only=True)
     warranty_remaining_days = serializers.IntegerField(read_only=True)
     is_under_warranty = serializers.BooleanField(read_only=True)
@@ -378,13 +393,30 @@ class WarrantyCheckSerializer(serializers.ModelSerializer):
         fields = [
             "serial_number",
             "mattress_name",
+            "mattress_brand",
+            "mattress_category_label",
+            "mattress_width",
+            "mattress_length",
+            "mattress_height",
+            "mattress_image",
             "warranty_months",
+            "warranty_status",
+            "warranty_rejection_reason",
             "is_warranty_active",
             "activation_date",
             "warranty_expiration_date",
             "warranty_remaining_days",
             "is_under_warranty",
         ]
+
+    def get_mattress_image(self, obj: MattressInstance) -> str | None:
+        image = obj.mattress.image
+        if not image:
+            return None
+        request = self.context.get("request")
+        if request is not None:
+            return request.build_absolute_uri(image.url)
+        return image.url
 
 
 class MattressInstanceCreateSerializer(serializers.ModelSerializer):
