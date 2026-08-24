@@ -32,4 +32,14 @@ urlpatterns = [
     path("admin/customers/", admin_views.AdminCustomerListView.as_view(), name="admin-customers"),
     path("admin/reviews/", admin_views.AdminReviewListView.as_view(), name="admin-reviews"),
     path("admin/reviews/<int:pk>/", admin_views.AdminReviewDetailView.as_view(), name="admin-review-detail"),
+    path(
+        "admin/warranty-requests/",
+        admin_views.AdminWarrantyRequestListView.as_view(),
+        name="admin-warranty-requests",
+    ),
+    path(
+        "admin/warranty-requests/<str:serial_number>/",
+        admin_views.AdminWarrantyRequestDetailView.as_view(),
+        name="admin-warranty-request-detail",
+    ),
 ]

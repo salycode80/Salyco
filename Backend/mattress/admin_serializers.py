@@ -172,3 +172,71 @@ class AdminReviewSerializer(serializers.ModelSerializer):
 
     def get_customer_name(self, obj: Review) -> str:
         return f"{obj.customer.first_name} {obj.customer.last_name}".strip() or "کاربر"
+
+
+class AdminWarrantyRequestSerializer(AdminInstanceSerializer):
+    """A row in the warranty review queue.
+
+    Carries the full buyer snapshot and the product photo, because approving is
+    a verification decision: the reviewer compares what the customer submitted
+    against the product the serial actually belongs to.
+    """
+
+    warranty_months = serializers.IntegerField(
+        source="mattress.warranty_months", read_only=True
+    )
+    mattress_image = serializers.SerializerMethodField()
+    reviewed_by_name = serializers.SerializerMethodField()
+
+    class Meta(AdminInstanceSerializer.Meta):
+        fields = AdminInstanceSerializer.Meta.fields + [
+            "warranty_months",
+            "mattress_image",
+            "warranty_status",
+            "warranty_submitted_at",
+            "warranty_reviewed_at",
+            "reviewed_by_name",
+            "warranty_rejection_reason",
+            "buyer_address",
+            "buyer_postal_code",
+        ]
+
+    def get_mattress_image(self, obj: MattressInstance) -> str | None:
+        image = obj.mattress.image
+        if not image:
+            return None
+        request = self.context.get("request")
+        if request is not None:
+            return request.build_absolute_uri(image.url)
+        return image.url
+
+    def get_reviewed_by_name(self, obj: MattressInstance) -> str:
+        reviewer = obj.warranty_reviewed_by
+        if reviewer is None:
+            return ""
+        full_name = f"{reviewer.first_name} {reviewer.last_name}".strip()
+        return full_name or reviewer.get_username()
+
+
+class WarrantyReviewActionSerializer(serializers.Serializer):
+    """Applies an approve/reject decision to a pending warranty request.
+
+    An explicit `action` rather than a writable `warranty_status`, so the API
+    cannot be used to drive an illegal transition — APPROVED back to PENDING,
+    for instance.
+    """
+
+    APPROVE = "approve"
+    REJECT = "reject"
+
+    action = serializers.ChoiceField(choices=[APPROVE, REJECT])
+    rejection_reason = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs: dict) -> dict:
+        if attrs["action"] == self.REJECT and not (
+            attrs.get("rejection_reason") or ""
+        ).strip():
+            raise serializers.ValidationError(
+                {"rejection_reason": "دلیل رد درخواست الزامی است."}
+            )
+        return attrs

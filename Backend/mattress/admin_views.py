@@ -1,24 +1,33 @@
 from __future__ import annotations
 
 import csv
+import logging
 
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import generics, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import Customer
+from users.notifications import send_warranty_activated_sms
 
 from .admin_serializers import (
     AdminCustomerSerializer,
     AdminInstanceDetailSerializer,
     AdminInstanceSerializer,
     AdminReviewSerializer,
+    AdminWarrantyRequestSerializer,
+    WarrantyReviewActionSerializer,
 )
 from .models import MattressInstance, Review
 from .permissions import IsAdminUser
+from .utils import format_jalali
+
+logger = logging.getLogger(__name__)
 
 
 # ── shared query helpers ─────────────────────────────────────────────────────
@@ -320,3 +329,109 @@ class AdminReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     # The parent mattress's cached rating is refreshed by the Review
     # post_save/post_delete signals (mattress/models.py), so approving or
     # deleting here needs no extra bookkeeping.
+
+
+class AdminWarrantyRequestListView(generics.ListAPIView):
+    """The warranty review queue: every instance a customer has claimed."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminWarrantyRequestSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = MattressInstance.objects.select_related(
+            "mattress", "customer", "warranty_reviewed_by"
+        ).exclude(warranty_status=MattressInstance.UNREGISTERED)
+
+        requested = (self.request.query_params.get("status") or "").strip()
+        valid = {value for value, _label in MattressInstance.WARRANTY_STATUS_CHOICES}
+        if requested in valid:
+            qs = qs.filter(warranty_status=requested)
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            qs = qs.filter(
+                Q(serial_number__icontains=search)
+                | Q(buyer_first_name__icontains=search)
+                | Q(buyer_last_name__icontains=search)
+                | Q(buyer_phone_number__icontains=search)
+            )
+
+        # Oldest first. Every other admin list here is newest-first, but a
+        # newest-first review queue starves the oldest request — the one a
+        # customer has already been waiting on longest.
+        return qs.order_by("warranty_submitted_at", "serial_number")
+
+
+class AdminWarrantyRequestDetailView(generics.RetrieveUpdateAPIView):
+    """PATCH {"action": "approve"} or {"action": "reject", "rejection_reason": ...}."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminWarrantyRequestSerializer
+    lookup_field = "serial_number"
+    queryset = MattressInstance.objects.select_related(
+        "mattress", "customer", "warranty_reviewed_by"
+    )
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def update(self, request, *args, **kwargs):
+        action = WarrantyReviewActionSerializer(data=request.data)
+        action.is_valid(raise_exception=True)
+        decision = action.validated_data
+        approved = decision["action"] == WarrantyReviewActionSerializer.APPROVE
+
+        # Lock the row and re-check inside the transaction: two admins clicking
+        # approve at the same moment, or a customer resubmitting mid-review,
+        # would otherwise both pass the status check and double-send the SMS.
+        with transaction.atomic():
+            instance = (
+                MattressInstance.objects.select_for_update()
+                .select_related("mattress", "customer")
+                .get(serial_number=self.kwargs["serial_number"])
+            )
+            if instance.warranty_status != MattressInstance.PENDING:
+                raise ValidationError({"detail": "این درخواست قبلاً بررسی شده است."})
+
+            instance.warranty_status = (
+                MattressInstance.APPROVED if approved else MattressInstance.REJECTED
+            )
+            instance.warranty_rejection_reason = (
+                "" if approved else decision["rejection_reason"].strip()
+            )
+            instance.warranty_reviewed_at = timezone.now()
+            instance.warranty_reviewed_by = request.user
+            instance.save(
+                update_fields=[
+                    "warranty_status",
+                    "warranty_rejection_reason",
+                    "warranty_reviewed_at",
+                    "warranty_reviewed_by",
+                ]
+            )
+
+        if approved:
+            # Best-effort, and outside the transaction: the approval is
+            # committed by now, so a gateway failure must not roll it back or
+            # surface as a 500. Prefer the phone recorded for this sale over
+            # the account's — a dealer may have registered for the customer.
+            try:
+                send_warranty_activated_sms(
+                    phone_number=instance.buyer_phone_number
+                    or (
+                        instance.customer.phone_number
+                        if instance.customer_id
+                        else ""
+                    ),
+                    customer_name=instance.buyer_full_name,
+                    activation_date=format_jalali(
+                        instance.activation_date or timezone.localdate()
+                    ),
+                    product_name=instance.mattress.name,
+                )
+            except Exception:
+                logger.exception(
+                    "Warranty approval SMS failed for %s", instance.serial_number
+                )
+
+        instance.refresh_from_db()
+        return Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)

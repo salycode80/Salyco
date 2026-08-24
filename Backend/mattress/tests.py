@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from io import BytesIO
 from unittest.mock import patch
@@ -397,3 +397,156 @@ class WarrantyCheckProductDetailTests(APITestCase):
         response = self.client.get(reverse("warranty-check", args=["CHK-001"]))
         for leaked in ("price", "discount_price", "average_rating", "review_count"):
             self.assertNotIn(leaked, response.data)
+
+
+class WarrantyApprovalTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.mattress = Mattress.objects.create(
+            name="Approve Probe",
+            brand="سالیکو",
+            description="Approve probe mattress",
+            slug="approve-probe",
+            warranty_months=120,
+            price=Decimal("999.00"),
+            image=create_test_image("approve.jpg"),
+        )
+        cls.admin = User.objects.create_user(
+            username="warrantyadmin", password="testpass123", is_staff=True
+        )
+        cls.plain_user = User.objects.create_user(
+            username="plainuser", password="testpass123"
+        )
+
+    def setUp(self):
+        self.submitted_on = date(2024, 6, 1)
+        self.instance = MattressInstance.objects.create(
+            serial_number="APP-001",
+            mattress=self.mattress,
+            manufacture_date=date(2024, 1, 1),
+            warranty_status=MattressInstance.PENDING,
+            activation_date=self.submitted_on,
+            warranty_submitted_at=timezone.now(),
+            buyer_first_name="Jane",
+            buyer_last_name="Doe",
+            buyer_phone_number="555-0100",
+        )
+        self.url = reverse("admin-warranty-request-detail", args=["APP-001"])
+
+    def _patch(self, payload, user=None):
+        self.client.force_authenticate(user=user or self.admin)
+        return self.client.patch(self.url, payload, format="json")
+
+    @patch("mattress.admin_views.send_warranty_activated_sms")
+    def test_approve_activates_warranty_and_sends_one_sms(self, mock_sms):
+        response = self._patch({"action": "approve"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.warranty_status, MattressInstance.APPROVED)
+        self.assertTrue(self.instance.is_warranty_active)
+        self.assertTrue(self.instance.is_under_warranty)
+        self.assertEqual(self.instance.warranty_reviewed_by, self.admin)
+        self.assertIsNotNone(self.instance.warranty_reviewed_at)
+        self.assertEqual(mock_sms.call_count, 1)
+
+    @patch("mattress.admin_views.send_warranty_activated_sms")
+    def test_approve_preserves_submission_activation_date(self, _mock_sms):
+        """The customer must not lose coverage to review delay — the spec's
+        first decision."""
+        self._patch({"action": "approve"})
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.activation_date, self.submitted_on)
+        self.assertEqual(
+            self.instance.warranty_expiration_date,
+            add_months(self.submitted_on, 120),
+        )
+
+    @patch("mattress.admin_views.send_warranty_activated_sms")
+    def test_approving_twice_is_rejected_and_sms_sent_once(self, mock_sms):
+        self.assertEqual(self._patch({"action": "approve"}).status_code, 200)
+        second = self._patch({"action": "approve"})
+        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(mock_sms.call_count, 1)
+
+    @patch("mattress.admin_views.send_warranty_activated_sms")
+    def test_reject_without_reason_is_rejected(self, mock_sms):
+        response = self._patch({"action": "reject"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.warranty_status, MattressInstance.PENDING)
+        mock_sms.assert_not_called()
+
+    @patch("mattress.admin_views.send_warranty_activated_sms")
+    def test_reject_with_reason_stores_verdict_and_sends_no_sms(self, mock_sms):
+        reason = "تصویر فاکتور ناخوانا بود"
+        response = self._patch({"action": "reject", "rejection_reason": reason})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.warranty_status, MattressInstance.REJECTED)
+        self.assertEqual(self.instance.warranty_rejection_reason, reason)
+        self.assertEqual(self.instance.warranty_reviewed_by, self.admin)
+        self.assertFalse(self.instance.is_warranty_active)
+        mock_sms.assert_not_called()
+
+    @patch("mattress.admin_views.send_warranty_activated_sms")
+    def test_sms_gateway_failure_does_not_fail_the_approval(self, mock_sms):
+        """The transition is committed before the send, so a gateway error must
+        not surface as a 500 or roll the approval back."""
+        mock_sms.side_effect = RuntimeError("gateway down")
+        response = self._patch({"action": "approve"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.instance.refresh_from_db()
+        self.assertEqual(self.instance.warranty_status, MattressInstance.APPROVED)
+
+    def test_non_staff_cannot_review(self):
+        response = self._patch({"action": "approve"}, user=self.plain_user)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_anonymous_cannot_review(self):
+        response = self.client.patch(self.url, {"action": "approve"}, format="json")
+        self.assertIn(
+            response.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
+
+    def test_queue_lists_claimed_requests_oldest_first(self):
+        MattressInstance.objects.create(
+            serial_number="APP-002",
+            mattress=self.mattress,
+            manufacture_date=date(2024, 1, 1),
+            warranty_status=MattressInstance.PENDING,
+            warranty_submitted_at=timezone.now() + timedelta(hours=1),
+        )
+        MattressInstance.objects.create(
+            serial_number="APP-003",
+            mattress=self.mattress,
+            manufacture_date=date(2024, 1, 1),
+        )  # UNREGISTERED — nothing to review
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("admin-warranty-requests"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        serials = [row["serial_number"] for row in response.data]
+        self.assertEqual(serials, ["APP-001", "APP-002"])
+
+    def test_queue_filters_by_status(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(
+            reverse("admin-warranty-requests"), {"status": "REJECTED"}
+        )
+        self.assertEqual(list(response.data), [])
+
+    def test_queue_row_carries_buyer_and_product_detail(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("admin-warranty-requests"))
+        row = response.data[0]
+        self.assertEqual(row["customer_name"], "Jane Doe")
+        self.assertEqual(row["customer_phone"], "555-0100")
+        self.assertEqual(row["warranty_status"], MattressInstance.PENDING)
+        self.assertEqual(row["warranty_months"], 120)
+        self.assertIn("mattress_image", row)
+        self.assertIn("buyer_address", row)
+        self.assertIn("buyer_postal_code", row)
