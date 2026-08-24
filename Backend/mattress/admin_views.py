@@ -61,7 +61,7 @@ def filter_instances(request):
     Params:
       search   – matches serial number, customer name, or phone
       sold     – "true" | "false"     (has a customer or not)
-      warranty – "active" | "inactive"
+      warranty – "active" | "inactive" | "pending" | "rejected"
       mattress – mattress id
       ordering – one of INSTANCE_ORDERING (default: newest first)
     """
@@ -90,6 +90,10 @@ def filter_instances(request):
         qs = qs.filter(warranty_status=MattressInstance.APPROVED)
     elif warranty == "inactive":
         qs = qs.exclude(warranty_status=MattressInstance.APPROVED)
+    elif warranty == "pending":
+        qs = qs.filter(warranty_status=MattressInstance.PENDING)
+    elif warranty == "rejected":
+        qs = qs.filter(warranty_status=MattressInstance.REJECTED)
 
     mattress_id = request.query_params.get("mattress")
     if mattress_id:
@@ -135,6 +139,7 @@ class AdminStatsView(APIView):
         total = instances.count()
         sold = instances.filter(customer__isnull=False).count()
         active = instances.filter(warranty_status=MattressInstance.APPROVED).count()
+        pending = instances.filter(warranty_status=MattressInstance.PENDING).count()
 
         today = timezone.localdate()
         active_qs = instances.filter(
@@ -159,6 +164,7 @@ class AdminStatsView(APIView):
                 "sold_instances": sold,
                 "in_stock_instances": total - sold,
                 "active_warranties": active,
+                "pending_warranties": pending,
                 "under_warranty": under_warranty,
                 "expired_warranties": expired,
                 "total_customers": Customer.objects.count(),
@@ -219,7 +225,7 @@ class AdminInstanceExportView(APIView):
                 "Customer",
                 "Phone",
                 "Sold",
-                "Warranty Active",
+                "Warranty Status",
                 "Activation Date",
                 "Manufacture Date",
                 "Created At",
@@ -236,7 +242,7 @@ class AdminInstanceExportView(APIView):
                     i.buyer_phone_number
                     or (i.customer.phone_number if i.customer_id else ""),
                     "Yes" if i.customer_id else "No",
-                    "Yes" if i.is_warranty_active else "No",
+                    i.get_warranty_status_display(),
                     i.activation_date or "",
                     i.manufacture_date or "",
                     timezone.localtime(i.created_at).strftime("%Y-%m-%d %H:%M:%S")

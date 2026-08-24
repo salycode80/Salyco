@@ -157,10 +157,12 @@ class CustomerWarrantyListView(generics.ListAPIView):
         customer = getattr(self.request.user, "customer", None)
         if customer is None:
             return MattressInstance.objects.none()
+        # Every instance this customer has claimed, in any state. A submitted
+        # request that vanished from this page until an admin acted would read
+        # as data loss.
         return (
-            MattressInstance.objects.filter(
-                customer=customer, warranty_status=MattressInstance.APPROVED
-            )
+            MattressInstance.objects.filter(customer=customer)
+            .exclude(warranty_status=MattressInstance.UNREGISTERED)
             .select_related("mattress", "customer")
-            .order_by("-activation_date")
+            .order_by("-warranty_submitted_at")
         )

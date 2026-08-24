@@ -565,3 +565,106 @@ class WarrantyApprovalTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         mock_sms.assert_not_called()
+
+
+class WarrantyReadSurfaceTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.mattress = Mattress.objects.create(
+            name="Surface Probe",
+            description="Surface probe mattress",
+            slug="surface-probe",
+            warranty_months=24,
+            price=Decimal("499.00"),
+            image=create_test_image("surface.jpg"),
+        )
+        cls.user = User.objects.create_user(
+            username="surfaceuser", password="testpass123"
+        )
+        cls.admin = User.objects.create_user(
+            username="surfaceadmin", password="testpass123", is_staff=True
+        )
+        cls.customer = Customer.objects.create(
+            user=cls.user,
+            first_name="Jane",
+            last_name="Doe",
+            address="123 Main St",
+            phone_number="555-0100",
+            postal_code="12345",
+        )
+        owned = {
+            "mattress": cls.mattress,
+            "manufacture_date": date(2024, 1, 1),
+            "customer": cls.customer,
+        }
+        MattressInstance.objects.create(
+            serial_number="SRF-APPROVED",
+            warranty_status=MattressInstance.APPROVED,
+            activation_date=date(2024, 2, 1),
+            warranty_submitted_at=timezone.now(),
+            **owned,
+        )
+        MattressInstance.objects.create(
+            serial_number="SRF-PENDING",
+            warranty_status=MattressInstance.PENDING,
+            warranty_submitted_at=timezone.now(),
+            **owned,
+        )
+        MattressInstance.objects.create(
+            serial_number="SRF-REJECTED",
+            warranty_status=MattressInstance.REJECTED,
+            warranty_rejection_reason="سریال با محصول همخوانی ندارد",
+            warranty_submitted_at=timezone.now(),
+            **owned,
+        )
+        MattressInstance.objects.create(
+            serial_number="SRF-UNCLAIMED",
+            mattress=cls.mattress,
+            manufacture_date=date(2024, 1, 1),
+        )
+
+    def test_my_warranties_includes_pending_and_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse("warranty-my-list"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        by_serial = {row["serial_number"]: row for row in response.data}
+        self.assertEqual(
+            set(by_serial), {"SRF-APPROVED", "SRF-PENDING", "SRF-REJECTED"}
+        )
+        self.assertEqual(
+            by_serial["SRF-PENDING"]["warranty_status"], MattressInstance.PENDING
+        )
+        self.assertEqual(
+            by_serial["SRF-REJECTED"]["warranty_rejection_reason"],
+            "سریال با محصول همخوانی ندارد",
+        )
+
+    def test_stats_report_pending_count(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("admin-stats"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["pending_warranties"], 1)
+        self.assertEqual(response.data["active_warranties"], 1)
+
+    def test_instance_filter_accepts_pending(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("admin-instances"), {"warranty": "pending"})
+        serials = [row["serial_number"] for row in response.data]
+        self.assertEqual(serials, ["SRF-PENDING"])
+
+    def test_instance_filter_inactive_excludes_only_approved(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("admin-instances"), {"warranty": "inactive"})
+        serials = {row["serial_number"] for row in response.data}
+        self.assertNotIn("SRF-APPROVED", serials)
+        self.assertIn("SRF-PENDING", serials)
+        self.assertIn("SRF-UNCLAIMED", serials)
+
+    def test_csv_export_reports_warranty_status(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("admin-instances-export"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        body = response.content.decode("utf-8-sig")
+        self.assertIn("Warranty Status", body)
+        self.assertIn("Pending review", body)
