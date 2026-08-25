@@ -668,3 +668,28 @@ class WarrantyReadSurfaceTests(APITestCase):
         body = response.content.decode("utf-8-sig")
         self.assertIn("Warranty Status", body)
         self.assertIn("Pending review", body)
+
+    def test_instance_row_carries_warranty_status(self):
+        """The CRM table branches on the status, so the compact row must carry
+        it — is_warranty_active alone cannot distinguish pending from
+        unregistered."""
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(
+            reverse("admin-instances"), {"search": "SRF-REJECTED"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        row = response.data[0]
+        self.assertEqual(row["warranty_status"], MattressInstance.REJECTED)
+        self.assertEqual(
+            row["warranty_rejection_reason"], "سریال با محصول همخوانی ندارد"
+        )
+
+    def test_instance_detail_carries_warranty_status(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(
+            reverse("admin-instance-detail", args=["SRF-PENDING"])
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["warranty_status"], MattressInstance.PENDING
+        )

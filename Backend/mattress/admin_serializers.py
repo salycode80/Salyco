@@ -31,6 +31,8 @@ class AdminInstanceSerializer(serializers.ModelSerializer):
             "customer_phone",
             "is_sold",
             "is_warranty_active",
+            "warranty_status",
+            "warranty_rejection_reason",
             "activation_date",
             "manufacture_date",
             "created_at",
@@ -192,11 +194,9 @@ class AdminWarrantyRequestSerializer(AdminInstanceSerializer):
         fields = AdminInstanceSerializer.Meta.fields + [
             "warranty_months",
             "mattress_image",
-            "warranty_status",
             "warranty_submitted_at",
             "warranty_reviewed_at",
             "reviewed_by_name",
-            "warranty_rejection_reason",
             "buyer_address",
             "buyer_postal_code",
         ]

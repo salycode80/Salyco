@@ -25,6 +25,8 @@ import {
   RotateCcw,
   CheckCircle2,
   Circle,
+  Clock,
+  XCircle,
   Loader2,
 } from "lucide-react";
 
@@ -56,6 +58,43 @@ function Badge({ ok, yes, no }) {
     >
       {ok ? <CheckCircle2 size={13} /> : <Circle size={13} />}
       {ok ? yes : no}
+    </span>
+  );
+}
+
+// Four warranty states, not a boolean. An APPROVED instance still distinguishes
+// in-period from expired — that was the old Badge's whole job here — while
+// PENDING and REJECTED get their own colours so a submitted request is not
+// mistaken for an unclaimed serial.
+const WARRANTY_STATES = {
+  PENDING: {
+    label: "در انتظار تأیید",
+    fill: "bg-[#E7F3FB]",
+    text: "text-[#009CDE]",
+    Icon: Clock,
+  },
+  REJECTED: {
+    label: "رد شده",
+    fill: "bg-[#FDE7E7]",
+    text: "text-[#D20000]",
+    Icon: XCircle,
+  },
+};
+
+function WarrantyBadge({ row }) {
+  if (row.warranty_status === "APPROVED") {
+    return <Badge ok={row.is_under_warranty} yes="در دوره گارانتی" no="منقضی" />;
+  }
+
+  const state = WARRANTY_STATES[row.warranty_status];
+  if (!state) return <Badge ok={false} yes="" no="غیرفعال" />;
+
+  const { Icon } = state;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${state.fill} ${state.text}`}
+    >
+      <Icon size={13} /> {state.label}
     </span>
   );
 }
@@ -136,11 +175,14 @@ function InstanceModal({ serial, onClose }) {
               <div className="flex-1 space-y-2 text-center sm:text-right">
                 <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
                   <Badge ok={data.is_sold} yes="فروخته شده" no="در انبار" />
-                  <Badge ok={data.is_warranty_active} yes="گارانتی فعال" no="گارانتی غیرفعال" />
-                  {data.is_warranty_active && (
-                    <Badge ok={data.is_under_warranty} yes="در دوره گارانتی" no="منقضی شده" />
-                  )}
+                  <WarrantyBadge row={data} />
                 </div>
+                {data.warranty_status === "REJECTED" &&
+                  data.warranty_rejection_reason && (
+                    <p className="rounded-lg border border-[#D20000] bg-[#FDE7E7] px-3 py-2 font-persian text-xs leading-6 text-[#D20000]">
+                      دلیل رد: {data.warranty_rejection_reason}
+                    </p>
+                  )}
                 {data.qr_code && (
                   <button
                     onClick={handleDownloadQR}
@@ -306,6 +348,7 @@ export default function DashboardPanel() {
         <StatCard icon={Boxes} label="کل محصولات تولیدی" value={stats?.total_instances} accent="text-[#003087]" />
         <StatCard icon={Package} label="فروخته شده" value={stats?.sold_instances} accent="text-[#019C34]" />
         <StatCard icon={ShieldCheck} label="گارانتی فعال" value={stats?.active_warranties} accent="text-[#003087]" />
+        <StatCard icon={Clock} label="در انتظار تأیید" value={stats?.pending_warranties} accent="text-[#009CDE]" />
         <StatCard icon={Users} label="مشتریان" value={stats?.total_customers} accent="text-[#009CDE]" />
         <StatCard icon={Boxes} label="موجود در انبار" value={stats?.in_stock_instances} accent="text-[#687173]" />
         <StatCard icon={ShieldCheck} label="در دوره گارانتی" value={stats?.under_warranty} accent="text-[#019C34]" />
@@ -356,7 +399,9 @@ export default function DashboardPanel() {
               <Select value={warranty} onChange={setWarranty}>
                 <option value="">گارانتی (همه)</option>
                 <option value="active">فعال</option>
-                <option value="inactive">غیرفعال</option>
+                <option value="pending">در انتظار تأیید</option>
+                <option value="rejected">رد شده</option>
+                <option value="inactive">غیرفعال (هر وضعیتی جز فعال)</option>
               </Select>
               <Select value={mattressId} onChange={setMattressId}>
                 <option value="">مدل محصول (همه)</option>
@@ -497,11 +542,7 @@ function InstanceTable({ rows, onSelect }) {
                 <Badge ok={r.is_sold} yes="فروخته شده" no="در انبار" />
               </td>
               <td className="px-4 py-3">
-                {r.is_warranty_active ? (
-                  <Badge ok={r.is_under_warranty} yes="در دوره گارانتی" no="منقضی" />
-                ) : (
-                  <Badge ok={false} yes="" no="غیرفعال" />
-                )}
+                <WarrantyBadge row={r} />
               </td>
               <td className="px-4 py-3 font-persian text-sm text-[#687173]">
                 {r.manufacture_date || "—"}
