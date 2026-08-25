@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { checkWarranty } from "../api/warranty";
 import { useAuth } from "../hooks/UseAuth";
 import WarrantyRegistration from "../components/warranty/WarrantyRegistration";
+import ProductPreviewCard from "../components/warranty/ProductPreviewCard";
 import PageBackground from "../components/PageBackground";
 import { ShieldCheck, LogIn, AlertTriangle } from "lucide-react";
 
@@ -110,17 +111,7 @@ export default function WarrantyStatusPage() {
           <>
             {!warrantyData.is_warranty_active && !isAuthenticated ? (
               <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-                <ShieldCheck
-                  size={48}
-                  className="mx-auto mb-4 text-[#009CDE]"
-                  strokeWidth={1.5}
-                />
-                <h2
-                  className="font-persian text-xl font-semibold text-[#1A1A2E]"
-                  dir="rtl"
-                >
-                  {warrantyData.mattress_name}
-                </h2>
+                <ProductPreviewCard warrantyData={warrantyData} />
                 <p
                   className="mt-1 font-mono text-sm text-[#687173]"
                   dir="ltr"

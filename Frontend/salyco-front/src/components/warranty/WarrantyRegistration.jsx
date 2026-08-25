@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { registerWarranty } from "../../api/warranty";
 import ProductHeader from "./ProductHeader";
+import ProductPreviewCard from "./ProductPreviewCard";
 import GuaranteeDisk from "./GuaranteeDisk";
 import StatusBadge from "./StatusBadge";
 import ActionButton from "./ActionButton";
@@ -66,6 +67,8 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
     <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]">
       <div className="p-6 sm:p-8">
         <ProductHeader product={product} onCopy={clearMessage} />
+
+        <ProductPreviewCard warrantyData={warrantyData} />
 
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-4 sm:p-5">
           <GuaranteeDisk product={product} />
