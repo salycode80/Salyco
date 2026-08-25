@@ -9,7 +9,11 @@ import RegistrationForm from "./RegistrationForm";
 import MessageToast from "./MessageToast";
 
 const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSuccess }) => {
-  const isRegistered = warrantyData.is_warranty_active;
+  // The one component that needs all four states rather than a boolean — which
+  // is why is_warranty_active stayed a property for every other consumer.
+  const status = warrantyData.warranty_status || "UNREGISTERED";
+  const isApproved = status === "APPROVED";
+  const canSubmit = status === "UNREGISTERED" || status === "REJECTED";
 
   const product = {
     name: warrantyData.mattress_name,
@@ -33,14 +37,16 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
     setLoading(true);
     setMessage({ type: null, text: "" });
     try {
-      await registerWarranty({
+      const result = await registerWarranty({
         serial_number: serialNumber,
         ...formData,
       });
       setShowForm(false);
       setMessage({
         type: "success",
-        text: `گارانتی برای ${formData.first_name} ${formData.last_name} · ${serialNumber} فعال شد`,
+        text:
+          result?.detail ||
+          "درخواست ثبت گارانتی ارسال شد و پس از تأیید کارشناسان فعال می‌شود",
       });
       onRegistrationSuccess?.();
     } catch (err) {
@@ -71,14 +77,52 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
         <ProductPreviewCard warrantyData={warrantyData} />
 
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-4 sm:p-5">
-          <GuaranteeDisk product={product} />
-          <StatusBadge isRegistered={isRegistered} />
+          {/* activation_date is set at submission, so warranty_remaining_days
+              returns a real positive number while a request is still PENDING.
+              Rendering the dial then would tell the customer their coverage had
+              already started — the spec's "Known sharp edge", which is why the
+              rule is to branch on warranty_status and never on
+              warranty_remaining_days > 0. Gated on APPROVED, exactly as
+              MyWarrantiesPage does. */}
+          {isApproved ? (
+            <GuaranteeDisk product={product} />
+          ) : (
+            <p className="font-persian text-sm text-[#687173]" dir="rtl">
+              {status === "PENDING"
+                ? "پوشش گارانتی پس از تأیید کارشناسان، از تاریخ ثبت درخواست محاسبه می‌شود."
+                : status === "REJECTED"
+                  ? "برای فعال‌سازی گارانتی، درخواست را دوباره ثبت کنید."
+                  : "گارانتی این محصول هنوز ثبت نشده است."}
+            </p>
+          )}
+          <div className="ml-auto">
+            <StatusBadge status={status} />
+          </div>
         </div>
 
+        {status === "REJECTED" && (
+          <div
+            className="mb-4 rounded-lg border border-[#D20000] bg-[#FDE7E7] px-5 py-3"
+            dir="rtl"
+          >
+            <p className="font-persian text-sm font-semibold text-[#D20000]">
+              درخواست قبلی شما رد شد
+            </p>
+            {warrantyData.warranty_rejection_reason && (
+              <p className="mt-1 font-persian text-sm leading-6 text-[#D20000]">
+                {warrantyData.warranty_rejection_reason}
+              </p>
+            )}
+            <p className="mt-1 font-persian text-xs text-[#D20000]/80">
+              اطلاعات را اصلاح کنید و درخواست را دوباره ثبت کنید.
+            </p>
+          </div>
+        )}
+
         <ActionButton
-          isRegistered={isRegistered}
+          status={status}
           onClick={
-            isRegistered ? handleShowWarrantyInfo : () => setShowForm(true)
+            isApproved ? handleShowWarrantyInfo : () => setShowForm(true)
           }
         />
 
@@ -86,7 +130,7 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
           <MessageToast type={message.type} text={message.text} />
         )}
 
-        {!isRegistered && showForm && (
+        {canSubmit && showForm && (
           <RegistrationForm
             formData={formData}
             setFormData={setFormData}

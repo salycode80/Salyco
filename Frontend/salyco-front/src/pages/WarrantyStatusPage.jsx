@@ -4,6 +4,7 @@ import { checkWarranty } from "../api/warranty";
 import { useAuth } from "../hooks/UseAuth";
 import WarrantyRegistration from "../components/warranty/WarrantyRegistration";
 import ProductPreviewCard from "../components/warranty/ProductPreviewCard";
+import StatusBadge from "../components/warranty/StatusBadge";
 import PageBackground from "../components/PageBackground";
 import { ShieldCheck, LogIn, AlertTriangle } from "lucide-react";
 
@@ -107,46 +108,79 @@ export default function WarrantyStatusPage() {
           </div>
         )}
 
-        {!loading && !error && warrantyData && (
-          <>
-            {!warrantyData.is_warranty_active && !isAuthenticated ? (
-              <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-                <ProductPreviewCard warrantyData={warrantyData} />
-                <p
-                  className="mt-1 font-mono text-sm text-[#687173]"
-                  dir="ltr"
-                >
-                  {serialNumber}
-                </p>
-                <p
-                  className="mt-4 font-persian text-sm text-[#687173]"
-                  dir="rtl"
-                >
-                  گارانتی این محصول هنوز فعال نشده است. برای فعال‌سازی وارد حساب
-                  کاربری خود شوید.
-                </p>
-                <button
-                  onClick={() =>
-                    navigate(
-                      `/auth?redirect=/warranty/mattress/${serialNumber}`,
-                    )
-                  }
-                  className="mt-6 inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
-                >
-                  <LogIn size={18} strokeWidth={2} />
-                  ورود / ثبت‌نام برای فعال‌سازی گارانتی
-                </button>
-              </div>
-            ) : (
-              <WarrantyRegistration
-                warrantyData={warrantyData}
-                serialNumber={serialNumber}
-                onRegistrationSuccess={fetchWarranty}
-              />
-            )}
-          </>
-        )}
+        {!loading && !error && warrantyData && <WarrantyView
+          warrantyData={warrantyData}
+          serialNumber={serialNumber}
+          isAuthenticated={isAuthenticated}
+          onNavigate={navigate}
+          onRefresh={fetchWarranty}
+        />}
       </div>
     </section>
+  );
+}
+
+// Signed-in customers get the full registration card. Signed-out ones get a
+// login CTA only when logging in would actually let them do something: a
+// pending or approved serial is read-only, so the CTA would be a dead end.
+function WarrantyView({
+  warrantyData,
+  serialNumber,
+  isAuthenticated,
+  onNavigate,
+  onRefresh,
+}) {
+  if (isAuthenticated) {
+    return (
+      <WarrantyRegistration
+        warrantyData={warrantyData}
+        serialNumber={serialNumber}
+        onRegistrationSuccess={onRefresh}
+      />
+    );
+  }
+
+  const status = warrantyData.warranty_status || "UNREGISTERED";
+  const canClaim = status === "UNREGISTERED" || status === "REJECTED";
+
+  const READ_ONLY_MESSAGE = {
+    PENDING:
+      "درخواست ثبت گارانتی این محصول ارسال شده و در انتظار تأیید کارشناسان است.",
+    APPROVED: "گارانتی این محصول فعال است.",
+  };
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+      <ProductPreviewCard warrantyData={warrantyData} />
+
+      <p className="mt-1 font-mono text-sm text-[#687173]" dir="ltr">
+        {serialNumber}
+      </p>
+
+      <div className="mt-4 flex justify-center">
+        <StatusBadge status={status} />
+      </div>
+
+      {canClaim ? (
+        <>
+          <p className="mt-4 font-persian text-sm text-[#687173]" dir="rtl">
+            برای ثبت درخواست گارانتی وارد حساب کاربری خود شوید.
+          </p>
+          <button
+            onClick={() =>
+              onNavigate(`/auth?redirect=/warranty/mattress/${serialNumber}`)
+            }
+            className="mt-6 inline-flex h-12 items-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B]"
+          >
+            <LogIn size={18} strokeWidth={2} />
+            ورود / ثبت‌نام برای ثبت گارانتی
+          </button>
+        </>
+      ) : (
+        <p className="mt-4 font-persian text-sm text-[#687173]" dir="rtl">
+          {READ_ONLY_MESSAGE[status]}
+        </p>
+      )}
+    </div>
   );
 }
