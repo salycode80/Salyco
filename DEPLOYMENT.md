@@ -332,6 +332,17 @@ docker compose up -d --build
 
 Migrations run automatically on backend startup (via `entrypoint.sh`).
 
+### Warranty approval flow (migration 0012)
+
+`mattress.0012_warranty_status` drops `MattressInstance.is_warranty_active` and
+replaces it with `warranty_status`. Deploy the backend and the frontend bundle in
+the same release: an older frontend reads `is_warranty_active` — still served, as
+a property — and would label a pending request "فعال".
+
+Reversing `0012` is lossy. `APPROVED` maps back to `True`; `PENDING` and
+`REJECTED` both collapse to `False`, discarding the fact that a request was ever
+submitted or declined. Export the pending queue before rolling back.
+
 ### Common commands
 
 ```bash
