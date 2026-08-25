@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { getMyWarranties } from "../api/warranty";
 import GuaranteeDisk from "../components/warranty/GuaranteeDisk";
 import PageBackground from "../components/PageBackground";
-import { ShieldCheck, ShieldOff, Plus, AlertTriangle } from "lucide-react";
+import { ShieldOff, Plus, AlertTriangle } from "lucide-react";
+import StatusBadge from "../components/warranty/StatusBadge";
+import { getProductImageUrl } from "../utils/productImage";
 
 export default function MyWarrantiesPage() {
   const [warranties, setWarranties] = useState([]);
@@ -132,7 +134,11 @@ export default function MyWarrantiesPage() {
                   Math.round((item.warranty_remaining_days || 0) / 30),
                 ),
               };
-              const isActive = item.is_under_warranty;
+              const status = item.warranty_status || "UNREGISTERED";
+              // Only an approved warranty can be expired; for the other states
+              // the badge's own label is the whole story.
+              const expired =
+                status === "APPROVED" && !item.is_under_warranty;
 
               return (
                 <Link
@@ -140,53 +146,75 @@ export default function MyWarrantiesPage() {
                   to={`/warranty/mattress/${item.serial_number}`}
                   className="group overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-6 shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
                 >
-                  <div
-                    className="mb-4 flex items-center justify-between"
-                    dir="rtl"
-                  >
-                    <h3 className="font-persian text-lg font-semibold text-[#1A1A2E]">
-                      {product.name}
-                    </h3>
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                        isActive
-                          ? "bg-[#E6F4EA] text-[#019C34]"
-                          : "bg-[#FFF8E1] text-[#F5BA2E]"
-                      }`}
-                    >
-                      <ShieldCheck size={14} strokeWidth={2} />
-                      {isActive ? "فعال" : "منقضی"}
-                    </span>
-                  </div>
-
-                  <p
-                    className="mb-4 font-mono text-xs text-[#687173]"
-                    dir="ltr"
-                  >
-                    {item.serial_number}
-                  </p>
-
-                  <div className="flex items-center gap-4 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-3">
-                    <GuaranteeDisk product={product} />
-                    <div dir="rtl" className="text-sm">
-                      {item.activation_date && (
-                        <p className="font-persian text-[#687173]">
-                          فعال‌سازی:{" "}
-                          {new Date(item.activation_date).toLocaleDateString(
-                            "fa-IR",
-                          )}
-                        </p>
-                      )}
-                      {item.warranty_expiration_date && (
-                        <p className="font-persian text-[#687173]">
-                          انقضا:{" "}
-                          {new Date(
-                            item.warranty_expiration_date,
-                          ).toLocaleDateString("fa-IR")}
-                        </p>
-                      )}
+                  <div className="mb-4 flex items-start gap-3" dir="rtl">
+                    <img
+                      src={getProductImageUrl(item.mattress?.image)}
+                      alt={product.name}
+                      className="h-16 w-16 shrink-0 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-persian text-lg font-semibold text-[#1A1A2E]">
+                        {product.name}
+                      </h3>
+                      <p
+                        className="mt-1 font-mono text-xs text-[#687173]"
+                        dir="ltr"
+                      >
+                        {item.serial_number}
+                      </p>
                     </div>
                   </div>
+
+                  <div className="mb-4 flex" dir="rtl">
+                    <StatusBadge status={status} expired={expired} />
+                  </div>
+
+                  {status === "REJECTED" && item.warranty_rejection_reason && (
+                    <p
+                      className="mb-4 rounded-lg border border-[#D20000] bg-[#FDE7E7] px-4 py-2 font-persian text-xs leading-6 text-[#D20000]"
+                      dir="rtl"
+                    >
+                      {item.warranty_rejection_reason}
+                    </p>
+                  )}
+
+                  {status === "APPROVED" ? (
+                    <div className="flex items-center gap-4 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-3">
+                      <GuaranteeDisk product={product} />
+                      <div dir="rtl" className="text-sm">
+                        {item.activation_date && (
+                          <p className="font-persian text-[#687173]">
+                            فعال‌سازی:{" "}
+                            {new Date(item.activation_date).toLocaleDateString(
+                              "fa-IR",
+                            )}
+                          </p>
+                        )}
+                        {item.warranty_expiration_date && (
+                          <p className="font-persian text-[#687173]">
+                            انقضا:{" "}
+                            {new Date(
+                              item.warranty_expiration_date,
+                            ).toLocaleDateString("fa-IR")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    // activation_date is set at submission, so the expiration
+                    // properties return real-looking dates while a request is
+                    // still pending. Showing the coverage dial here would tell
+                    // the customer their warranty had started. See the spec's
+                    // "Known sharp edge".
+                    <p
+                      className="rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-3 font-persian text-sm text-[#687173]"
+                      dir="rtl"
+                    >
+                      {status === "PENDING"
+                        ? "پس از تأیید کارشناسان، پوشش گارانتی از تاریخ ثبت درخواست محاسبه می‌شود."
+                        : "برای ثبت مجدد درخواست، این محصول را انتخاب کنید."}
+                    </p>
+                  )}
                 </Link>
               );
             })}
