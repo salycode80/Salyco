@@ -211,3 +211,37 @@ export async function deleteAdminLocation(id) {
     throw new Error(msg);
   }
 }
+
+// ── Warranty review queue (تأیید گارانتی‌ها) ───────────────────────────────────
+
+export async function listAdminWarrantyRequests(params) {
+  try {
+    const res = await api.get(`/api/admin/warranty-requests/${qs(params)}`);
+    return res.data;
+  } catch (err) {
+    const msg =
+      err.response?.data?.detail || "خطا در دریافت درخواست‌های گارانتی";
+    throw new Error(msg);
+  }
+}
+
+// `data` is {action: "approve"} or {action: "reject", rejection_reason: "..."}.
+// Surfaces the field errors too, not just `detail`: a stale queue produces
+// "این درخواست قبلاً بررسی شده است" and an empty reason produces a
+// rejection_reason error, and the panel shows both to the admin.
+export async function reviewAdminWarrantyRequest(serialNumber, data) {
+  try {
+    const res = await api.patch(
+      `/api/admin/warranty-requests/${encodeURIComponent(serialNumber)}/`,
+      data
+    );
+    return res.data;
+  } catch (err) {
+    const data_ = err.response?.data;
+    const firstError =
+      data_ && typeof data_ === "object"
+        ? data_.detail || Object.values(data_).flat()[0]
+        : null;
+    throw new Error(firstError || "خطا در بررسی درخواست گارانتی");
+  }
+}

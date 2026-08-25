@@ -23,6 +23,7 @@ import MyWarrantiesPage from "./pages/MyWarrantiesPage";
 import AdminWorkspace from "./pages/admin/AdminWorkspace";
 import DashboardPanel from "./pages/admin/DashboardPanel";
 import CreateInstancePanel from "./pages/admin/CreateInstancePanel";
+import WarrantyRequestsPanel from "./pages/admin/WarrantyRequestsPanel";
 import ReviewsPanel from "./pages/admin/ReviewsPanel";
 import SuggestionsPanel from "./pages/admin/SuggestionsPanel";
 import UserInfo from "./pages/UserInfo";
@@ -111,6 +112,10 @@ function App() {
             >
               <Route index element={<DashboardPanel />} />
               <Route path="create" element={<CreateInstancePanel />} />
+              <Route
+                path="warranty-requests"
+                element={<WarrantyRequestsPanel />}
+              />
               <Route path="reviews" element={<ReviewsPanel />} />
               <Route path="suggestions" element={<SuggestionsPanel />} />
               <Route path="orders" element={<OrdersPanel />} />

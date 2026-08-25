@@ -31,6 +31,12 @@ const controls = [
     icon: PackagePlus,
   },
   {
+    to: "/admin/warranty-requests",
+    label: "تأیید گارانتی‌ها",
+    hint: "بررسی درخواست‌های ثبت گارانتی",
+    icon: ShieldCheck,
+  },
+  {
     to: "/admin/orders",
     label: "مدیریت سفارش‌ها",
     hint: "بررسی و پیگیری سفارش‌ها",
