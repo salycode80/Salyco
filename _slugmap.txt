@@ -1,0 +1,24 @@
+OLD : /products/mattress/tsh-slo-mdl-shmrh-1
+NEW : /products/mattress/تشک-امپریال
+ENC : /products/mattress/%D8%AA%D8%B4%DA%A9-%D8%A7%D9%85%D9%BE%D8%B1%DB%8C%D8%A7%D9%84
+
+OLD : /products/mattress/mdl-rst
+NEW : /products/mattress/تشک-پرستیژ
+ENC : /products/mattress/%D8%AA%D8%B4%DA%A9-%D9%BE%D8%B1%D8%B3%D8%AA%DB%8C%DA%98
+
+OLD : /articles/sz-tsh-mnsb-st-rhnm-baad-stndrd-nfrh-o-do-nfrh
+NEW : /articles/سایز-تشک-استاندارد
+ENC : /articles/%D8%B3%D8%A7%DB%8C%D8%B2-%D8%AA%D8%B4%DA%A9-%D8%A7%D8%B3%D8%AA%D8%A7%D9%86%D8%AF%D8%A7%D8%B1%D8%AF
+
+OLD : /articles/bhtrn-tsh-br-mrdrd-o-ds-mr-dm-st
+NEW : /articles/بهترین-تشک-برای-کمردرد
+ENC : /articles/%D8%A8%D9%87%D8%AA%D8%B1%DB%8C%D9%86-%D8%AA%D8%B4%DA%A9-%D8%A8%D8%B1%D8%A7%DB%8C-%DA%A9%D9%85%D8%B1%D8%AF%D8%B1%D8%AF
+
+OLD : /articles/tsh-sft-bkhrm-nrm-rhnm-ntkhb-br-ss-ozn-o-aadt-khob
+NEW : /articles/تشک-سفت-یا-نرم
+ENC : /articles/%D8%AA%D8%B4%DA%A9-%D8%B3%D9%81%D8%AA-%DB%8C%D8%A7-%D9%86%D8%B1%D9%85
+
+OLD : /articles/rhnm-gmaa-khrd-tsh-frk-tsh-tb-o-fnr-st
+NEW : /articles/تفاوت-تشک-طبی-و-فنری
+ENC : /articles/%D8%AA%D9%81%D8%A7%D9%88%D8%AA-%D8%AA%D8%B4%DA%A9-%D8%B7%D8%A8%DB%8C-%D9%88-%D9%81%D9%86%D8%B1%DB%8C
+
