@@ -18,16 +18,13 @@
       name="description"
       content="سالیکو — تولیدکننده تشک و محصولات خواب با بیش از دو دهه تجربه. تشک طبی و فنری با گارانتی معتبر."
     />
-    <!-- Warm up the font connections before the CSS request is parsed. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- 500 and 600 are loaded because the UI uses font-medium / font-semibold
-         throughout. Without them the browser synthesises the weight, which
-         renders Persian text noticeably blurrier than the real cut. -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Self-hosted Vazirmatn font. Weights 400, 500, 600, and 700 are preloaded
+         to avoid FOUT. The browser synthesizes weights without proper cuts,
+         making Persian text noticeably blurrier, so we load the real cuts. -->
+    <link rel="preload" href="/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Vazirmatn-Medium.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Vazirmatn-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
     <title>سالیکو | تشک و محصولات خواب</title>
   </head>
   <body>
