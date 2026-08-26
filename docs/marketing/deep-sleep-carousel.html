@@ -1,0 +1,642 @@
+<title>هفت اسلاید خواب عمیق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+--ground:#F7F2E7;--surface:#FFFDF8;--surface2:#F1E8D6;--line:#E0D3BA;--lineSoft:#EDE3CF;
+--ink:#0E1830;--ink2:#3C4661;--ink3:#6F7891;--navy:#003087;--navyDeep:#001F5C;--navyTint:#E5EAF6;
+--camel:#A97E50;--camelLift:#C19A6B;--camelTint:#F4EADA;
+--codeBg:#0C1631;--codeInk:#D7E1F4;--codeDim:#808EB2;--codeKey:#C9A472;--codeLine:#1B2848;
+--shadow:0 1px 2px rgba(14,24,48,.05),0 14px 34px -14px rgba(14,24,48,.18);
+--fa:"Vazirmatn",ui-sans-serif,system-ui,sans-serif;--lat:"Barlow Condensed","Vazirmatn",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--ground:#070C1A;--surface:#0E1528;--surface2:#161F38;--line:#26314F;--lineSoft:#1B2440;
+--ink:#EDE6D6;--ink2:#B3BCD2;--ink3:#7C87A3;--navy:#6E92D8;--navyDeep:#A8C2EC;--navyTint:#14203C;
+--camel:#C19A6B;--camelLift:#D6B387;--camelTint:#221B12;
+--codeBg:#050A17;--codeInk:#D7E1F4;--codeDim:#7A87A8;--codeKey:#C9A472;--codeLine:#18223C;
+--shadow:0 1px 2px rgba(0,0,0,.4),0 18px 40px -16px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+--ground:#070C1A;--surface:#0E1528;--surface2:#161F38;--line:#26314F;--lineSoft:#1B2440;
+--ink:#EDE6D6;--ink2:#B3BCD2;--ink3:#7C87A3;--navy:#6E92D8;--navyDeep:#A8C2EC;--navyTint:#14203C;
+--camel:#C19A6B;--camelLift:#D6B387;--camelTint:#221B12;
+--codeBg:#050A17;--codeInk:#D7E1F4;--codeDim:#7A87A8;--codeKey:#C9A472;--codeLine:#18223C;
+--shadow:0 1px 2px rgba(0,0,0,.4),0 18px 40px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--fa);
+line-height:1.8;font-size:16px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
+h1,h2,h3{line-height:1.35;text-wrap:balance;margin:0}
+p{margin:0}
+a{color:var(--navy)}
+.lat{font-family:var(--lat);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--lat);text-transform:uppercase;letter-spacing:.14em;
+font-size:.75rem;font-weight:600;color:var(--camel)}
+
+/* ---------- masthead ---------- */
+header.top{padding:72px 0 40px;border-bottom:1px solid var(--line)}
+.mark{display:flex;align-items:baseline;gap:10px;margin-bottom:28px}
+.mark b{font-family:var(--lat);font-size:1.4rem;letter-spacing:.02em;font-weight:700;color:var(--ink)}
+.mark span{font-size:.9rem;color:var(--ink3)}
+header.top h1{font-size:clamp(2rem,5.2vw,3.4rem);font-weight:900;letter-spacing:-.01em}
+header.top .dek{margin-top:18px;max-width:62ch;font-size:1.0625rem;color:var(--ink2)}
+.facts{display:flex;flex-wrap:wrap;gap:0;margin-top:36px;border:1px solid var(--line);
+border-radius:3px;overflow:hidden;background:var(--surface)}
+.fact{flex:1 1 150px;padding:14px 18px;border-left:1px solid var(--lineSoft)}
+.fact:first-child{border-left:0}
+.fact dt{font-family:var(--lat);text-transform:uppercase;letter-spacing:.1em;
+font-size:.6875rem;color:var(--ink3);font-weight:600}
+.fact dd{margin:2px 0 0;font-size:.9375rem;font-weight:500}
+
+/* ---------- section heads ---------- */
+section{padding-top:64px}
+.shead{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.shead .num{font-family:var(--lat);font-size:.8125rem;font-weight:700;color:var(--camel);
+letter-spacing:.1em}
+.shead .rule{flex:1;height:1px;background:var(--line)}
+section>h2{font-size:clamp(1.375rem,3vw,1.875rem);font-weight:700;margin-bottom:12px}
+section>.lede{max-width:64ch;color:var(--ink2);margin-bottom:32px}
+
+/* ---------- callout ---------- */
+.note{border:1px solid var(--line);border-right:3px solid var(--camel);
+background:var(--camelTint);padding:18px 22px;border-radius:3px;margin:28px 0}
+.note h3{font-size:1rem;font-weight:700;margin-bottom:6px}
+.note p{font-size:.9375rem;color:var(--ink2)}
+.note.navy{border-right-color:var(--navy);background:var(--navyTint)}
+
+/* ---------- slide card ---------- */
+.slide{background:var(--surface);border:1px solid var(--line);border-radius:4px;
+box-shadow:var(--shadow);margin-bottom:28px;overflow:hidden}
+.slide>.bar{display:flex;align-items:center;gap:14px;padding:14px 22px;
+background:var(--surface2);border-bottom:1px solid var(--line)}
+.slide>.bar .idx{font-family:var(--lat);font-size:1.5rem;font-weight:700;
+color:var(--navy);line-height:1}
+.slide>.bar .role{font-family:var(--lat);text-transform:uppercase;letter-spacing:.12em;
+font-size:.6875rem;font-weight:600;color:var(--ink3)}
+.slide>.bar .role b{display:block;font-family:var(--fa);text-transform:none;
+letter-spacing:0;font-size:.9375rem;color:var(--ink);font-weight:600}
+.slide .body{padding:26px 22px}
+.copy{border:1px dashed var(--line);border-radius:3px;padding:20px;background:var(--ground)}
+.copy .kicker{font-size:.8125rem;color:var(--camel);font-weight:600;margin-bottom:8px}
+.copy .head{font-size:clamp(1.25rem,3.4vw,1.75rem);font-weight:900;
+color:var(--navyDeep);letter-spacing:-.01em}
+.copy .sub{margin-top:12px;font-size:1rem;color:var(--ink2);max-width:52ch}
+.copy .cite{margin-top:14px;font-size:.8125rem;color:var(--ink3);
+padding-top:12px;border-top:1px solid var(--lineSoft)}
+.lbl{font-family:var(--lat);text-transform:uppercase;letter-spacing:.12em;
+font-size:.6875rem;font-weight:600;color:var(--ink3);margin:24px 0 8px}
+
+/* ---------- prompt block ---------- */
+pre.prompt{direction:ltr;text-align:left;margin:0;background:var(--codeBg);
+color:var(--codeInk);border:1px solid var(--codeLine);border-radius:3px;
+padding:18px 20px;overflow-x:auto;font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+font-size:.8125rem;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+pre.prompt .k{color:var(--codeKey);font-weight:600}
+pre.prompt .d{color:var(--codeDim)}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:.9375rem;min-width:520px}
+th,td{padding:11px 16px;text-align:right;border-bottom:1px solid var(--lineSoft);
+vertical-align:top}
+thead th{background:var(--surface2);font-family:var(--lat);text-transform:uppercase;
+letter-spacing:.1em;font-size:.6875rem;color:var(--ink3);font-weight:600}
+tbody tr:last-child td{border-bottom:0}
+td.no{color:var(--camel);font-weight:600}
+
+/* ---------- caption block ---------- */
+.caption{background:var(--surface);border:1px solid var(--line);border-radius:4px;
+padding:26px 24px;box-shadow:var(--shadow)}
+.caption p{margin-bottom:14px}
+.caption p:last-of-type{margin-bottom:0}
+.tags{margin-top:20px;padding-top:18px;border-top:1px solid var(--lineSoft);
+display:flex;flex-wrap:wrap;gap:7px}
+.tags span{background:var(--navyTint);color:var(--navy);border:1px solid var(--line);
+border-radius:2px;padding:3px 9px;font-size:.8125rem;direction:rtl}
+.tagset{margin-top:22px}
+.tagset .lbl{margin-top:0}
+
+ul.plain{margin:0;padding:0 20px 0 0;list-style:none}
+ul.plain li{position:relative;padding-right:18px;margin-bottom:10px;color:var(--ink2)}
+ul.plain li::before{content:"";position:absolute;right:0;top:.75em;width:6px;height:1px;
+background:var(--camel)}
+ul.plain li b{color:var(--ink);font-weight:600}
+
+footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
+font-size:.875rem;color:var(--ink3)}
+@media (max-width:640px){
+.facts{flex-direction:column}
+.fact{border-left:0;border-top:1px solid var(--lineSoft)}
+.fact:first-child{border-top:0}
+}
+</style>
+
+<div class="wrap" dir="rtl" lang="fa">
+
+<header class="top">
+  <div class="mark">
+    <b class="lat">SALY.CO</b>
+    <span>سالیکو · نیشابور</span>
+  </div>
+  <h1>هفت اسلاید خواب عمیق</h1>
+  <p class="dek">
+    یک پست کاروسل اینستاگرام برای سالیکو: از علمِ خواب عمیق شروع می‌کند، به
+    این می‌رسد که چه چیزی خواب عمیق را می‌شکند، و با معرفی تشک تمام می‌شود.
+    هر اسلاید شامل متن فارسی آماده و پرامپت تصویر است.
+  </p>
+  <dl class="facts">
+    <div class="fact"><dt>Format</dt><dd>کاروسل ۷ اسلایدی · ۱۰۸۰×۱۳۵۰</dd></div>
+    <div class="fact"><dt>Language</dt><dd>فارسی · وزیرمتن</dd></div>
+    <div class="fact"><dt>Local target</dt><dd>مشهد و خراسان رضوی</dd></div>
+    <div class="fact"><dt>Palette</dt><dd class="lat">#003087 · #C19A6B · #F3EBDA</dd></div>
+  </dl>
+</header>
+
+<section>
+  <div class="shead"><span class="num lat">READ FIRST</span><span class="rule"></span></div>
+  <h2>پرامپت‌ها متن فارسی تولید نمی‌کنند — و نباید بکنند</h2>
+  <p class="lede">
+    مدل‌های تصویرساز (Midjourney، DALL·E، Flux، Ideogram) خط فارسی را درست
+    نمی‌نویسند؛ حروف را جدا، معکوس یا بی‌معنا می‌سازند. پس پرامپت‌های زیر
+    عمداً «بدون متن» نوشته شده‌اند و در هر ترکیب‌بندی جای خالی برای تیتر
+    رزرو شده است.
+  </p>
+  <div class="note navy">
+    <h3>روش درست، در سه گام</h3>
+    <p>
+      ۱) با پرامپت، فقط تصویرِ پس‌زمینه را بسازید.
+      ۲) در Canva یا فیگما متن فارسی را با فونت <b>وزیرمتن</b> روی آن بگذارید —
+      همان فونتی که سایت با آن ست شده است.
+      ۳) لوگو را از فایل واقعی خودتان بگذارید، نه ساخته‌ی مدل:
+      <code class="lat" dir="ltr">Frontend/salyco-front/public/navbar-logo.svg</code>
+      (نسخه‌ی SVG، چون در هر اندازه تیز می‌ماند).
+    </p>
+  </div>
+  <div class="note">
+    <h3>قالب سبک — این بلوک را به ابتدای هر هفت پرامپت اضافه کنید</h3>
+    <p>
+      یکدست بودن هفت اسلاید مهم‌ترین چیزی است که یک کاروسل را حرفه‌ای نشان
+      می‌دهد. این پاراگراف ثابت است و فقط موضوعِ بعد از آن عوض می‌شود.
+    </p>
+  </div>
+  <pre class="prompt"><span class="d">/* STYLE BLOCK — prepend to every slide prompt */</span>
+
+Minimal editorial infographic poster, <span class="k">4:5 portrait</span>, 1080x1350.
+Flat vector illustration, no photorealism, no gradients except one soft
+radial glow. Strict three-colour palette: deep navy <span class="k">#003087</span> as the
+ground, warm wheat <span class="k">#F3EBDA</span> for surfaces, muted camel <span class="k">#C19A6B</span> for
+the single accent. Thin 1.5px line work, generous negative space,
+calm and clinical rather than decorative. Subtle paper grain.
+<span class="k">Absolutely no text, no letters, no numbers, no typography</span> anywhere
+in the image. Leave the upper third as clean empty navy field for a
+headline to be typeset later. Centred composition, museum-label
+restraint, Swiss design sensibility.
+
+<span class="d">--- then the slide subject below ---</span></pre>
+</section>
+
+<section>
+  <div class="shead"><span class="num lat">SLIDES</span><span class="rule"></span></div>
+  <h2>هفت اسلاید، به ترتیب</h2>
+  <p class="lede">
+    قوس روایت: قلاب → علم (چهار اسلاید) → علت شکستن خواب عمیق → محصول.
+    اسلاید ششم لولای پست است؛ جایی که حرف علمی به تشک وصل می‌شود بدون این
+    که تبلیغ زودهنگام به نظر برسد.
+  </p>
+
+  <!-- 01 -->
+  <article class="slide">
+    <div class="bar">
+      <span class="idx lat">01</span>
+      <span class="role">Hook<b>قلاب — توقف اسکرول</b></span>
+    </div>
+    <div class="body">
+      <div class="copy">
+        <p class="kicker">خواب عمیق</p>
+        <p class="head">هر شب، مغزتان خودش را می‌شوید</p>
+        <p class="sub">
+          اما این شست‌وشو فقط در خواب عمیق انجام می‌شود. اگر شب‌تان مدام
+          بشکند، مغز فرصت تمیز کردن خودش را پیدا نمی‌کند.
+        </p>
+        <p class="cite">پژوهش دانشگاه روچستر، مجله‌ی Science، ۲۰۱۳ — فاصله‌ی
+          میان سلول‌های مغز در خواب باز می‌شود و مایع مغزی‌نخاعی مواد زائد
+          متابولیک را می‌شوید.</p>
+      </div>
+      <p class="lbl">Image prompt</p>
+      <pre class="prompt"><span class="d">[STYLE BLOCK] +</span>
+
+Subject: a simplified side-profile cross-section of a human head,
+drawn as a single thin camel-coloured contour line on the deep navy
+ground. Inside the skull, delicate branching channels of pale wheat
+fluid flow downward and outward like a slow river system, suggesting
+rinsing and clearance. The channels glow faintly. Nothing anatomical
+or medical-textbook — reduce the brain to soft abstract lobes.
+One soft radial glow behind the head. Head positioned in the lower
+two-thirds, <span class="k">upper third left empty navy</span> for the headline.</pre>
+      <p class="lbl">Design note</p>
+      <ul class="plain">
+        <li>این اسلاید تنها کاری که باید بکند، متوقف کردن اسکرول است. تیتر
+        را <b>خیلی بزرگ</b> بگذارید — دو خط، وزن ۹۰۰ وزیرمتن.</li>
+        <li>پایین راست یک فلش کوچک کاملی برای «بکشید» بگذارید. نرخ ورود به
+        اسلاید دوم مهم‌ترین عدد این پست است.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- 02 -->
+  <article class="slide">
+    <div class="bar">
+      <span class="idx lat">02</span>
+      <span class="role">Mechanism<b>خواب عمیق دقیقاً چیست</b></span>
+    </div>
+    <div class="body">
+      <div class="copy">
+        <p class="kicker">معماری یک شب</p>
+        <p class="head">خواب یک خط صاف نیست</p>
+        <p class="sub">
+          شب شما چهار تا شش چرخه‌ی حدوداً ۹۰ دقیقه‌ای است. خواب عمیق تنها
+          ۱۳ تا ۲۳ درصد کل خواب یک بزرگسال سالم است — و بیشترش در نیمه‌ی
+          اول شب جمع شده. یعنی کیفیت، نه فقط طول.
+        </p>
+        <p class="cite">مراحل خواب NREM، مرجع استاندارد طب خواب بالینی.</p>
+      </div>
+      <p class="lbl">Image prompt</p>
+      <pre class="prompt"><span class="d">[STYLE BLOCK] +</span>
+
+Subject: a hypnogram — a stepped horizontal chart line travelling
+left to right across the frame, dropping down through four distinct
+horizontal levels then rising again, repeating in four wave-like
+cycles across one night. The line is camel <span class="k">#C19A6B</span>, 2px, crisp
+right-angle steps like a clinical sleep-lab readout. Four faint wheat
+horizontal guide rules behind it mark the stage levels. The deepest
+troughs are filled with a soft wheat glow beneath the line.
+Chart occupies the middle band only, <span class="k">no axis labels, no numbers</span>.
+Wide empty navy above and below.</pre>
+      <p class="lbl">Design note</p>
+      <ul class="plain">
+        <li>این تنها اسلایدی است که «نمودار» واقعی دارد — و همان چیزی است
+        که به پست اعتبار علمی می‌دهد. برچسب مراحل را خودتان در Canva
+        اضافه کنید: <b>بیداری · سبک · عمیق · REM</b>.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- 03 -->
+  <article class="slide">
+    <div class="bar">
+      <span class="idx lat">03</span>
+      <span class="role">Stakes<b>قلب و فشار خون</b></span>
+    </div>
+    <div class="body">
+      <div class="copy">
+        <p class="kicker">بدن</p>
+        <p class="head">قلب شما در خواب عمیق نفس می‌کشد</p>
+        <p class="sub">
+          فشار خون و ضربان قلب در خواب عمیق به‌طور طبیعی افت می‌کنند؛ این
+          تنها استراحت واقعی قلب در شبانه‌روز است. در فراتحلیل‌های جمعیتی،
+          خواب کوتاه با افزایش خطر بیماری عروق کرونر و سکته همراه بوده است.
+        </p>
+        <p class="cite">Cappuccio و همکاران، European Heart Journal، ۲۰۱۱ —
+          فراتحلیل مطالعات آینده‌نگر.</p>
+      </div>
+      <p class="lbl">Image prompt</p>
+      <pre class="prompt"><span class="d">[STYLE BLOCK] +</span>
+
+Subject: a single continuous camel line that begins as a jagged awake
+heartbeat rhythm on the left, then visibly calms — amplitude shrinking,
+spacing widening — into long slow gentle waves on the right, and
+finally settles into a near-flat resting line. Above the calm right
+section, a very simple geometric heart shape drawn in the same thin
+line, unfilled, with one soft wheat glow behind it.
+Nothing clinical or gory. <span class="k">Pure line diagram.</span>
+Composition sits in the lower half; upper third empty navy.</pre>
+      <p class="lbl">Design note</p>
+      <ul class="plain">
+        <li>ادعای «درمان» نکنید. جمله را در سطح <b>همراهی آماری</b> نگه
+        دارید — همان‌طور که در متن بالا نوشته شده. این هم درست‌تر است و هم
+        از دردسر تبلیغاتی دور می‌ماند.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- 04 -->
+  <article class="slide">
+    <div class="bar">
+      <span class="idx lat">04</span>
+      <span class="role">Stakes<b>ایمنی و ترمیم</b></span>
+    </div>
+    <div class="body">
+      <div class="copy">
+        <p class="kicker">بدن</p>
+        <p class="head">کم‌خوابی، ایمنی را چهار برابر ضعیف می‌کند</p>
+        <p class="sub">
+          در یک آزمایش کنترل‌شده، افرادی که کمتر از ۶ ساعت می‌خوابیدند در
+          برابر ویروس سرماخوردگی بیش از چهار برابر بیشتر از افراد با خواب
+          بالای هفت ساعت بیمار شدند. بیشترین ترشح هورمون رشد — همان که
+          بافت و عضله را بازسازی می‌کند — هم در خواب عمیق رخ می‌دهد.
+        </p>
+        <p class="cite">Prather و همکاران، مجله‌ی Sleep، ۲۰۱۵.</p>
+      </div>
+      <p class="lbl">Image prompt</p>
+      <pre class="prompt"><span class="d">[STYLE BLOCK] +</span>
+
+Subject: a simple concentric-circle shield motif — three nested thin
+camel rings on the navy ground, the innermost filled with soft wheat
+glow. Small abstract geometric particles (tiny circles and hexagons,
+wheat coloured) approach from the outer edges of the frame but are
+deflected around the rings, their paths drawn as faint dotted arcs.
+Reads as protection, not as a virus illustration. Strictly geometric,
+no cells, no medical imagery. Centred in the lower two-thirds,
+<span class="k">upper third empty navy</span>.</pre>
+      <p class="lbl">Design note</p>
+      <ul class="plain">
+        <li>عدد «۴ برابر» را به عنوان یک عدد بزرگ کاملی وسط سپر بگذارید —
+        اعداد بزرگ در کاروسل بیشترین ذخیره‌شدن را می‌گیرند.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- 05 -->
+  <article class="slide">
+    <div class="bar">
+      <span class="idx lat">05</span>
+      <span class="role">Stakes<b>حافظه و خلق‌وخو</b></span>
+    </div>
+    <div class="body">
+      <div class="copy">
+        <p class="kicker">ذهن</p>
+        <p class="head">حافظه شب‌ها ساخته می‌شود، نه روزها</p>
+        <p class="sub">
+          چیزی که روز یاد می‌گیرید، در خواب از حافظه‌ی کوتاه‌مدت به بلندمدت
+          منتقل و تثبیت می‌شود. کم‌خوابی همچنین واکنش بخش هیجانی مغز را
+          تشدید می‌کند — به همین دلیل بعد از یک شب بد، همه‌چیز بزرگ‌تر و
+          تلخ‌تر به نظر می‌رسد.
+        </p>
+        <p class="cite">تثبیت حافظه در خواب موج‌آهسته؛ و Yoo و همکاران،
+          Current Biology، ۲۰۰۷ — افزایش واکنش‌پذیری آمیگدال پس از بی‌خوابی.</p>
+      </div>
+      <p class="lbl">Image prompt</p>
+      <pre class="prompt"><span class="d">[STYLE BLOCK] +</span>
+
+Subject: a constellation of small wheat-coloured dots scattered loosely
+across the lower half of the navy field, connected by thin camel lines
+that grow denser and more organised toward the centre-right, where they
+resolve into one clean crystalline lattice. Reads as scattered fragments
+being consolidated into structure. A few outlying dots remain
+unconnected at the far left. Very sparse, more star-map than
+neural-network cliché — <span class="k">avoid glowing brain-network stock imagery</span>.
+Upper third empty navy.</pre>
+      <p class="lbl">Design note</p>
+      <ul class="plain">
+        <li>این اسلاید بهترین جا برای گرفتن کامنت است. یک سؤال کوتاه پایین
+        بگذارید: <b>«بعد از شب بی‌خوابی، اول چه چیزی را از دست می‌دهید؟»</b></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- 06 -->
+  <article class="slide">
+    <div class="bar">
+      <span class="idx lat">06 · PIVOT</span>
+      <span class="role">Bridge<b>لولای پست — علت شکستن خواب عمیق</b></span>
+    </div>
+    <div class="body">
+      <div class="copy">
+        <p class="kicker">پس مشکل کجاست؟</p>
+        <p class="head">هر بار جابه‌جا می‌شوید، چرخه از اول شروع می‌شود</p>
+        <p class="sub">
+          بدن شما شب‌ها ده‌ها بار می‌چرخد تا فشار را از شانه و لگن بردارد.
+          هر چرخش یک بیداری کوتاه است که صبح یادتان نمی‌ماند — ولی خواب
+          عمیق را قطع می‌کند. سطحی که روی آن می‌خوابید یک متغیر است، نه
+          یک ثابت.
+        </p>
+        <p class="cite">کارآزمایی بالینی در The Lancet، ۲۰۰۳: بیماران
+          کمردرد مزمن روی تشک با سفتی متوسط، درد و ناتوانی کمتری نسبت به
+          تشک سفت گزارش کردند. توصیه‌ی رایج، بازبینی تشک هر ۷ تا ۱۰ سال است.</p>
+      </div>
+      <p class="lbl">Image prompt</p>
+      <pre class="prompt"><span class="d">[STYLE BLOCK] +</span>
+
+Subject: a side-view line silhouette of a person lying on their side,
+drawn as one thin camel contour. Beneath them, a horizontal wheat line
+represents the sleeping surface. On the left half the surface sags into
+a deep U and the spine curve is visibly bent, with two small camel
+pressure-burst marks at shoulder and hip. On the right half the same
+figure rests on a level surface and the spine reads as one straight
+neutral line, no burst marks. A thin vertical wheat rule divides the
+two halves. Diagram-like, calm, <span class="k">no arrows, no text, no icons</span>.
+Occupies the middle band; upper third empty navy.</pre>
+      <p class="lbl">Design note</p>
+      <ul class="plain">
+        <li>این مهم‌ترین اسلاید تجاری پست است و باید <b>هنوز حرف تبلیغ
+        نزند</b>. اسم برند اینجا نیاید — فقط مسئله. اسلاید بعد جواب است.</li>
+        <li>مقایسه‌ی «قبل / بعد» را با یک خط عمودی نازک وسط قاب بگذارید؛
+        بدون برچسب هم فهمیده می‌شود.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- 07 -->
+  <article class="slide">
+    <div class="bar">
+      <span class="idx lat">07</span>
+      <span class="role">Product + CTA<b>معرفی محصول</b></span>
+    </div>
+    <div class="body">
+      <div class="copy">
+        <p class="kicker">سالیکو · بیش از دو دهه تجربه</p>
+        <p class="head">آنجا که خواب بر بال‌های قو آرام می‌گیرد</p>
+        <p class="sub">
+          دو مدل، برای دو نوع بدن و دو سلیقه‌ی سفتی:
+          <b>مدل امپریال</b> با ارتفاع ۳۱ سانتی‌متر و سفتی بالا، و
+          <b>مدل پرستیژ</b> با ارتفاع ۲۴ سانتی‌متر و سفتی متوسط.
+          هر دو با اسکلت فنری متراکم، لایه‌های محافظ و پد فشرده ساخته
+          می‌شوند — و هر دو <b>۱۰ سال گارانتی</b> دارند.
+        </p>
+        <p class="cite">تولید در نیشابور · ارسال در خراسان ·
+          ثبت گارانتی با اسکن QR روی برچسب تشک · salyco.ir</p>
+      </div>
+      <p class="lbl">Image direction — این اسلاید را نسازید، بسازید</p>
+      <div class="note navy">
+        <h3>از عکس واقعی محصول استفاده کنید، نه تصویر تولیدشده</h3>
+        <p>
+          مدل تصویرساز یک تشک <em>شبیه</em> تشک شما می‌سازد که مال شما نیست
+          — دوخت، نوار سرمه‌ای و برچسب طلایی گارانتی همه غلط در می‌آیند.
+          دو فایل خودتان برای این اسلاید دقیقاً ساخته شده‌اند:
+          <code class="lat" dir="ltr">public/layerdimage.png</code> (برش
+          مقطعی که لایه‌ها را نشان می‌دهد) و عکس‌های
+          <code class="lat" dir="ltr">salyco-studio/Emperial-Images-References/</code>.
+          برش مقطعی برای این اسلاید بهتر است، چون حرف «لایه‌های محافظ و پد
+          فشرده» را ثابت می‌کند.
+        </p>
+      </div>
+      <p class="lbl">Prompt — فقط برای پس‌زمینه‌ی زیر عکس محصول</p>
+      <pre class="prompt"><span class="d">[STYLE BLOCK] +</span>
+
+Subject: an empty studio backdrop plate. Deep navy field with one very
+soft wide elliptical wheat glow low and centred, like a single overhead
+light falling on an empty plinth. A faint horizontal wheat line marks
+the floor plane. Barely-there camel vignette at the corners.
+<span class="k">Completely empty centre</span> — nothing occupies the middle of the frame;
+it exists purely as a ground to composite a product photograph onto.
+No furniture, no bed, no mattress, no props, no text.</pre>
+      <p class="lbl">Design note</p>
+      <ul class="plain">
+        <li><b>قیمت را روی تصویر نگذارید.</b> قیمت و درصد تخفیف عوض می‌شوند
+        و پست در فید می‌ماند؛ یک قیمت باطل‌شده بدتر از نبودن قیمت است.
+        قیمت را در کپشن بنویسید، جایی که می‌توانید ویرایشش کنید.</li>
+        <li>لوگو را اینجا بزرگ‌تر از اسلایدهای دیگر بگذارید — این تنها
+        اسلایدی است که برند حق دارد در آن بلند حرف بزند.</li>
+        <li>پایین قاب: <b>salyco.ir</b> و «لینک در بایو».</li>
+      </ul>
+    </div>
+  </article>
+</section>
+
+<section>
+  <div class="shead"><span class="num lat">CAPTION</span><span class="rule"></span></div>
+  <h2>کپشن</h2>
+  <p class="lede">
+    خط اول تنها چیزی است که قبل از «بیشتر» دیده می‌شود، پس قلاب باید همان
+    اول بیاید. نکته‌ی هورمون اشتها عمداً در کاروسل نیست و فقط در کپشن آمده
+    — به کسی که تا کپشن آمده چیز تازه‌ای می‌دهد.
+  </p>
+  <div class="caption">
+    <p>مغز شما هر شب خودش را می‌شوید — اما فقط در خواب عمیق. 🌙</p>
+    <p>
+      خواب عمیق تنها ۱۳ تا ۲۳ درصد شب شماست و بیشترش در نیمه‌ی اول شب جمع
+      شده. در همین بازه است که فشار خون افت می‌کند، هورمون رشد آزاد می‌شود،
+      حافظه‌ی روز تثبیت می‌شود و مغز مواد زائدش را می‌شوید.
+    </p>
+    <p>
+      یک نکته که در اسلایدها نگفتیم: در پژوهشی در دانشگاه شیکاگو، دو شب
+      خواب چهار ساعته سطح لپتین (هورمون سیری) را کاهش و گرلین (هورمون
+      گرسنگی) را افزایش داد — یعنی اشتهای بیشتر، بیشتر برای شیرینی و
+      نشاسته. کم‌خوابی فقط خستگی نیست.
+    </p>
+    <p>
+      و نکته‌ای که کمتر گفته می‌شود: خواب عمیق با هر جابه‌جایی شبانه قطع
+      می‌شود. بدن وقتی فشار روی شانه و لگن جمع شود می‌چرخد — و هر چرخش یک
+      بیداری کوتاه است که یادتان نمی‌ماند. به همین دلیل سطحی که روی آن
+      می‌خوابید یک متغیر است، نه یک ثابت.
+    </p>
+    <p>
+      سالیکو با بیش از دو دهه تجربه در نیشابور تشک تولید می‌کند. دو مدل
+      داریم: <b>امپریال</b> با سفتی بالا و ارتفاع ۳۱ سانتی‌متر، و
+      <b>پرستیژ</b> با سفتی متوسط و ارتفاع ۲۴ سانتی‌متر — هر دو با اسکلت
+      فنری متراکم، لایه‌های محافظ و <b>۱۰ سال گارانتی</b>.
+    </p>
+    <p>
+      🚚 ارسال در خراسان &nbsp;|&nbsp; 📍 نیشابور &nbsp;|&nbsp;
+      🔗 مشاوره‌ی انتخاب سفتی و خرید: لینک در بایو — salyco.ir
+    </p>
+    <p>
+      اگر این پست برایتان تازه بود، ذخیره‌اش کنید و برای کسی که بد می‌خوابد
+      بفرستید. 💬 شما شبی چند ساعت می‌خوابید؟
+    </p>
+
+    <div class="tagset">
+      <p class="lbl">هشتگ‌ها — محلی (مهم‌ترین گروه، چون ارسال فقط خراسان است)</p>
+      <div class="tags">
+        <span>#تشک_مشهد</span><span>#خرید_تشک_مشهد</span><span>#تشک_نیشابور</span>
+        <span>#مشهد</span><span>#نیشابور</span><span>#خراسان_رضوی</span>
+      </div>
+    </div>
+    <div class="tagset">
+      <p class="lbl">هشتگ‌ها — دسته‌ی محصول</p>
+      <div class="tags">
+        <span>#تشک</span><span>#خرید_تشک</span><span>#تشک_طبی</span>
+        <span>#تشک_فنری</span><span>#تشک_دو_نفره</span><span>#سرویس_خواب</span>
+        <span>#اتاق_خواب</span><span>#تختخواب</span>
+      </div>
+    </div>
+    <div class="tagset">
+      <p class="lbl">هشتگ‌ها — موضوع محتوا</p>
+      <div class="tags">
+        <span>#خواب_عمیق</span><span>#بی_خوابی</span><span>#خواب_سالم</span>
+        <span>#بهداشت_خواب</span><span>#کمردرد</span><span>#دیسک_کمر</span>
+        <span>#سلامتی</span><span>#سبک_زندگی_سالم</span>
+      </div>
+    </div>
+    <div class="tagset">
+      <p class="lbl">هشتگ‌ها — برند</p>
+      <div class="tags"><span>#سالیکو</span><span class="lat">#salyco</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="num lat">GUARDRAILS</span><span class="rule"></span></div>
+  <h2>چه چیزی را می‌توانید بگویید، چه چیزی را نه</h2>
+  <p class="lede">
+    این جدول از داده‌ی واقعی محصولات روی <span class="lat">salyco.ir</span>
+    درآمده. ستون سمت چپ ادعاهایی است که داده پشتشان نیست — و چون پست در فید
+    می‌ماند، بعداً هم قابل حذف نیست.
+  </p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>ادعا</th><th>وضعیت</th><th>دلیل</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>۱۰ سال گارانتی</td><td>مجاز</td>
+          <td><span class="lat" dir="ltr">warranty_months: 120</span> روی هر دو مدل</td></tr>
+        <tr><td>تولید در نیشابور</td><td>مجاز</td>
+          <td>ادعای قابل بررسی و قوی‌ترین برگ برنده‌ی یک تولیدکننده</td></tr>
+        <tr><td>ارسال در خراسان</td><td>مجاز</td>
+          <td>محدوده‌ی واقعی ارسال. هرگز «ارسال به سراسر ایران» نگویید</td></tr>
+        <tr><td>اسکلت فنری متراکم، لایه‌های محافظ، پد فشرده</td><td>مجاز</td>
+          <td>در توضیحات محصول آمده و در برش مقطعی دیده می‌شود</td></tr>
+        <tr><td class="no">شب آزمایشی / تست رایگان</td><td class="no">ممنوع</td>
+          <td><span class="lat" dir="ltr">trial_nights: 0</span> — این ادعا در حال حاضر نادرست است</td></tr>
+        <tr><td class="no">نام متریال خاص (مموری‌فوم، لاتکس، …)</td><td class="no">ممنوع</td>
+          <td>فیلد <span class="lat" dir="ltr">material</span> روی هر دو محصول خالی است</td></tr>
+        <tr><td class="no">امتیاز مشتریان / «۵ ستاره»</td><td class="no">ممنوع</td>
+          <td>امپریال ۲٫۰۰ از یک نظر است؛ پرستیژ هیچ نظری ندارد</td></tr>
+        <tr><td class="no">«درمان کمردرد» یا «تشک طبی معجزه‌گر»</td><td class="no">ممنوع</td>
+          <td>پژوهش‌ها همراهی آماری نشان می‌دهند، نه درمان</td></tr>
+        <tr><td class="no">قیمت روی تصویر</td><td class="no">توصیه نمی‌شود</td>
+          <td>تخفیف‌ها عوض می‌شوند؛ قیمت را در کپشن بنویسید که ویرایش‌شدنی است</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="num lat">PRODUCTION</span><span class="rule"></span></div>
+  <h2>مشخصات فنی و اجرا</h2>
+  <ul class="plain">
+    <li><b>ابعاد:</b> ۱۰۸۰×۱۳۵۰ پیکسل (نسبت ۴:۵). بلندترین نسبتی که
+      اینستاگرام در فید کامل نشان می‌دهد — بیشترین فضای صفحه.</li>
+    <li><b>حاشیه‌ی امن:</b> متن را حداقل ۱۰۰ پیکسل از هر لبه فاصله دهید.
+      پیش‌نمایش شبکه و برخی نمایش‌ها قاب را می‌برند.</li>
+    <li><b>تایپوگرافی:</b> تیتر با وزیرمتن وزن ۹۰۰ در ۷۲ تا ۹۰ پیکسل،
+      متن با وزن ۴۰۰ در ۳۴ تا ۴۰ پیکسل، برچسب‌ها با وزن ۵۰۰ و
+      فاصله‌ی حروف کمی باز.</li>
+    <li><b>خروجی:</b> PNG، فضای رنگ sRGB. اگر JPEG می‌گیرید کیفیت را زیر
+      ۹۰ نیاورید — نوار سرمه‌ای پشت متن سفید زودتر از بقیه لک می‌شود.</li>
+    <li><b>لوگو:</b> در اسلایدهای ۱ تا ۶ کوچک و گوشه‌ی پایین؛ در اسلاید ۷
+      بزرگ و مرکزی. یک اندازه و یک موقعیت ثابت در شش اسلاید اول.</li>
+    <li><b>متن جایگزین (Alt):</b> اینستاگرام برای هر تصویر Alt می‌پذیرد و
+      همان متن قابل جست‌وجو است. برای هر اسلاید تیتر فارسی همان اسلاید را
+      به‌عنوان Alt بگذارید — کاری کم‌هزینه که تقریباً هیچ‌کس نمی‌کند.</li>
+    <li><b>اولین کامنت:</b> لینک <span class="lat">salyco.ir</span> و یک
+      سؤال. لینک در کپشن کلیک‌شدنی نیست ولی در کامنت متن کامل دیده می‌شود.</li>
+    <li><b>چهار مقاله‌ی سایت را به استوری تبدیل کنید</b> و به همین پست وصل
+      کنید: «سایز تشک مناسب»، «بهترین تشک برای کمردرد»، «تشک سفت یا نرم»،
+      «فرق تشک طبی و فنری». اسلاید ۶ دقیقاً به مقاله‌ی سفت‌یا‌نرم وصل
+      می‌شود.</li>
+  </ul>
+</section>
+
+<footer>
+  <p>
+    ساخته‌شده بر پایه‌ی داده‌ی زنده‌ی <span class="lat">salyco.ir/api</span>
+    و پالت برند از <span class="lat" dir="ltr">index.css</span> ·
+    مرداد ۱۴۰۵
+  </p>
+</footer>
+
+</div>

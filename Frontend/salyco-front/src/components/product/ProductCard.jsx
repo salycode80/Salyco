@@ -28,8 +28,13 @@ export default function ProductCard({ product }) {
     : `${toPersianNumber(warrantyMonths)} ماه گارانتی`;
 
   // `rating` is the server-side display score: the approved-review average, or
-  // 5 for a product nobody has reviewed yet. Fall back to 5 here too, so an
-  // older cached API response can't render an unrated product as zero stars.
+  // DEFAULT_RATING (5.00) for a product nobody has reviewed yet — the two are
+  // deliberately indistinguishable in that one value, so `review_count` is the
+  // only thing that tells them apart. Card layout has no room for a "N نظر"
+  // caption, so an unreviewed product shows no stars at all rather than five
+  // gold ones it has not earned.
+  const reviewCount = Number(product.review_count ?? 0);
+  const hasReviews = reviewCount > 0;
   const stars = Math.round(Number(product.rating ?? 5));
   const [imageSrc, setImageSrc] = useState(getProductImageUrl(product.image));
   const { addItem } = useCart();
@@ -141,26 +146,32 @@ export default function ProductCard({ product }) {
             <div className="h-px w-1/2 bg-[#CBD2D6]" />
             {/* The five glyphs are decorative; the score is announced once as
                 text so a screen reader doesn't read "star" five times. */}
-            <div
-              dir="ltr"
-              role="img"
-              aria-label={`امتیاز ${toPersianNumber(stars)} از ۵`}
-              className="flex flex-1 items-center justify-end gap-0.5"
-            >
-              {[0, 1, 2, 3, 4].map((i) => (
-                <Star
-                  key={i}
-                  size={14}
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                  className={
-                    i < stars
-                      ? "fill-[#F5BA2E] text-[#F5BA2E] @[280px]:size-4"
-                      : "fill-[#E5E9EB] text-[#E5E9EB] @[280px]:size-4"
-                  }
-                />
-              ))}
-            </div>
+            {hasReviews ? (
+              <div
+                dir="ltr"
+                role="img"
+                aria-label={`امتیاز ${toPersianNumber(stars)} از ۵ از ${toPersianNumber(reviewCount)} نظر`}
+                className="flex flex-1 items-center justify-end gap-0.5"
+              >
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star
+                    key={i}
+                    size={14}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                    className={
+                      i < stars
+                        ? "fill-[#F5BA2E] text-[#F5BA2E] @[280px]:size-4"
+                        : "fill-[#E5E9EB] text-[#E5E9EB] @[280px]:size-4"
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <span className="flex-1 text-right font-persian text-[11px] text-[#687173]">
+                بدون نظر
+              </span>
+            )}
           </div>
 
           {/* Price — full width below the divider. mt-auto pins it to the card

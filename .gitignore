@@ -14,3 +14,16 @@ Frontend/salyco-front/dist/
 
 # Local DB (only used in dev; production uses Postgres)
 *.sqlite3
+
+# Scratch space for pulled-down production assets (see .claude/phase1-deploy.md)
+.local-backup/
+
+# Generated image derivatives. Built by
+# Frontend/salyco-front/scripts/gen_image_derivatives.py at Docker build time,
+# so they never need to be committed. Originals are tracked as normal.
+*.png.avif
+*.png.webp
+*.jpg.avif
+*.jpg.webp
+*.jpeg.avif
+*.jpeg.webp
