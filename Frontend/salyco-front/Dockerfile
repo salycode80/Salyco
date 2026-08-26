@@ -43,8 +43,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Compiled assets plus the generated .avif/.webp siblings.
 COPY --from=images /work/dist /usr/share/nginx/html
 
-# Fail the build rather than ship a container that would not start.
-RUN nginx -t
+# nginx -t cannot run at build time because the upstream "backend:8000" does not
+# exist until Docker Compose creates the network. Nginx will validate on startup
+# and fail fast if the config has errors.
+# RUN nginx -t
 
 EXPOSE 80
 
