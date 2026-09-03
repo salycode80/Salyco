@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from users.models import Customer
 
-from .models import MattressInstance, Review
+from .models import Mattress, MattressInstance, Review
 from .utils import generate_qr_code_base64, get_warranty_public_url
 
 
@@ -105,6 +105,38 @@ class AdminInstanceDetailSerializer(AdminInstanceSerializer):
         return generate_qr_code_base64(
             get_warranty_public_url(obj.serial_number, self.context.get("request"))
         )
+
+
+class AdminInstanceUpdateSerializer(serializers.ModelSerializer):
+    """Repoint an already-minted instance at a different product model.
+
+    Only the mattress FK is writable. The serial number is the primary key and
+    the QR code encodes a URL built from it, so swapping the model leaves the
+    printed code untouched — the same sticker simply resolves to the new product
+    on the next scan. warranty_expiration_date derives from
+    mattress.warranty_months, so the covered period follows the new model too;
+    that is deliberate, and the panel warns before changing a sold unit.
+    """
+
+    mattress_id = serializers.PrimaryKeyRelatedField(
+        source="mattress",
+        queryset=Mattress.objects.all(),
+        write_only=True,
+    )
+
+    class Meta:
+        model = MattressInstance
+        fields = ["mattress_id"]
+
+    def validate_mattress_id(self, mattress: Mattress) -> Mattress:
+        # Same rule the create flow enforces: only serial-numbered lines can
+        # carry a per-unit warranty, so an instance must never point at a
+        # pillow or duvet.
+        if not mattress.is_warranty_registrable:
+            raise serializers.ValidationError(
+                "این دسته‌بندی محصول سریال‌دار نیست و قابل انتخاب برای نمونه محصول نمی‌باشد."
+            )
+        return mattress
 
 
 class AdminCustomerSerializer(serializers.ModelSerializer):

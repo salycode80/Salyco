@@ -20,6 +20,7 @@ from .admin_serializers import (
     AdminCustomerSerializer,
     AdminInstanceDetailSerializer,
     AdminInstanceSerializer,
+    AdminInstanceUpdateSerializer,
     AdminReviewSerializer,
     AdminWarrantyRequestSerializer,
     WarrantyReviewActionSerializer,
@@ -190,11 +191,37 @@ class AdminInstanceListView(generics.ListAPIView):
         return filter_instances(self.request)
 
 
-class AdminInstanceDetailView(generics.RetrieveAPIView):
+class AdminInstanceDetailView(generics.RetrieveUpdateAPIView):
+    """Read one instance, or PATCH it to point at a different product model.
+
+    PATCH exists so a serial printed against the wrong model can be corrected
+    after the fact — the QR sticker stays valid and starts resolving to the new
+    product. Writes go through a narrow serializer (mattress only); the response
+    is the full detail payload so the panel can show the recalculated warranty
+    months and expiry without a second request.
+    """
+
     permission_classes = [IsAdminUser]
-    serializer_class = AdminInstanceDetailSerializer
     lookup_field = "serial_number"
     queryset = MattressInstance.objects.select_related("mattress", "customer")
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return AdminInstanceUpdateSerializer
+        return AdminInstanceDetailSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        instance.refresh_from_db()
+        return Response(
+            AdminInstanceDetailSerializer(
+                instance, context=self.get_serializer_context()
+            ).data
+        )
 
 
 class AdminCustomerListView(generics.ListAPIView):

@@ -41,6 +41,26 @@ export async function getAdminInstance(serialNumber) {
   }
 }
 
+// Repoint an instance at a different product model. The serial number and its
+// printed QR code are unchanged — only what the scan resolves to. Returns the
+// full detail payload with the recalculated warranty months/expiry.
+export async function updateAdminInstance(serialNumber, data) {
+  try {
+    const res = await api.patch(
+      `/api/admin/instances/${encodeURIComponent(serialNumber)}/`,
+      data
+    );
+    return res.data;
+  } catch (err) {
+    const data_ = err.response?.data;
+    const firstError =
+      data_ && typeof data_ === "object"
+        ? data_.detail || Object.values(data_).flat()[0]
+        : null;
+    throw new Error(firstError || "خطا در بروزرسانی محصول");
+  }
+}
+
 export async function listAdminCustomers(params) {
   try {
     const res = await api.get(`/api/admin/customers/${qs(params)}`);

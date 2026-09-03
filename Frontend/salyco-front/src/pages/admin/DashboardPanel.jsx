@@ -3,6 +3,7 @@ import {
   getAdminStats,
   listAdminInstances,
   getAdminInstance,
+  updateAdminInstance,
   listAdminCustomers,
   exportAdminCsv,
 } from "../../api/admin";
@@ -28,6 +29,9 @@ import {
   Clock,
   XCircle,
   Loader2,
+  Pencil,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 
 const faNum = (n) => Number(n ?? 0).toLocaleString("fa-IR");
@@ -99,8 +103,159 @@ function WarrantyBadge({ row }) {
   );
 }
 
+// ── editable product field ───────────────────────────────────────────────────
+// Repointing an instance keeps its serial and its printed QR code — only what a
+// scan resolves to changes. Because warranty length comes from the model, doing
+// this to a unit a customer has already registered rewrites their coverage, so a
+// sold or approved instance takes a confirmation step before the PATCH goes out.
+function ProductField({ data, mattresses, onSaved, autoOpen = false }) {
+  // autoOpen is set when the admin arrived via the row's «ویرایش» button, so the
+  // select is already showing rather than hidden behind another click. Safe as an
+  // initial value: this component only mounts once the instance has loaded.
+  const [editing, setEditing] = useState(autoOpen);
+  const [choice, setChoice] = useState(String(data.mattress?.id ?? ""));
+  const [confirming, setConfirming] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Only serial-numbered lines can back an instance — the server rejects the
+  // rest, so don't offer an option that cannot succeed.
+  const options = mattresses.filter((m) => m.is_warranty_registrable);
+  const grouped = options.reduce((groups, m) => {
+    const label = m.category_label || "سایر";
+    (groups[label] ||= []).push(m);
+    return groups;
+  }, {});
+
+  const isSensitive = data.is_sold || data.warranty_status === "APPROVED";
+  const changed = choice !== "" && String(choice) !== String(data.mattress?.id);
+
+  const open = () => {
+    setChoice(String(data.mattress?.id ?? ""));
+    setError(null);
+    setConfirming(false);
+    setEditing(true);
+  };
+
+  const close = () => {
+    setEditing(false);
+    setConfirming(false);
+    setError(null);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateAdminInstance(data.serial_number, {
+        mattress_id: parseInt(choice, 10),
+      });
+      onSaved(updated);
+      close();
+    } catch (err) {
+      setError(err.message);
+      setConfirming(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!changed) return close();
+    if (isSensitive && !confirming) return setConfirming(true);
+    save();
+  };
+
+  if (!editing) {
+    return (
+      <div className="rounded-xl border border-[#CBD2D6] bg-white p-3">
+        <p className="font-persian text-xs text-[#687173]">محصول</p>
+        <p className="mt-0.5 font-persian text-sm font-medium text-[#1A1A2E]">
+          {data.mattress?.name}
+        </p>
+        <button
+          onClick={open}
+          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#003087] bg-white px-2.5 py-1 font-persian text-xs font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
+        >
+          <Pencil size={13} /> ویرایش مدل
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border-2 border-[#003087] bg-white p-3 sm:col-span-2">
+      <p className="mb-1.5 font-persian text-xs text-[#687173]">
+        تغییر مدل محصول
+      </p>
+      <select
+        value={choice}
+        onChange={(e) => {
+          setChoice(e.target.value);
+          setConfirming(false);
+        }}
+        disabled={saving}
+        className="h-11 w-full rounded-lg border border-[#CBD2D6] bg-white px-3 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20 disabled:bg-[#F5F7FA]"
+      >
+        {Object.entries(grouped).map(([label, items]) => (
+          <optgroup key={label} label={label}>
+            {items.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+
+      <p className="mt-2 font-persian text-xs leading-6 text-[#687173]">
+        شماره سریال و QR کد تغییر نمی‌کند؛ فقط مدل محصولی که با اسکن نمایش داده
+        می‌شود جابه‌جا می‌شود.
+      </p>
+
+      {confirming && (
+        <div className="mt-2 rounded-lg border border-[#D20000] bg-[#FDE7E7] p-3">
+          <p className="flex items-start gap-2 font-persian text-xs leading-6 text-[#D20000]">
+            <AlertTriangle size={14} className="mt-1 shrink-0" />
+            <span>
+              این محصول به مشتری فروخته شده است. تغییر مدل، محصول ثبت‌شده و مدت
+              گارانتی این مشتری را هم تغییر می‌دهد. مطمئن هستید؟
+            </span>
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <p className="mt-2 font-persian text-xs text-[#D20000]">{error}</p>
+      )}
+
+      <div className="mt-3 flex gap-2">
+        <button
+          onClick={handleSubmit}
+          disabled={saving}
+          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-[#003087] px-4 font-persian text-sm font-semibold text-white transition hover:bg-[#00246B] disabled:bg-[#CBD2D6] disabled:text-[#687173]"
+        >
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Check size={15} />
+          )}
+          {confirming ? "تأیید و ذخیره" : "ذخیره"}
+        </button>
+        <button
+          onClick={close}
+          disabled={saving}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm font-medium text-[#687173] transition hover:bg-[#F5F7FA]"
+        >
+          انصراف
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── instance detail modal ────────────────────────────────────────────────────
-function InstanceModal({ serial, onClose }) {
+function InstanceModal({ serial, mattresses, startEditing, onClose, onSaved }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
@@ -196,7 +351,17 @@ function InstanceModal({ serial, onClose }) {
 
             {/* product & warranty */}
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="محصول" value={data.mattress?.name} />
+              <ProductField
+                data={data}
+                mattresses={mattresses}
+                autoOpen={startEditing}
+                onSaved={(updated) => {
+                  // The PATCH response is the full detail payload, so the
+                  // warranty months and expiry below refresh with it.
+                  setData(updated);
+                  onSaved();
+                }}
+              />
               <Field label="برند" value={data.mattress?.brand || "—"} />
               <Field label="مدت گارانتی" value={`${faNum(data.warranty_months)} ماه`} />
               <Field label="تاریخ تولید" value={data.manufacture_date || "—"} />
@@ -272,7 +437,12 @@ export default function DashboardPanel() {
   const [tab, setTab] = useState("instances"); // "instances" | "customers"
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState(null); // serial for modal
+  // {serial, edit} — `edit` is true when opened via the row's «ویرایش» button, so
+  // the modal lands directly on the model select.
+  const [selected, setSelected] = useState(null);
+  // Bumped when the modal edits an instance, so the table row behind it and the
+  // per-model stat counts pick up the new product without a manual reload.
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // filters
   const [search, setSearch] = useState("");
@@ -309,7 +479,7 @@ export default function DashboardPanel() {
         .finally(() => setLoading(false));
     }, 300);
     return () => clearTimeout(t);
-  }, [tab, params]);
+  }, [tab, params, refreshKey]);
 
   const resetFilters = () => {
     setSearch("");
@@ -447,7 +617,10 @@ export default function DashboardPanel() {
             <p className="font-persian text-sm text-[#687173]">موردی یافت نشد.</p>
           </div>
         ) : tab === "instances" ? (
-          <InstanceTable rows={rows} onSelect={setSelected} />
+          <InstanceTable
+            rows={rows}
+            onSelect={(serial, edit) => setSelected({ serial, edit })}
+          />
         ) : (
           <CustomerTable rows={rows} />
         )}
@@ -457,7 +630,18 @@ export default function DashboardPanel() {
         {faNum(rows.length)} مورد نمایش داده شد
       </p>
 
-      {selected && <InstanceModal serial={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <InstanceModal
+          serial={selected.serial}
+          startEditing={selected.edit}
+          mattresses={mattresses}
+          onClose={() => setSelected(null)}
+          onSaved={() => {
+            setRefreshKey((k) => k + 1);
+            getAdminStats().then(setStats).catch(() => {});
+          }}
+        />
+      )}
     </>
   );
 }
@@ -551,12 +735,24 @@ function InstanceTable({ rows, onSelect }) {
                 {fmtDateTime(r.created_at)}
               </td>
               <td className="px-4 py-3 text-center">
-                <button
-                  onClick={() => onSelect(r.serial_number)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#003087] bg-white px-3 py-1.5 font-persian text-xs font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
-                >
-                  <QrCode size={14} /> مشاهده
-                </button>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    onClick={() => onSelect(r.serial_number, false)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#003087] bg-white px-3 py-1.5 font-persian text-xs font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
+                  >
+                    <QrCode size={14} /> مشاهده
+                  </button>
+                  {/* Opens the same modal already in edit mode. Repointing a
+                      serial at another model is a routine correction, so it
+                      needs to be reachable from the row, not only after
+                      opening the detail view. */}
+                  <button
+                    onClick={() => onSelect(r.serial_number, true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#CBD2D6] bg-white px-3 py-1.5 font-persian text-xs font-medium text-[#687173] transition hover:border-[#003087] hover:bg-[#F5F7FA] hover:text-[#003087]"
+                  >
+                    <Pencil size={14} /> ویرایش
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
