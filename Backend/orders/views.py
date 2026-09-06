@@ -8,6 +8,12 @@ from rest_framework.views import APIView
 
 from users.models import Customer
 
+from .checkout import (
+    EMPTY_CART_MESSAGE,
+    INVALID_METHOD_MESSAGE,
+    create_order_from_cart,
+    validate_checkout,
+)
 from .models import AllowedLocation, Cart, CartItem, Order, OrderItem
 from .notifications import send_order_confirmation
 from .serializers import (
@@ -39,18 +45,6 @@ def _get_customer(user) -> Customer:
 def _get_cart(user) -> Cart:
     cart, _ = Cart.objects.get_or_create(customer=_get_customer(user))
     return cart
-
-
-def _location_error(province: str, city: str) -> str | None:
-    """Business rule: orders are only accepted for admin-defined allowed areas.
-    A blank-city allowed row covers the whole province. Returns a Persian error
-    message when the area is not serviceable, otherwise None."""
-    allowed = AllowedLocation.objects.filter(is_active=True, province=province)
-    province_wide = allowed.filter(city="").exists()
-    city_match = bool(city) and allowed.filter(city=city).exists()
-    if province_wide or city_match:
-        return None
-    return "متأسفانه ارسال به این منطقه امکان‌پذیر نیست."
 
 
 def _add_to_cart(cart: Cart, mattress, size, quantity: int) -> CartItem:
@@ -144,89 +138,28 @@ class OrderCreateView(APIView):
 
     def post(self, request):
         cart = _get_cart(request.user)
-        items = list(cart.items.select_related("mattress", "size").all())
-        if not items:
+        if not cart.items.exists():
             return Response(
-                {"detail": "سبد خرید شما خالی است."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": EMPTY_CART_MESSAGE}, status=status.HTTP_400_BAD_REQUEST
             )
 
         method = request.data.get("method")
         if method not in (Order.ONLINE, Order.PHONE):
             return Response(
-                {"detail": "روش سفارش نامعتبر است."},
+                {"detail": INVALID_METHOD_MESSAGE},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        customer = cart.customer
-        customer_phone = (request.data.get("customer_phone") or "").strip()
-        call_time_preference = (request.data.get("call_time_preference") or "").strip()
-        province = (request.data.get("province") or "").strip()
-        city = (request.data.get("city") or "").strip()
-        postal_code = (request.data.get("postal_code") or "").strip()
-        address = (request.data.get("address") or "").strip()
-        recipient_name = (request.data.get("recipient_name") or "").strip() or (
-            f"{customer.first_name} {customer.last_name}".strip()
-        )
-        phone_number = (
-            request.data.get("phone_number") or ""
-        ).strip() or customer.phone_number
-
-        # The checkout form collects the full delivery address before the order
-        # method is picked, so both ONLINE and PHONE orders carry the same
-        # required fields and go through the same allowed-area check.
-        errors = {}
-        for field, value, message in (
-            ("recipient_name", recipient_name, "نام تحویل‌گیرنده الزامی است."),
-            ("phone_number", phone_number, "شماره تماس الزامی است."),
-            ("province", province, "لطفاً استان را انتخاب کنید."),
-            ("city", city, "لطفاً شهر را وارد کنید."),
-            ("postal_code", postal_code, "کد پستی الزامی است."),
-            ("address", address, "نشانی کامل الزامی است."),
-        ):
-            if not value:
-                errors[field] = message
+        # Validation, the allowed-area rule and order creation are shared with
+        # the online-payment path — see orders/checkout.py.
+        cleaned, errors = validate_checkout(cart, request.data, method)
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-        location_error = _location_error(province, city)
-        if location_error:
-            return Response(
-                {"detail": location_error}, status=status.HTTP_400_BAD_REQUEST
-            )
-
         with transaction.atomic():
-            order = Order.objects.create(
-                customer=customer,
-                method=method,
-                # Phone orders are followed up by a sales call, so keep a
-                # dedicated contact number even when it matches phone_number.
-                customer_phone=(customer_phone or phone_number)
-                if method == Order.PHONE
-                else customer_phone,
-                call_time_preference=call_time_preference,
-                recipient_name=recipient_name,
-                phone_number=phone_number,
-                province=province,
-                city=city,
-                postal_code=postal_code,
-                address=address,
-                total_amount=cart.total,
-            )
-            OrderItem.objects.bulk_create(
-                [
-                    OrderItem(
-                        order=order,
-                        mattress=item.mattress,
-                        mattress_name=item.mattress.name,
-                        size_label=item.size.label if item.size_id else "",
-                        quantity=item.quantity,
-                        unit_price=item.unit_price,
-                    )
-                    for item in items
-                ]
-            )
-            # Clear the cart now that the order is recorded.
+            order = create_order_from_cart(cart, cleaned, method)
+            # A phone order is complete the moment it is recorded, so its cart
+            # clears here. The online path clears only after payment verifies.
             cart.items.all().delete()
 
         # Tell the customer their order is in. Sent after the atomic block has
