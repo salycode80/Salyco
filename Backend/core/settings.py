@@ -119,6 +119,7 @@ INSTALLED_APPS = [
     "contact",
     "search",
     "orders",
+    "payments",
     "banners",
 ]
 
@@ -228,6 +229,19 @@ SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 389724))
 SMS_IR_TEMPLATE_WELCOME = int(os.getenv('SMS_IR_TEMPLATE_WELCOME', 596133))
 SMS_IR_TEMPLATE_WARRANTY = int(os.getenv('SMS_IR_TEMPLATE_WARRANTY', 475048))
 SMS_IR_TEMPLATE_ORDER = int(os.getenv('SMS_IR_TEMPLATE_ORDER', 248731))
+
+# ── Zibal payment gateway (IPG) ───────────────────────────────────────────────
+# Merchant key from the Zibal panel. "zibal" is the test account documented in
+# api-1.json — it exercises the whole flow without moving real money, so it is
+# the default and the production key arrives via .env with no code change.
+ZIBAL_MERCHANT = os.getenv('ZIBAL_MERCHANT', 'zibal')
+
+# Origin Zibal redirects the customer's browser back to. Must be public HTTPS —
+# Zibal drives a real browser to it, so localhost cannot work for an end-to-end
+# test, and a non-http(s) value is refused with result 106. Empty falls back to
+# the request's own host, which is correct for the single-origin nginx
+# deployment where /api is proxied to Django.
+ZIBAL_CALLBACK_BASE_URL = os.getenv('ZIBAL_CALLBACK_BASE_URL', '')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
