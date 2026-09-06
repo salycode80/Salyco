@@ -10,10 +10,12 @@ import {
   MapPin,
   User,
   Info,
+  CreditCard,
 } from "lucide-react";
 import api from "../../api";
 import { useCart } from "../../context/CartContext";
 import { createOrder, getAllowedLocations } from "../../api/orders";
+import { startPayment } from "../../api/payments";
 import { IRAN_PROVINCES } from "../../constants/provinces";
 import { IRAN_PROVINCES_CITIES, getCitiesForProvince } from "../../constants/cities";
 import {
@@ -37,7 +39,7 @@ const SALES_PHONE = "09126847234";
 
 // Placeholder copy — replace with the final wording from the business.
 const NOTICES = [
-  "سفارش‌های سالیکو در حال حاضر به‌صورت تلفنی نهایی می‌شوند. پس از ثبت این فرم، کارشناسان ما در اولین فرصت با شما تماس می‌گیرند تا جزئیات سفارش، زمان ارسال و مبلغ نهایی هماهنگ شود. تا پیش از این تماس هیچ مبلغی از شما دریافت نمی‌شود.",
+  "سفارش خود را می‌توانید به‌صورت آنلاین پرداخت کنید یا به‌صورت تلفنی ثبت کنید. در ثبت سفارش تلفنی، کارشناسان ما برای هماهنگی جزئیات و مبلغ نهایی با شما تماس می‌گیرند و تا پیش از آن مبلغی دریافت نمی‌شود.",
   "شماره تماس خود را با دقت وارد کنید. در صورت نادرست بودن شماره، امکان هماهنگی و ارسال سفارش وجود نخواهد داشت.",
   "ارسال تشک‌ها فقط به مناطقی انجام می‌شود که در فهرست استان‌ها و شهرهای قابل انتخاب نمایش داده شده‌اند. اگر شهر شما در فهرست نیست، لطفاً تلفنی با ما تماس بگیرید.",
   "نام تحویل‌گیرنده، کد پستی و نشانی کامل را دقیق وارد کنید؛ این اطلاعات مبنای ارسال سفارش شماست.",
@@ -106,7 +108,7 @@ export default function CheckoutOrder() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState("idle"); // idle | sending | success
+  const [status, setStatus] = useState("idle"); // idle | sending | redirecting | success
   const [error, setError] = useState("");
 
   const [areas, setAreas] = useState(null); // Map | null while loading
@@ -259,6 +261,34 @@ export default function CheckoutOrder() {
     }
   };
 
+  // Online payment. Runs the same validation the phone path does, then hands the
+  // browser to Zibal.
+  const handleOnlinePayment = async () => {
+    setError("");
+    if (noServiceableAreas || !validate()) return;
+
+    setStatus("redirecting");
+    try {
+      const { payment_url } = await startPayment({
+        recipient_name: form.recipient_name.trim(),
+        phone_number: toLatinDigits(form.phone_number).replace(/\D/g, ""),
+        province: form.province,
+        city: form.city.trim(),
+        postal_code: toLatinDigits(form.postal_code).replace(/\D/g, ""),
+        address: form.address.trim(),
+      });
+      // A full-page navigation, deliberately not a router transition: Zibal
+      // requires a Referer header whose domain matches the gateway's registered
+      // website and will not show the payment page without one. The cart is left
+      // intact — nothing is paid yet, and clearing it would strand a customer
+      // who abandons the bank page.
+      window.location.href = payment_url;
+    } catch (err) {
+      setError(err.message);
+      setStatus("idle");
+    }
+  };
+
   if (status === "success") {
     return (
       <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
@@ -288,7 +318,11 @@ export default function CheckoutOrder() {
     );
   }
 
-  const submitBlocked = status === "sending" || loadingAreas || noServiceableAreas;
+  const submitBlocked =
+    status === "sending" ||
+    status === "redirecting" ||
+    loadingAreas ||
+    noServiceableAreas;
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
@@ -523,13 +557,24 @@ export default function CheckoutOrder() {
                 <div>
                   <button
                     type="button"
-                    disabled
-                    className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white opacity-50 grayscale"
+                    onClick={handleOnlinePayment}
+                    disabled={submitBlocked}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    خرید آنلاین
+                    {status === "redirecting" ? (
+                      <>
+                        <Loader2 size={17} className="animate-spin" />
+                        در حال انتقال به درگاه...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard size={17} />
+                        پرداخت آنلاین
+                      </>
+                    )}
                   </button>
                   <p className="mt-2 text-center font-persian text-xs text-[#687173]">
-                    در حال حاضر فروش آنلاین در دسترس نیست
+                    پرداخت امن از طریق درگاه زیبال
                   </p>
                 </div>
 

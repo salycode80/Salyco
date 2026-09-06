@@ -30,6 +30,7 @@ import UserInfo from "./pages/UserInfo";
 import SearchResults from "./pages/SearchResults";
 import CartPage from "./pages/CartPage";
 import CheckoutOrder from "./pages/checkout/CheckoutOrder";
+import PaymentResult from "./pages/PaymentResult";
 import OrderPublicPage from "./pages/OrderPublicPage";
 import OrdersPanel from "./pages/admin/OrdersPanel";
 import AllowedLocationsPanel from "./pages/admin/AllowedLocationsPanel";
@@ -72,6 +73,7 @@ function App() {
             <Route path="/user-info" element={<UserInfo />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/payment/result" element={<PaymentResult />} />
             {/* Public order page, opened from the confirmation SMS. Not behind
                 ProtectedRoute on purpose: the link is tapped on phones that are
                 usually not signed in, and the URL token is the credential. */}
