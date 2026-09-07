@@ -29,6 +29,16 @@ services:
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      # Zibal payment gateway. These MUST be listed here: this service
+      # enumerates its environment explicitly, so a variable present in .env but
+      # absent from this list never reaches the container — and ZIBAL_MERCHANT
+      # then falls back to its 'zibal' default, which is Zibal's shared TEST
+      # account. The symptom is a payment page that simulates instead of asking
+      # for a card, with no error anywhere: the test merchant is a valid
+      # merchant, so the gateway accepts the request and the IP allowlist on the
+      # real one never comes into play.
+      ZIBAL_MERCHANT: ${ZIBAL_MERCHANT}
+      ZIBAL_CALLBACK_BASE_URL: ${ZIBAL_CALLBACK_BASE_URL}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

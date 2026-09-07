@@ -236,6 +236,23 @@ SMS_IR_TEMPLATE_ORDER = int(os.getenv('SMS_IR_TEMPLATE_ORDER', 248731))
 # the default and the production key arrives via .env with no code change.
 ZIBAL_MERCHANT = os.getenv('ZIBAL_MERCHANT', 'zibal')
 
+# Fail loudly in production if the test merchant is still in use. Without this
+# the mistake is invisible: 'zibal' is a *valid* merchant, so the gateway accepts
+# every request and shows a simulator page instead of asking for a card. There is
+# no error to find — the only clue is that no money ever arrives. Cost us a
+# production debugging session when docker-compose.yml omitted ZIBAL_MERCHANT
+# from the backend service and this default silently took over.
+if not DEBUG and ZIBAL_MERCHANT == 'zibal':
+    import warnings
+    warnings.warn(
+        "ZIBAL_MERCHANT is still Zibal's shared TEST account ('zibal'). Online "
+        "payments will show a simulated payment page and no real money will be "
+        "collected. Set ZIBAL_MERCHANT in .env — and, when deploying with "
+        "Docker, confirm it is listed under the backend service's environment "
+        "in docker-compose.yml.",
+        RuntimeWarning,
+    )
+
 # Origin Zibal redirects the customer's browser back to. Must be public HTTPS —
 # Zibal drives a real browser to it, so localhost cannot work for an end-to-end
 # test, and a non-http(s) value is refused with result 106. Empty falls back to
