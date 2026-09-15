@@ -50,6 +50,11 @@ services:
     expose:
       - "8000"
 
+  # Serves the SPA and reverse-proxies /api, /admin, /media and /static to the
+  # backend over the docker network. The host port is bound to localhost only:
+  # the public entry point is the host's own Nginx, which proxies
+  # salyco.ir -> 127.0.0.1:8080 (see deploy/nginx/salyco.conf). Other apps on
+  # the same server take 8081, 8082, ...
   frontend:
     build:
       context: ./Frontend/salyco-front
@@ -59,33 +64,13 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    expose:
-      - "80"
+    ports:
+      - "127.0.0.1:8080:80"
     volumes:
       - media_data:/app/media:ro
       - static_data:/app/staticfiles:ro
-
-  # HTTPS reverse proxy. Fetches + auto-renews Let's Encrypt certs for the
-  # domain, then forwards all traffic to the frontend (nginx) container.
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      - frontend
-    ports:
-      - "80:80"
-      - "443:443"
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
 
 volumes:
   postgres_data:
   media_data:
   static_data:
-  caddy_data:
-  caddy_config:
