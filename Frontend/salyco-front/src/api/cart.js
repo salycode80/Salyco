@@ -57,3 +57,30 @@ export async function mergeCart(items) {
     throw new Error(msg);
   }
 }
+
+// Applying and removing a code both answer with the whole cart payload — the
+// server owns the money arithmetic (which lines are eligible, how the
+// percentage rounds), so the client never recomputes a discount.
+export async function applyCartCoupon(code) {
+  try {
+    const res = await api.post("/api/cart/coupon/", { code });
+    return res.data;
+  } catch (err) {
+    // The server writes these in Persian and they are shown verbatim, which is
+    // why the rule wording lives there and not here.
+    const msg = err.response?.data?.detail || "خطا در اعمال کد تخفیف";
+    // `cause` keeps the axios error (status, request, response) reachable from
+    // the console — the message alone is what the customer sees.
+    throw new Error(msg, { cause: err });
+  }
+}
+
+export async function removeCartCoupon() {
+  try {
+    const res = await api.delete("/api/cart/coupon/");
+    return res.data;
+  } catch (err) {
+    const msg = err.response?.data?.detail || "خطا در حذف کد تخفیف";
+    throw new Error(msg, { cause: err });
+  }
+}

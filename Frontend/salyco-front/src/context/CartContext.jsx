@@ -6,6 +6,8 @@ import {
   updateCartItem,
   removeCartItem,
   mergeCart,
+  applyCartCoupon,
+  removeCartCoupon,
 } from "../api/cart";
 
 const CartContext = createContext(null);
@@ -38,11 +40,25 @@ function normalizeLocal(items) {
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
+  const [coupon, setCoupon] = useState(null);
+  // Toman off, as the server computed it. Kept separate from `items` because
+  // which lines are eligible is the server's call, not something the client can
+  // derive from the item list alone.
+  const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
   // Track auth so we can detect the logged-out → logged-in transition.
   const wasAuthed = useRef(!!localStorage.getItem(ACCESS_TOKEN));
 
   const isAuthed = () => !!localStorage.getItem(ACCESS_TOKEN);
+
+  // Every server cart response carries items, coupon and discount_amount
+  // together, so they are applied together — there is no state in which the
+  // items have arrived and the discount has not.
+  const applyCartState = useCallback((data) => {
+    setItems(data.items || []);
+    setCoupon(data.coupon || null);
+    setDiscount(Number(data.discount_amount || 0));
+  }, []);
 
   // Load the appropriate cart on mount.
   const refresh = useCallback(async () => {
@@ -50,16 +66,20 @@ export function CartProvider({ children }) {
       setLoading(true);
       try {
         const data = await getCart();
-        setItems(data.items || []);
+        applyCartState(data);
       } catch {
         setItems([]);
+        setCoupon(null);
+        setDiscount(0);
       } finally {
         setLoading(false);
       }
     } else {
       setItems(normalizeLocal(readLocal()));
+      setCoupon(null);
+      setDiscount(0);
     }
-  }, []);
+  }, [applyCartState]);
 
   // When the user logs in, push the local cart to the server then reload.
   const syncOnLogin = useCallback(async () => {
@@ -104,6 +124,10 @@ export function CartProvider({ children }) {
           syncOnLogin();
         } else {
           setItems(normalizeLocal(readLocal()));
+          // The coupon lived on the server cart, so it goes with it — leaving
+          // it would show a discount against a cart it was never applied to.
+          setCoupon(null);
+          setDiscount(0);
         }
       }
     }, 1000);
@@ -118,7 +142,7 @@ export function CartProvider({ children }) {
         size_id: size?.id || null,
         quantity,
       });
-      setItems(data.items || []);
+      applyCartState(data);
       return;
     }
     // Logged out: merge into the local cart by (mattress, size).
@@ -154,12 +178,12 @@ export function CartProvider({ children }) {
       : [...local, incoming];
     writeLocal(next);
     setItems(normalizeLocal(next));
-  }, []);
+  }, [applyCartState]);
 
   const updateItem = useCallback(async (id, quantity) => {
     if (isAuthed()) {
       const data = await updateCartItem(id, quantity);
-      setItems(data.items || []);
+      applyCartState(data);
       return;
     }
     const local = readLocal();
@@ -169,35 +193,54 @@ export function CartProvider({ children }) {
         : local.map((i) => (i.id === id ? { ...i, quantity } : i));
     writeLocal(next);
     setItems(normalizeLocal(next));
-  }, []);
+  }, [applyCartState]);
 
   const removeItem = useCallback(async (id) => {
     if (isAuthed()) {
       const data = await removeCartItem(id);
-      setItems(data.items || []);
+      applyCartState(data);
       return;
     }
     const next = readLocal().filter((i) => i.id !== id);
     writeLocal(next);
     setItems(normalizeLocal(next));
-  }, []);
+  }, [applyCartState]);
+
+  // Both throw the server's Persian message on failure so the caller can show
+  // err.message directly; neither swallows it the way the cart mutations do,
+  // because a refused code is the whole point of the interaction.
+  const applyCoupon = useCallback(async (code) => {
+    applyCartState(await applyCartCoupon(code));
+  }, [applyCartState]);
+
+  const removeCoupon = useCallback(async () => {
+    applyCartState(await removeCartCoupon());
+  }, [applyCartState]);
 
   const clear = useCallback(() => {
     if (!isAuthed()) {
       localStorage.removeItem(LOCAL_KEY);
     }
     setItems([]);
+    setCoupon(null);
+    setDiscount(0);
   }, []);
 
   const count = items.reduce((n, i) => n + i.quantity, 0);
-  const total = items.reduce(
+  const subtotal = items.reduce(
     (sum, i) => sum + Number(i.unit_price) * i.quantity,
     0
   );
+  // Uniform for both carts: `discount` is always 0 when signed out, because a
+  // coupon needs a server-side cart to hang off.
+  const total = Math.max(subtotal - discount, 0);
 
   const value = {
     items,
     count,
+    subtotal,
+    discount,
+    coupon,
     total,
     loading,
     addItem,
@@ -205,6 +248,8 @@ export function CartProvider({ children }) {
     removeItem,
     clear,
     refresh,
+    applyCoupon,
+    removeCoupon,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

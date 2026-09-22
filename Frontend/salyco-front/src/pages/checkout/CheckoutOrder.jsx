@@ -1,10 +1,10 @@
+import { BRAND } from "../../config/brand";
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   ClipboardList,
   Loader2,
-  CheckCircle2,
   AlertCircle,
   Phone,
   MapPin,
@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import api from "../../api";
 import { useCart } from "../../context/CartContext";
-import { createOrder, getAllowedLocations } from "../../api/orders";
+import { getAllowedLocations } from "../../api/orders";
 import { startPayment } from "../../api/payments";
 import { IRAN_PROVINCES } from "../../constants/provinces";
-import { IRAN_PROVINCES_CITIES, getCitiesForProvince } from "../../constants/cities";
+import { getCitiesForProvince } from "../../constants/cities";
 import {
   toPersianNumber,
   formatPersianPrice,
@@ -26,20 +26,20 @@ import {
 import PageBackground from "../../components/PageBackground";
 
 const CARD =
-  "rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]";
+  "rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)]";
 
 const inputBase =
-  "w-full rounded-lg border border-[#CBD2D6] bg-white px-4 py-3 font-persian text-sm text-[#1A1A2E] placeholder-[#687173] transition focus:border-[#009CDE] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20";
+  "w-full rounded-lg border border-brand-mist bg-white px-4 py-3 font-persian text-sm text-text-primary placeholder-text-secondary transition focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/20";
 
 const inputError =
-  "border-[#D20000] bg-[#FDE7E7] focus:border-[#D20000] focus:ring-[#D20000]/20";
+  "border-status-error bg-status-error-bg focus:border-status-error focus:ring-status-error/20";
 
 // Sales line + calling hours. Adjust to the real contact details as needed.
-const SALES_PHONE = "09126847234";
+const SALES_PHONE = BRAND.mobile;
 
 // Placeholder copy — replace with the final wording from the business.
 const NOTICES = [
-  "سفارش خود را می‌توانید به‌صورت آنلاین پرداخت کنید یا به‌صورت تلفنی ثبت کنید. در ثبت سفارش تلفنی، کارشناسان ما برای هماهنگی جزئیات و مبلغ نهایی با شما تماس می‌گیرند و تا پیش از آن مبلغی دریافت نمی‌شود.",
+  "پرداخت سفارش به‌صورت آنلاین و از طریق درگاه زیبال انجام می‌شود. سفارش شما پس از پرداخت موفق به‌طور خودکار ثبت و تأیید می‌شود.",
   "شماره تماس خود را با دقت وارد کنید. در صورت نادرست بودن شماره، امکان هماهنگی و ارسال سفارش وجود نخواهد داشت.",
   "ارسال تشک‌ها فقط به مناطقی انجام می‌شود که در فهرست استان‌ها و شهرهای قابل انتخاب نمایش داده شده‌اند. اگر شهر شما در فهرست نیست، لطفاً تلفنی با ما تماس بگیرید.",
   "نام تحویل‌گیرنده، کد پستی و نشانی کامل را دقیق وارد کنید؛ این اطلاعات مبنای ارسال سفارش شماست.",
@@ -48,7 +48,6 @@ const NOTICES = [
 const EMPTY_FORM = {
   recipient_name: "",
   phone_number: "",
-  call_time_preference: "",
   province: "",
   city: "",
   postal_code: "",
@@ -74,20 +73,27 @@ function buildAreaMap(rows) {
   return map;
 }
 
+// The control is nested inside the <label> so the association is implicit —
+// the previous sibling <label> had no htmlFor, so clicking it did nothing and
+// the field reached screen readers unnamed. On a payment form that matters:
+// "شماره تماس" and "کد پستی" must not be announced as just "edit text".
+// The error stays outside the label so it isn't read as part of the name.
 function Field({ label, error, optional, children }) {
   return (
     <div>
-      <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
-        {label}
-        {optional && (
-          <span className="mr-1 text-xs font-normal text-[#687173]">
-            (اختیاری)
-          </span>
-        )}
+      <label className="block">
+        <span className="mb-1.5 block font-persian text-sm font-medium text-text-primary">
+          {label}
+          {optional && (
+            <span className="mr-1 text-xs font-normal text-text-secondary">
+              (اختیاری)
+            </span>
+          )}
+        </span>
+        {children}
       </label>
-      {children}
       {error && (
-        <p className="mt-1 font-persian text-xs text-[#D20000]">{error}</p>
+        <p className="mt-1 font-persian text-xs text-status-error">{error}</p>
       )}
     </div>
   );
@@ -95,7 +101,7 @@ function Field({ label, error, optional, children }) {
 
 function SectionTitle({ icon: Icon, children }) {
   return (
-    <h2 className="flex items-center gap-2 font-persian text-base font-bold text-[#003087]">
+    <h2 className="flex items-center gap-2 font-persian text-base font-bold text-brand-navy">
       <Icon size={18} />
       {children}
     </h2>
@@ -103,23 +109,23 @@ function SectionTitle({ icon: Icon, children }) {
 }
 
 export default function CheckoutOrder() {
-  const { items, count, total, clear } = useCart();
+  const { items, count, subtotal, discount, coupon, total, refresh } = useCart();
   const navigate = useNavigate();
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState("idle"); // idle | sending | redirecting | success
+  const [status, setStatus] = useState("idle"); // idle | redirecting
   const [error, setError] = useState("");
 
   const [areas, setAreas] = useState(null); // Map | null while loading
   const [areasFailed, setAreasFailed] = useState(false);
 
-  // No items — go back to the cart (unless we just placed the order).
+  // No items — go back to the cart.
   useEffect(() => {
-    if (items.length === 0 && status !== "success") {
+    if (items.length === 0) {
       navigate("/cart", { replace: true });
     }
-  }, [items.length, status, navigate]);
+  }, [items.length, navigate]);
 
   // Serviceable areas drive the province/city fields.
   useEffect(() => {
@@ -236,34 +242,10 @@ export default function CheckoutOrder() {
     return Object.keys(next).length === 0;
   };
 
+  // The form's only action: validate every field, then hand the browser to
+  // Zibal.
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    if (noServiceableAreas || !validate()) return;
-
-    setStatus("sending");
-    try {
-      await createOrder({
-        method: "PHONE",
-        recipient_name: form.recipient_name.trim(),
-        phone_number: toLatinDigits(form.phone_number).replace(/\D/g, ""),
-        call_time_preference: form.call_time_preference.trim(),
-        province: form.province,
-        city: form.city.trim(),
-        postal_code: toLatinDigits(form.postal_code).replace(/\D/g, ""),
-        address: form.address.trim(),
-      });
-      clear();
-      setStatus("success");
-    } catch (err) {
-      setError(err.message);
-      setStatus("idle");
-    }
-  };
-
-  // Online payment. Runs the same validation the phone path does, then hands the
-  // browser to Zibal.
-  const handleOnlinePayment = async () => {
     setError("");
     if (noServiceableAreas || !validate()) return;
 
@@ -286,96 +268,67 @@ export default function CheckoutOrder() {
     } catch (err) {
       setError(err.message);
       setStatus("idle");
+      // The server clears a coupon it refuses at payment time and says so in
+      // `detail`. Re-reading the cart is what makes the summary above the pay
+      // button agree with it — one GET, and only on a failed attempt.
+      refresh();
     }
   };
 
-  if (status === "success") {
-    return (
-      <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
-        <PageBackground />
-        <div className="relative mx-auto max-w-[560px] px-6 py-16" dir="rtl">
-          <div className={`${CARD} flex flex-col items-center p-10 text-center`}>
-            <CheckCircle2 className="h-16 w-16 text-[#019C34]" />
-            <h1 className="mt-4 font-persian text-2xl font-bold text-[#1A1A2E]">
-              سفارش شما ثبت شد
-            </h1>
-            <p className="mt-2 font-persian text-sm leading-7 text-[#687173]">
-              سفارش شما با موفقیت ثبت شد. کارشناسان ما جهت هماهنگی نهایی و ارسال
-              با شما تماس خواهند گرفت.
-            </p>
-            <div className="mt-4 rounded-lg bg-[#F5F7FA] px-6 py-3 font-persian text-lg font-bold text-[#003087]">
-              {SALES_PHONE}
-            </div>
-            <Link
-              to="/products"
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
-            >
-              ادامه خرید
-            </Link>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const submitBlocked =
-    status === "sending" ||
-    status === "redirecting" ||
-    loadingAreas ||
-    noServiceableAreas;
+  const submitBlocked = status === "redirecting" || loadingAreas || noServiceableAreas;
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-[1120px] px-6 py-8 sm:py-10" dir="rtl">
         <Link
           to="/cart"
-          className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] transition-colors hover:text-[#009CDE]"
+          className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-brand-navy transition-colors hover:text-brand-navy"
         >
           <ArrowRight size={16} />
           بازگشت به سبد خرید
         </Link>
 
-        <h1 className="mb-2 flex items-center gap-3 font-persian text-2xl font-bold text-[#1A1A2E] md:text-3xl">
-          <ClipboardList size={26} className="text-[#003087]" />
+        <h1 className="mb-2 flex items-center gap-3 font-persian text-2xl font-bold text-text-primary md:text-3xl">
+          <ClipboardList size={26} className="text-brand-navy" />
           تکمیل اطلاعات سفارش
         </h1>
-        <p className="mb-6 font-persian text-sm text-[#687173]">
-          لطفاً اطلاعات زیر را کامل کنید. پس از تکمیل و تأیید اطلاعات، می‌توانید
-          روش ثبت سفارش خود را انتخاب کنید.
+        <p className="mb-6 font-persian text-sm text-text-secondary">
+          لطفاً اطلاعات زیر را کامل کنید. پس از تکمیل اطلاعات، به درگاه پرداخت
+          آنلاین منتقل می‌شوید.
         </p>
 
         {/* Intro notice — must be read before ordering, so it is styled loud. */}
-        <div className="mb-8 overflow-hidden rounded-xl border-2 border-[#009CDE] bg-white shadow-[0_4px_16px_rgba(0,48,135,0.12)]">
-          <div className="flex items-center gap-2 bg-[#003087] px-5 py-3 sm:px-6">
+        <div className="mb-8 overflow-hidden rounded-xl border-2 border-brand-navy bg-white shadow-[0_4px_16px_rgba(5,46,95,0.12)]">
+          <div className="flex items-center gap-2 bg-brand-navy px-5 py-3 sm:px-6">
             <Info size={20} className="shrink-0 text-white" />
             <h2 className="font-persian text-base font-bold text-white sm:text-lg">
               پیش از ثبت سفارش این موارد را بخوانید
             </h2>
           </div>
 
-          <ul className="flex flex-col gap-4 bg-[#F0F8FC] px-5 py-5 sm:px-6 sm:py-6">
+          <ul className="flex flex-col gap-4 bg-status-info-bg px-5 py-5 sm:px-6 sm:py-6">
             {NOTICES.map((notice, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#003087] font-persian text-xs font-bold text-white">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-navy font-persian text-xs font-bold text-white">
                   {toPersianNumber(i + 1)}
                 </span>
-                <p className="font-persian text-[15px] font-medium leading-8 text-[#1A1A2E]">
+                <p className="font-persian text-[15px] font-medium leading-8 text-text-primary">
                   {notice}
                 </p>
               </li>
             ))}
           </ul>
 
-          <div className="flex flex-col items-center justify-center gap-2 border-t-2 border-[#009CDE]/30 bg-white px-5 py-4 text-center sm:flex-row sm:gap-3 sm:px-6">
-            <span className="font-persian text-sm font-medium text-[#1A1A2E]">
+          <div className="flex flex-col items-center justify-center gap-2 border-t-2 border-brand-navy/30 bg-white px-5 py-4 text-center sm:flex-row sm:gap-3 sm:px-6">
+            <span className="font-persian text-sm font-medium text-text-primary">
               سؤالی دارید؟ پیش از ثبت سفارش با ما تماس بگیرید:
             </span>
             <a
               href={`tel:${SALES_PHONE}`}
               dir="ltr"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#003087] px-4 py-2 font-persian text-base font-bold text-white transition hover:bg-[#00246B]"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-navy px-4 py-2 font-persian text-base font-bold text-white transition hover:bg-action-hover"
             >
               <Phone size={16} />
               {SALES_PHONE}
@@ -421,37 +374,16 @@ export default function CheckoutOrder() {
                   />
                 </Field>
               </div>
-
-              <Field label="بازه زمانی مناسب برای تماس" optional>
-                <div className="flex gap-2">
-                  <input
-                    name="call_time_preference"
-                    value={form.call_time_preference}
-                    onChange={handleChange}
-                    placeholder="مثال: صبح‌ها ۹ تا ۱۲"
-                    className={`${inputBase} flex-1`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setForm((f) => ({ ...f, call_time_preference: "هر زمان" }))
-                    }
-                    className="shrink-0 rounded-lg border-2 border-[#003087] bg-white px-6 py-3 font-persian text-sm font-bold text-[#003087] transition hover:bg-[#003087] hover:text-white"
-                  >
-                    هر زمان
-                  </button>
-                </div>
-              </Field>
             </div>
 
-            <div className="border-t border-[#CBD2D6]" />
+            <div className="border-t border-brand-mist" />
 
             {/* Delivery address */}
             <div className="flex flex-col gap-5">
               <SectionTitle icon={MapPin}>آدرس تحویل</SectionTitle>
 
               {noServiceableAreas && (
-                <p className="flex items-start gap-2 rounded-lg bg-[#FDE7E7] px-4 py-3 font-persian text-sm text-[#D20000]">
+                <p className="flex items-start gap-2 rounded-lg bg-status-error-bg px-4 py-3 font-persian text-sm text-status-error">
                   <AlertCircle size={16} className="mt-0.5 shrink-0" />
                   در حال حاضر ارسال به هیچ منطقه‌ای امکان‌پذیر نیست. لطفاً بعداً
                   دوباره تلاش کنید یا با شماره {SALES_PHONE} تماس بگیرید.
@@ -539,109 +471,94 @@ export default function CheckoutOrder() {
             </div>
 
             {error && (
-              <p className="flex items-start gap-2 rounded-lg bg-[#FDE7E7] px-4 py-3 font-persian text-sm text-[#D20000]">
+              <p className="flex items-start gap-2 rounded-lg bg-status-error-bg px-4 py-3 font-persian text-sm text-status-error">
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                 {error}
               </p>
             )}
 
-            <div className="border-t border-[#CBD2D6]" />
+            <div className="border-t border-brand-mist" />
 
-            {/* Order method — only available once the form above is valid. */}
-            <div className="flex flex-col gap-3">
-              <p className="font-persian text-sm text-[#687173]">
-                روش ثبت سفارش خود را انتخاب کنید:
+            {/* Pay — the form's only action; enabled once the fields above are
+                valid and a serviceable area is known. */}
+            <div className="flex flex-col gap-2">
+              <button
+                type="submit"
+                disabled={submitBlocked}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-navy px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {status === "redirecting" ? (
+                  <>
+                    <Loader2 size={17} className="animate-spin" />
+                    در حال انتقال به درگاه...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard size={17} />
+                    پرداخت آنلاین
+                  </>
+                )}
+              </button>
+              <p className="text-center font-persian text-xs text-text-secondary">
+                پرداخت امن از طریق درگاه زیبال
               </p>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <button
-                    type="button"
-                    onClick={handleOnlinePayment}
-                    disabled={submitBlocked}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {status === "redirecting" ? (
-                      <>
-                        <Loader2 size={17} className="animate-spin" />
-                        در حال انتقال به درگاه...
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard size={17} />
-                        پرداخت آنلاین
-                      </>
-                    )}
-                  </button>
-                  <p className="mt-2 text-center font-persian text-xs text-[#687173]">
-                    پرداخت امن از طریق درگاه زیبال
-                  </p>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={submitBlocked}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#019C34] px-6 py-3 font-persian text-sm font-bold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {status === "sending" ? (
-                      <>
-                        <Loader2 size={17} className="animate-spin" />
-                        در حال ثبت...
-                      </>
-                    ) : (
-                      <>
-                        <Phone size={17} />
-                        ثبت سفارش تلفنی
-                      </>
-                    )}
-                  </button>
-                  <p className="mt-2 text-center font-persian text-xs text-[#687173]">
-                    کارشناسان ما با شما تماس می‌گیرند
-                  </p>
-                </div>
-              </div>
             </div>
           </form>
 
           {/* Invoice summary */}
           <div className="lg:col-span-1">
             <div className={`${CARD} sticky top-24 p-6`}>
-              <h2 className="mb-4 font-persian text-lg font-semibold text-[#003087]">
+              <h2 className="mb-4 font-persian text-lg font-semibold text-brand-navy">
                 خلاصه سفارش
               </h2>
-              <div className="flex flex-col gap-3 border-b border-[#CBD2D6] pb-4">
+              <div className="flex flex-col gap-3 border-b border-brand-mist pb-4">
                 {items.map((item) => (
                   <div
                     key={item.id}
                     className="flex justify-between gap-2 text-sm"
                   >
-                    <span className="min-w-0 truncate text-[#1A1A2E]">
+                    <span className="min-w-0 truncate text-text-primary">
                       {item.mattress_name}
-                      <span className="text-[#687173]">
+                      <span className="text-text-secondary">
                         {" "}
                         × {toPersianNumber(item.quantity)}
                       </span>
                     </span>
-                    <span className="shrink-0 text-[#687173] [font-feature-settings:'tnum']">
+                    <span className="shrink-0 text-text-secondary [font-feature-settings:'tnum']">
                       {formatPersianPrice(item.line_total)}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between border-b border-[#CBD2D6] py-3 text-sm">
-                <span className="text-[#687173]">تعداد اقلام</span>
-                <span className="font-medium text-[#1A1A2E]">
+              <div className="flex justify-between border-b border-brand-mist py-3 text-sm">
+                <span className="text-text-secondary">تعداد اقلام</span>
+                <span className="font-medium text-text-primary">
                   {toPersianNumber(count)}
                 </span>
               </div>
+              <div className="flex justify-between border-b border-brand-mist py-3 text-sm">
+                <span className="text-text-secondary">جمع کل</span>
+                <span className="font-medium text-text-primary [font-feature-settings:'tnum']">
+                  {formatPersianPrice(subtotal)} تومان
+                </span>
+              </div>
+              {coupon && (
+                <div className="flex justify-between border-b border-brand-mist py-3 text-sm">
+                  <span className="text-text-secondary">
+                    کد تخفیف ({coupon.code})
+                  </span>
+                  <span className="font-medium text-status-success [font-feature-settings:'tnum']">
+                    {formatPersianPrice(discount)}− تومان
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between py-4">
-                <span className="font-persian font-bold text-[#1A1A2E]">
+                <span className="font-persian font-bold text-text-primary">
                   مبلغ قابل پرداخت
                 </span>
-                <span className="font-persian text-xl font-bold text-[#003087] [font-feature-settings:'tnum']">
+                <span className="font-persian text-xl font-bold text-brand-navy [font-feature-settings:'tnum']">
                   {formatPersianPrice(total)}
-                  <span className="mr-1 text-xs font-normal text-[#687173]">
+                  <span className="mr-1 text-xs font-normal text-text-secondary">
                     تومان
                   </span>
                 </span>
