@@ -37,7 +37,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from orders.models import Cart, Order
+from orders.models import Cart, CouponRedemption, Order
 from orders.notifications import send_order_confirmation
 
 from . import zibal
@@ -226,10 +226,33 @@ def _confirm(payment: Payment, data: dict) -> tuple[str, str]:
         order.status = Order.CONFIRMED
         order.save(update_fields=["status"])
 
+    if order.coupon_id:
+        # One row per paid order. The OneToOneField is what makes this
+        # idempotent — and it is load-bearing rather than belt-and-braces:
+        # settlement is reachable twice for one payment (the browser callback and
+        # a later status inquiry), and the `is_settled` guard that would catch
+        # the second one sits behind select_for_update, which this module's own
+        # docstring notes is a silent no-op on SQLite. A duplicate redemption
+        # would silently spend a second use.
+        CouponRedemption.objects.get_or_create(
+            order=order,
+            defaults={
+                "coupon": order.coupon,
+                "customer": order.customer,
+                "amount": order.discount_amount,
+            },
+        )
+
     # The order is paid, so the cart it came from is spent.
     cart = Cart.objects.filter(customer_id=order.customer_id).first()
     if cart is not None:
         cart.items.all().delete()
+        # The coupon goes with it. Leaving it applied would show a stale discount
+        # on the customer's next, empty cart, and for a once-per-customer code it
+        # would only be refused later, at payment time.
+        if cart.coupon_id is not None:
+            cart.coupon = None
+            cart.save(update_fields=["coupon", "updated_at"])
 
     # After commit, so the order is durable before the SMS goes out and no HTTP
     # request is made with a transaction open. send_order_confirmation carries

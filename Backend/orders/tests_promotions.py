@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -16,9 +17,19 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from mattress.models import Mattress
+from payments.models import Payment
+from payments.settlement import _confirm
 from users.models import Customer, User
 
-from .models import Cart, CartItem, Coupon, CouponProduct, CouponRedemption, Order
+from .models import (
+    AllowedLocation,
+    Cart,
+    CartItem,
+    Coupon,
+    CouponProduct,
+    CouponRedemption,
+    Order,
+)
 from .promotions import (
     calculate_discount,
     coupon_status,
@@ -601,3 +612,230 @@ class CartCouponApiTests(APITestCase):
 
         res = self.client.get("/api/cart/")
         self.assertTrue(all(row["covered_by_coupon"] for row in res.data["items"]))
+
+
+# ═══ checkout, payment start and settlement ════════════════════════════════════
+
+
+class CreateOrderFromCartTests(TestCase):
+    def test_the_coupon_and_the_payable_total_are_frozen_onto_the_order(self):
+        from .checkout import create_order_from_cart
+
+        customer = make_customer()
+        cart = make_cart(customer, make_mattress(price="10000000"))
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        cart.coupon = coupon
+        cart.save(update_fields=["coupon"])
+
+        order = create_order_from_cart(cart, {"recipient_name": "آزمون"})
+
+        self.assertEqual(order.coupon_id, coupon.pk)
+        self.assertEqual(order.coupon_code, "TEN")
+        self.assertEqual(order.discount_amount, Decimal("1000000.00"))
+        self.assertEqual(order.total_amount, Decimal("9000000.00"))
+
+    def test_an_order_without_a_coupon_records_zero(self):
+        from .checkout import create_order_from_cart
+
+        customer = make_customer()
+        cart = make_cart(customer, make_mattress(price="10000000"))
+        order = create_order_from_cart(cart, {"recipient_name": "آزمون"})
+
+        self.assertIsNone(order.coupon_id)
+        self.assertEqual(order.coupon_code, "")
+        self.assertEqual(order.discount_amount, Decimal("0"))
+        self.assertEqual(order.total_amount, Decimal("10000000.00"))
+
+    def test_the_order_rows_still_snapshot_the_per_item_price(self):
+        # The discount lives on the order, not in the line unit_prices: the
+        # lines keep the price the customer was shown per item.
+        from .checkout import create_order_from_cart
+
+        customer = make_customer()
+        cart = make_cart(customer, make_mattress(price="10000000"))
+        cart.coupon = Coupon.objects.create(code="TEN", percent=10)
+        cart.save(update_fields=["coupon"])
+
+        order = create_order_from_cart(cart, {"recipient_name": "آزمون"})
+        self.assertEqual(order.items.get().unit_price, Decimal("10000000.00"))
+
+
+class PaymentStartCouponTests(APITestCase):
+    """The gateway amount — not just the cart page — must reflect the discount."""
+
+    URL = "/api/payments/start/"
+
+    # The same body payments/tests.py posts.
+    BODY = {
+        "recipient_name": "علی رضایی",
+        "phone_number": "09121112233",
+        "province": "تهران",
+        "city": "تهران",
+        "postal_code": "1234567890",
+        "address": "خیابان آزادی، پلاک ۱۲، واحد ۳",
+    }
+
+    def setUp(self):
+        AllowedLocation.objects.create(province="تهران", city="", is_active=True)
+        self.customer = make_customer("09121112233")
+        self.cart = make_cart(self.customer, make_mattress(price="10000000"))
+        self.client.force_authenticate(self.customer.user)
+
+    def _accepted(self, track_id=15966442233311):
+        # request_payment's contract is (ok, data), not a requests response.
+        return True, {"result": 100, "trackId": track_id, "message": "success"}
+
+    @patch("payments.views.zibal.request_payment")
+    def test_the_gateway_is_asked_for_the_discounted_amount(self, mock_request):
+        mock_request.return_value = self._accepted()
+        self.cart.coupon = Coupon.objects.create(code="TEN", percent=10)
+        self.cart.save(update_fields=["coupon"])
+
+        res = self.client.post(self.URL, self.BODY)
+
+        self.assertEqual(res.status_code, 201)
+
+        order = Order.objects.get()
+        self.assertEqual(order.total_amount, Decimal("9000000.00"))
+        self.assertEqual(order.coupon_code, "TEN")
+        self.assertEqual(order.discount_amount, Decimal("1000000.00"))
+
+        # 9,000,000 Toman = 90,000,000 Rial — on the row AND in the request, so a
+        # discount that reached the order but not the gateway cannot pass.
+        payment = Payment.objects.get()
+        self.assertEqual(payment.amount_rial, 90_000_000)
+        self.assertEqual(mock_request.call_args[1]["amount_rial"], 90_000_000)
+
+    def test_a_coupon_that_expired_overnight_is_cleared_and_explained(self):
+        coupon = Coupon.objects.create(
+            code="OLD", percent=10, expires_at=timezone.now() - timedelta(hours=1)
+        )
+        self.cart.coupon = coupon
+        self.cart.save(update_fields=["coupon"])
+
+        res = self.client.post(self.URL, self.BODY)
+
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data["detail"], "این کد تخفیف منقضی شده است.")
+        self.assertTrue(res.data["coupon_cleared"])
+        # Cleared, or every retry would hit the same wall.
+        self.cart.refresh_from_db()
+        self.assertIsNone(self.cart.coupon_id)
+        # The coupon check runs before the order is created, so a refused coupon
+        # leaves no order and no payment behind.
+        self.assertFalse(Payment.objects.exists())
+        self.assertFalse(Order.objects.exists())
+
+    @patch("payments.views.zibal.request_payment")
+    def test_the_customer_can_pay_the_full_price_after_the_coupon_is_cleared(
+        self, mock_request
+    ):
+        mock_request.return_value = self._accepted(15966442233399)
+        self.cart.coupon = Coupon.objects.create(
+            code="OLD", percent=10, expires_at=timezone.now() - timedelta(hours=1)
+        )
+        self.cart.save(update_fields=["coupon"])
+
+        self.client.post(self.URL, self.BODY)  # refused, coupon cleared
+        res = self.client.post(self.URL, self.BODY)  # retry at full price
+
+        self.assertEqual(res.status_code, 201)
+        # One payment, not two: the refused attempt left no row behind.
+        self.assertEqual(Payment.objects.count(), 1)
+        self.assertEqual(Payment.objects.get().amount_rial, 100_000_000)
+
+    def test_a_usage_limited_coupon_is_caught_at_payment_time(self):
+        # The cap can be reached by someone else between cart and checkout.
+        coupon = Coupon.objects.create(code="ONE", percent=10, usage_limit=1)
+        paid_order(make_customer("09120000004"), coupon)
+        self.cart.coupon = coupon
+        self.cart.save(update_fields=["coupon"])
+
+        res = self.client.post(self.URL, self.BODY)
+
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(
+            res.data["detail"], "ظرفیت استفاده از این کد تخفیف تکمیل شده است."
+        )
+        self.assertTrue(res.data["coupon_cleared"])
+
+
+class SettlementRedemptionTests(TestCase):
+    """A use is spent when the money is confirmed — and exactly once.
+
+    `_confirm` ends with `transaction.on_commit(...)`, which never fires under
+    `TestCase`: Django runs on_commit callbacks only when the outermost atomic
+    block commits, and TestCase wraps each test in one that rolls back. The
+    redemption row is written synchronously, so a TestCase can assert on it.
+    The send_order_confirmation patch is patched at `payments.settlement`, which
+    is where the name is actually bound — patching `orders.notifications` would
+    leave the real sender in place and, under a TransactionTestCase, spend an
+    SMS credit.
+    """
+
+    def _paid_payment(self, *, with_coupon: bool):
+        from .checkout import create_order_from_cart
+
+        customer = make_customer()
+        cart = make_cart(customer, make_mattress(price="10000000"))
+        coupon = None
+        if with_coupon:
+            coupon = Coupon.objects.create(code="TEN", percent=10)
+            cart.coupon = coupon
+            cart.save(update_fields=["coupon"])
+
+        order = create_order_from_cart(cart, {"recipient_name": "آزمون"})
+        # amount_rial is a BigIntegerField; int() the Decimal.
+        payment = Payment.objects.create(
+            order=order, amount_rial=int(order.total_amount * 10)
+        )
+        return payment, order, coupon
+
+    def test_no_redemption_is_written_at_redirect(self):
+        _, order, coupon = self._paid_payment(with_coupon=True)
+
+        # The order exists and carries the frozen discount, but nothing has been
+        # verified yet, so no use is spent.
+        self.assertEqual(order.discount_amount, Decimal("1000000.00"))
+        self.assertEqual(CouponRedemption.objects.count(), 0)
+        self.assertEqual(redeemed_count(coupon), 0)
+
+    def test_settlement_writes_exactly_one_redemption(self):
+        payment, order, coupon = self._paid_payment(with_coupon=True)
+
+        with patch("payments.settlement.send_order_confirmation"):
+            _confirm(payment, {"refNumber": "123", "cardNumber": "6037"})
+            # A second call is reachable in production: the browser callback and
+            # a later status inquiry both land here, and settlement.py's own
+            # module docstring notes that select_for_update is a silent no-op on
+            # SQLite, so the upstream `is_settled` check cannot serialise them.
+            # The OneToOne get_or_create is what actually holds the line.
+            _confirm(payment, {"refNumber": "123", "cardNumber": "6037"})
+
+        self.assertEqual(CouponRedemption.objects.count(), 1)
+        redemption = CouponRedemption.objects.get()
+        self.assertEqual(redemption.coupon_id, coupon.pk)
+        self.assertEqual(redemption.order_id, order.pk)
+        self.assertEqual(redemption.customer_id, order.customer_id)
+        self.assertEqual(redemption.amount, Decimal("1000000.00"))
+
+    def test_settlement_without_a_coupon_writes_nothing(self):
+        payment, _, _ = self._paid_payment(with_coupon=False)
+
+        with patch("payments.settlement.send_order_confirmation"):
+            _confirm(payment, {"refNumber": "123", "cardNumber": "6037"})
+
+        self.assertEqual(CouponRedemption.objects.count(), 0)
+
+    def test_settlement_spends_the_cart_and_its_coupon(self):
+        payment, order, _ = self._paid_payment(with_coupon=True)
+
+        with patch("payments.settlement.send_order_confirmation"):
+            _confirm(payment, {"refNumber": "123", "cardNumber": "6037"})
+
+        cart = Cart.objects.get(customer_id=order.customer_id)
+        self.assertEqual(cart.items.count(), 0)
+        # The coupon goes with the cart it discounted. Leaving it applied would
+        # show a stale discount on the customer's next, empty cart — and for a
+        # once-per-customer code it would be refused only at payment time.
+        self.assertIsNone(cart.coupon_id)

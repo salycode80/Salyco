@@ -27,7 +27,8 @@ from orders.checkout import (
     create_order_from_cart,
     validate_checkout,
 )
-from orders.models import Cart, Order
+from orders.models import Cart
+from orders.promotions import validate_coupon
 from orders.views import _get_customer
 
 from . import settlement, zibal
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 AMOUNT_TOO_LOW_MESSAGE = "مبلغ سبد خرید برای پرداخت آنلاین کافی نیست."
 GATEWAY_UNREACHABLE_MESSAGE = (
     "در حال حاضر امکان اتصال به درگاه پرداخت وجود ندارد. لطفاً چند دقیقه بعد "
-    "دوباره تلاش کنید یا سفارش تلفنی ثبت کنید."
+    "دوباره تلاش کنید."
 )
 
 
@@ -80,9 +81,22 @@ class PaymentStartView(APIView):
                 {"detail": EMPTY_CART_MESSAGE}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        cleaned, errors = validate_checkout(cart, request.data, Order.ONLINE)
+        cleaned, errors = validate_checkout(cart, request.data)
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # The cart may have been sitting since yesterday, so the coupon is
+        # re-checked here rather than trusted. Clearing it is the point: leaving
+        # it applied would make every retry fail the same way with no way out.
+        if cart.coupon_id:
+            error = validate_coupon(cart.coupon, cart, cart.customer)
+            if error:
+                cart.coupon = None
+                cart.save(update_fields=["coupon", "updated_at"])
+                return Response(
+                    {"detail": error, "coupon_cleared": True},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         amount_rial = toman_to_rial(cart.total)
         if amount_rial <= MIN_AMOUNT_RIAL:
@@ -94,12 +108,12 @@ class PaymentStartView(APIView):
             )
 
         with transaction.atomic():
-            order = create_order_from_cart(cart, cleaned, Order.ONLINE)
+            order = create_order_from_cart(cart, cleaned)
             payment = Payment.objects.create(order=order, amount_rial=amount_rial)
             # Cart intentionally not cleared and no SMS sent: nothing is paid yet.
 
         # Outside the transaction — a slow gateway must not hold a write lock,
-        # the same reasoning the phone path applies to its SMS call.
+        # the same reasoning the settlement step applies to its SMS call.
         ok, data = zibal.request_payment(
             amount_rial=amount_rial,
             callback_url=callback_url(request),
