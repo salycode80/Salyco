@@ -13,6 +13,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
+from rest_framework.test import APITestCase
 
 from mattress.models import Mattress
 from users.models import Customer, User
@@ -480,3 +481,123 @@ class CouponStatusTests(TestCase):
             minimum_order_message(Decimal("5000000")),
             "این کد تخفیف برای سفارش‌های بالای ۵٬۰۰۰٬۰۰۰ تومان است.",
         )
+
+
+# ═══ customer cart API ═════════════════════════════════════════════════════════
+
+
+class CartCouponApiTests(APITestCase):
+    URL = "/api/cart/coupon/"
+
+    def setUp(self):
+        self.customer = make_customer()
+        self.mattress = make_mattress(price="10000000")
+        self.cart = make_cart(self.customer, self.mattress)
+        self.client.force_authenticate(self.customer.user)
+
+    def test_applying_a_code_returns_the_whole_cart_payload(self):
+        Coupon.objects.create(code="SALYCO10", percent=10)
+        res = self.client.post(self.URL, {"code": "salyco10"}, format="json")
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data["coupon"]["code"], "SALYCO10")
+        self.assertEqual(res.data["coupon"]["percent"], 10)
+        self.assertEqual(res.data["subtotal"], "10000000.00")
+        self.assertEqual(res.data["discount_amount"], "1000000.00")
+        self.assertEqual(res.data["total"], "9000000.00")
+
+    def test_lowercase_and_padded_codes_are_accepted(self):
+        Coupon.objects.create(code="SALYCO10", percent=10)
+        res = self.client.post(self.URL, {"code": "  salyco 10 "}, format="json")
+        # " salyco 10 " normalises to "SALYCO 10", not "SALYCO10", so this must
+        # NOT match — the internal space is the interesting half of this test.
+        self.assertEqual(res.status_code, 400)
+
+    def test_a_padded_code_matches(self):
+        Coupon.objects.create(code="SALYCO10", percent=10)
+        res = self.client.post(self.URL, {"code": " SALYCO10 "}, format="json")
+        self.assertEqual(res.status_code, 200)
+
+    def test_unknown_code(self):
+        res = self.client.post(self.URL, {"code": "NOPE"}, format="json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data["detail"], "کد تخفیف یافت نشد.")
+
+    def test_empty_code(self):
+        res = self.client.post(self.URL, {"code": "   "}, format="json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data["detail"], "کد تخفیف را وارد کنید.")
+
+    def test_a_rule_failure_is_returned_verbatim(self):
+        Coupon.objects.create(code="OFF", percent=10, is_active=False)
+        res = self.client.post(self.URL, {"code": "OFF"}, format="json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data["detail"], "این کد تخفیف غیرفعال است.")
+
+    def test_applying_on_an_empty_cart_is_refused(self):
+        CartItem.objects.all().delete()
+        Coupon.objects.create(code="SALYCO10", percent=10)
+        res = self.client.post(self.URL, {"code": "SALYCO10"}, format="json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data["detail"], "سبد خرید شما خالی است.")
+
+    def test_applying_a_second_code_replaces_the_first(self):
+        Coupon.objects.create(code="TEN", percent=10)
+        second = Coupon.objects.create(code="TWENTY", percent=20)
+        self.client.post(self.URL, {"code": "TEN"}, format="json")
+
+        res = self.client.post(self.URL, {"code": "TWENTY"}, format="json")
+        self.assertEqual(res.status_code, 200)
+        self.cart.refresh_from_db()
+        self.assertEqual(self.cart.coupon_id, second.pk)
+        self.assertEqual(res.data["discount_amount"], "2000000.00")
+
+    def test_removing_clears_the_coupon(self):
+        Coupon.objects.create(code="TEN", percent=10)
+        self.client.post(self.URL, {"code": "TEN"}, format="json")
+
+        res = self.client.delete(self.URL)
+        self.assertEqual(res.status_code, 200)
+        self.assertIsNone(res.data["coupon"])
+        # Quantized to the field's two places, so "0.00" rather than "0".
+        self.assertEqual(res.data["discount_amount"], "0.00")
+        self.assertEqual(res.data["total"], "10000000.00")
+        self.cart.refresh_from_db()
+        self.assertIsNone(self.cart.coupon_id)
+
+    def test_removing_when_nothing_is_applied_is_still_a_200(self):
+        # Idempotent on purpose: the frontend never has to check first.
+        res = self.client.delete(self.URL)
+        self.assertEqual(res.status_code, 200)
+        self.assertIsNone(res.data["coupon"])
+
+    def test_anonymous_is_refused(self):
+        self.client.force_authenticate(None)
+        self.assertEqual(self.client.post(self.URL, {"code": "X"}).status_code, 401)
+
+    def test_covered_by_coupon_flags_only_the_eligible_line(self):
+        pillow = make_mattress(slug="pillow", price="2000000")
+        CartItem.objects.create(cart=self.cart, mattress=pillow, quantity=1)
+        coupon = Coupon.objects.create(
+            code="BED10", percent=10, applies_to_all_products=False
+        )
+        CouponProduct.objects.create(coupon=coupon, mattress=self.mattress)
+        self.client.post(self.URL, {"code": "BED10"}, format="json")
+
+        res = self.client.get("/api/cart/")
+        by_mattress = {row["mattress"]: row for row in res.data["items"]}
+        self.assertTrue(by_mattress[self.mattress.pk]["covered_by_coupon"])
+        self.assertFalse(by_mattress[pillow.pk]["covered_by_coupon"])
+
+    def test_covered_by_coupon_is_false_for_every_line_with_no_coupon(self):
+        res = self.client.get("/api/cart/")
+        self.assertFalse(res.data["items"][0]["covered_by_coupon"])
+
+    def test_all_products_coupon_covers_every_line(self):
+        pillow = make_mattress(slug="pillow", price="2000000")
+        CartItem.objects.create(cart=self.cart, mattress=pillow, quantity=1)
+        Coupon.objects.create(code="ALL10", percent=10)
+        self.client.post(self.URL, {"code": "ALL10"}, format="json")
+
+        res = self.client.get("/api/cart/")
+        self.assertTrue(all(row["covered_by_coupon"] for row in res.data["items"]))

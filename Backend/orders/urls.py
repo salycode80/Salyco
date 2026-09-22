@@ -8,7 +8,7 @@ urlpatterns = [
     path("cart/items/", views.CartItemView.as_view(), name="cart-items"),
     path("cart/items/<int:pk>/", views.CartItemDetailView.as_view(), name="cart-item-detail"),
     path("cart/merge/", views.CartMergeView.as_view(), name="cart-merge"),
-    path("orders/", views.OrderCreateView.as_view(), name="order-create"),
+    path("cart/coupon/", views.CartCouponView.as_view(), name="cart-coupon"),
     path("orders/my/", views.OrderListView.as_view(), name="order-my-list"),
     # Public, token-authorised order page linked from the confirmation SMS.
     # Declared after "orders/my/" so that literal path is never shadowed by the

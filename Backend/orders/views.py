@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -8,14 +7,9 @@ from rest_framework.views import APIView
 
 from users.models import Customer
 
-from .checkout import (
-    EMPTY_CART_MESSAGE,
-    INVALID_METHOD_MESSAGE,
-    create_order_from_cart,
-    validate_checkout,
-)
-from .models import AllowedLocation, Cart, CartItem, Order, OrderItem
-from .notifications import send_order_confirmation
+from .checkout import EMPTY_CART_MESSAGE
+from .models import AllowedLocation, Cart, CartItem, Coupon, Order
+from .promotions import COUPON_NOT_FOUND_MESSAGE, validate_coupon
 from .serializers import (
     AddCartItemSerializer,
     AllowedLocationSerializer,
@@ -133,48 +127,6 @@ class CartMergeView(APIView):
         return Response(CartSerializer(cart, context={"request": request}).data)
 
 
-class OrderCreateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        cart = _get_cart(request.user)
-        if not cart.items.exists():
-            return Response(
-                {"detail": EMPTY_CART_MESSAGE}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        method = request.data.get("method")
-        if method not in (Order.ONLINE, Order.PHONE):
-            return Response(
-                {"detail": INVALID_METHOD_MESSAGE},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Validation, the allowed-area rule and order creation are shared with
-        # the online-payment path — see orders/checkout.py.
-        cleaned, errors = validate_checkout(cart, request.data, method)
-        if errors:
-            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-
-        with transaction.atomic():
-            order = create_order_from_cart(cart, cleaned, method)
-            # A phone order is complete the moment it is recorded, so its cart
-            # clears here. The online path clears only after payment verifies.
-            cart.items.all().delete()
-
-        # Tell the customer their order is in. Sent after the atomic block has
-        # committed, so the order is durable before the SMS goes out and the
-        # request is not made while a transaction is open. Best-effort: a dead
-        # gateway must not fail an order that is already recorded — and if it
-        # does fail here, confirming the order in the admin panel retries it.
-        send_order_confirmation(order)
-
-        return Response(
-            OrderSerializer(order, context={"request": request}).data,
-            status=status.HTTP_201_CREATED,
-        )
-
-
 class OrderListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
@@ -250,3 +202,58 @@ class AllowedLocationPublicView(generics.ListAPIView):
     serializer_class = AllowedLocationSerializer
     pagination_class = None
     queryset = AllowedLocation.objects.filter(is_active=True)
+
+
+class CartCouponView(APIView):
+    """POST /api/cart/coupon/ — apply a code. DELETE — remove it.
+
+    Both answer with the whole cart payload, because applying or removing a code
+    changes every number the cart page renders.
+
+    The applied coupon is persisted on the cart rather than passed in the
+    checkout payload: the customer must see the reduction before deciding to
+    pay, and PaymentStartView re-validates it in case the cart sat overnight.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        cart = _get_cart(request.user)
+
+        if not cart.items.exists():
+            return Response(
+                {"detail": EMPTY_CART_MESSAGE}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        code = " ".join(str(request.data.get("code") or "").split()).upper()
+        if not code:
+            return Response(
+                {"detail": "کد تخفیف را وارد کنید."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        coupon = Coupon.objects.filter(code=code).first()
+        if coupon is None:
+            return Response(
+                {"detail": COUPON_NOT_FOUND_MESSAGE},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        error = validate_coupon(coupon, cart, cart.customer)
+        if error:
+            return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Replaces whatever was applied: trying a second code should not require
+        # clearing the first.
+        cart.coupon = coupon
+        cart.save(update_fields=["coupon", "updated_at"])
+        return Response(CartSerializer(cart, context={"request": request}).data)
+
+    def delete(self, request):
+        cart = _get_cart(request.user)
+        if cart.coupon_id is not None:
+            cart.coupon = None
+            cart.save(update_fields=["coupon", "updated_at"])
+        # Idempotent: removing when nothing is applied is a 200, not an error, so
+        # the frontend never has to check first.
+        return Response(CartSerializer(cart, context={"request": request}).data)

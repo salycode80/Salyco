@@ -4,7 +4,25 @@ from rest_framework import serializers
 
 from mattress.models import Mattress, MattressSize
 
-from .models import AllowedLocation, Cart, CartItem, Order, OrderItem
+from .models import (
+    AllowedLocation,
+    Cart,
+    CartItem,
+    Coupon,
+    CouponProduct,
+    Order,
+    OrderItem,
+)
+
+
+class CartCouponSerializer(serializers.ModelSerializer):
+    """The applied coupon, as much of it as the cart page needs to describe the
+    reduction. Never the usage counters — those are staff's business."""
+
+    class Meta:
+        model = Coupon
+        fields = ["code", "discount_type", "percent", "amount"]
+        read_only_fields = fields
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -21,6 +39,9 @@ class CartItemSerializer(serializers.ModelSerializer):
     line_total = serializers.DecimalField(
         max_digits=18, decimal_places=2, read_only=True
     )
+    # Without this a mixed cart shows a discount smaller than the headline
+    # percentage with nothing on screen to explain why.
+    covered_by_coupon = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
@@ -36,18 +57,56 @@ class CartItemSerializer(serializers.ModelSerializer):
             "quantity",
             "unit_price",
             "line_total",
+            "covered_by_coupon",
         ]
         read_only_fields = ["id"]
 
+    def get_covered_by_coupon(self, obj: CartItem) -> bool:
+        # self.root is the parent CartSerializer, so its instance is the cart
+        # being serialized — reading the coupon from there avoids one query per
+        # line. The fallback keeps this correct if the serializer is ever used
+        # standalone.
+        cart = getattr(self.root, "instance", None) or obj.cart
+        coupon = cart.coupon if cart is not None else None
+        if coupon is None:
+            return False
+        if coupon.applies_to_all_products:
+            return True
+        # One existence query per line, but only for a product-scoped coupon. A
+        # cart holds a handful of lines, so this stays cheap and avoids pulling
+        # the whole id set through the parent serializer.
+        return CouponProduct.objects.filter(
+            coupon=coupon, mattress_id=obj.mattress_id
+        ).exists()
+
 
 class CartSerializer(serializers.ModelSerializer):
+    """The cart page's whole money picture.
+
+    `total` keeps its name and now means *payable* — subtotal minus the coupon —
+    so every existing consumer of cart.total is already correct.
+    """
+
     items = CartItemSerializer(many=True, read_only=True)
+    subtotal = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    discount_amount = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
     total = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
     count = serializers.IntegerField(read_only=True)
+    coupon = CartCouponSerializer(read_only=True)
 
     class Meta:
         model = Cart
-        fields = ["id", "items", "total", "count"]
+        fields = [
+            "id",
+            "items",
+            "subtotal",
+            "discount_amount",
+            "total",
+            "count",
+            "coupon",
+        ]
 
 
 class AddCartItemSerializer(serializers.Serializer):
@@ -119,6 +178,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "city",
             "postal_code",
             "address",
+            "coupon_code",
+            "discount_amount",
             "total_amount",
             "created_at",
             "items",
@@ -154,6 +215,8 @@ class PublicOrderSerializer(serializers.ModelSerializer):
             "city",
             "postal_code",
             "address",
+            "coupon_code",
+            "discount_amount",
             "total_amount",
             "created_at",
             "items",
