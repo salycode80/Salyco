@@ -839,3 +839,211 @@ class SettlementRedemptionTests(TestCase):
         # show a stale discount on the customer's next, empty cart — and for a
         # once-per-customer code it would be refused only at payment time.
         self.assertIsNone(cart.coupon_id)
+
+
+# ═══ admin API ═════════════════════════════════════════════════════════════════
+
+
+class AdminCouponApiTests(APITestCase):
+    LIST = "/api/admin/coupons/"
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username="admin", password="x", is_staff=True
+        )
+        self.client.force_authenticate(self.admin)
+
+    def _create(self, **overrides):
+        payload = {"code": "SALYCO10", "discount_type": "PERCENT", "percent": 10}
+        payload.update(overrides)
+        return self.client.post(self.LIST, payload, format="json")
+
+    def test_staff_can_create_a_percent_coupon(self):
+        res = self._create()
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.data["code"], "SALYCO10")
+        self.assertEqual(res.data["status"], "ACTIVE")
+        self.assertEqual(res.data["redeemed_count"], 0)
+        # `products` is the read side; `product_ids` is write-only and so does
+        # not appear in a response at all.
+        self.assertEqual(res.data["products"], [])
+
+    def test_create_scopes_products_and_reports_them_back(self):
+        a = make_mattress(slug="a")
+        b = make_mattress(slug="b")
+        res = self._create(applies_to_all_products=False, product_ids=[a.pk, b.pk])
+
+        self.assertEqual(res.status_code, 201)
+        ids = sorted(p["mattress_id"] for p in res.data["products"])
+        self.assertEqual(ids, sorted([a.pk, b.pk]))
+        names = sorted(p["mattress_name"] for p in res.data["products"])
+        self.assertEqual(names, sorted([a.name, b.name]))
+
+    def test_scoping_to_nothing_is_refused(self):
+        res = self._create(applies_to_all_products=False, product_ids=[])
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data["product_ids"][0], "حداقل یک محصول را انتخاب کنید.")
+
+    def test_a_percent_coupon_without_a_percent_is_refused(self):
+        res = self._create(percent=None)
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("percent", res.data)
+
+    def test_a_percent_of_100_is_refused(self):
+        res = self._create(percent=100)
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data["percent"][0], "درصد تخفیف باید بین ۱ تا ۹۹ باشد.")
+
+    def test_a_fixed_coupon_carries_its_amount(self):
+        res = self._create(discount_type="FIXED", amount="200000", percent=None)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.data["amount"], "200000.00")
+
+    def test_a_fixed_coupon_without_an_amount_is_refused(self):
+        res = self._create(discount_type="FIXED", percent=None)
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(
+            res.data["amount"][0], "برای تخفیف مبلغی، مبلغ باید بیشتر از صفر باشد."
+        )
+
+    def test_expiry_before_start_is_refused(self):
+        now = timezone.now()
+        res = self._create(
+            starts_at=now.isoformat(),
+            expires_at=(now - timedelta(days=1)).isoformat(),
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(
+            res.data["expires_at"][0], "تاریخ پایان باید بعد از تاریخ شروع باشد."
+        )
+
+    def test_patch_can_deactivate_without_touching_the_rest(self):
+        created = self._create().data
+        res = self.client.patch(
+            f"{self.LIST}{created['id']}/", {"is_active": False}, format="json"
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(res.data["is_active"])
+        self.assertEqual(res.data["percent"], 10)
+        self.assertEqual(res.data["status"], "INACTIVE")
+
+    def test_patch_can_replace_the_product_scope(self):
+        a = make_mattress(slug="a")
+        b = make_mattress(slug="b")
+        created = self._create(applies_to_all_products=False, product_ids=[a.pk]).data
+
+        res = self.client.patch(
+            f"{self.LIST}{created['id']}/", {"product_ids": [b.pk]}, format="json"
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual([p["mattress_id"] for p in res.data["products"]], [b.pk])
+
+    def test_patch_cannot_leave_a_scoped_coupon_with_nothing_selected(self):
+        a = make_mattress(slug="a")
+        created = self._create(applies_to_all_products=False, product_ids=[a.pk]).data
+
+        res = self.client.patch(
+            f"{self.LIST}{created['id']}/", {"product_ids": []}, format="json"
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("product_ids", res.data)
+
+    def test_redeemed_count_and_remaining_uses(self):
+        coupon = Coupon.objects.create(code="ONE", percent=10, usage_limit=3)
+        paid_order(make_customer("09120000005"), coupon)
+
+        res = self.client.get(f"{self.LIST}{coupon.pk}/")
+        self.assertEqual(res.data["redeemed_count"], 1)
+        self.assertEqual(res.data["remaining_uses"], 2)
+
+    def test_remaining_uses_is_null_when_unlimited(self):
+        coupon = Coupon.objects.create(code="INF", percent=10)
+        res = self.client.get(f"{self.LIST}{coupon.pk}/")
+        self.assertIsNone(res.data["remaining_uses"])
+
+    def test_total_discount_given_sums_the_redemptions(self):
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        paid_order(make_customer("09120000006"), coupon, amount="1000")
+        paid_order(make_customer("09120000007"), coupon, amount="2500")
+
+        res = self.client.get(f"{self.LIST}{coupon.pk}/")
+        self.assertEqual(Decimal(res.data["total_discount_given"]), Decimal("3500"))
+
+    def test_deleting_a_redeemed_coupon_is_refused_with_a_persian_message(self):
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        paid_order(make_customer("09120000008"), coupon)
+
+        res = self.client.delete(f"{self.LIST}{coupon.pk}/")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(
+            res.data["detail"],
+            "این کد تخفیف استفاده شده و قابل حذف نیست؛ آن را غیرفعال کنید.",
+        )
+        self.assertTrue(Coupon.objects.filter(pk=coupon.pk).exists())
+
+    def test_deleting_an_unused_coupon_works(self):
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        res = self.client.delete(f"{self.LIST}{coupon.pk}/")
+        self.assertEqual(res.status_code, 204)
+        self.assertFalse(Coupon.objects.filter(pk=coupon.pk).exists())
+
+    def test_deleting_a_coupon_sitting_in_a_live_cart_works(self):
+        # Cart.coupon is SET_NULL: retiring a coupon must not take carts with it.
+        customer = make_customer()
+        cart = make_cart(customer, make_mattress())
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        cart.coupon = coupon
+        cart.save(update_fields=["coupon"])
+
+        res = self.client.delete(f"{self.LIST}{coupon.pk}/")
+
+        self.assertEqual(res.status_code, 204)
+        cart.refresh_from_db()
+        self.assertIsNone(cart.coupon_id)
+        self.assertEqual(cart.items.count(), 1)
+
+    def test_a_non_admin_is_refused(self):
+        customer = make_customer("09120000009")
+        self.client.force_authenticate(customer.user)
+        self.assertEqual(self.client.get(self.LIST).status_code, 403)
+        self.assertEqual(self._create().status_code, 403)
+
+    def test_redemptions_endpoint(self):
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        customer = make_customer("09120000010")
+        order = paid_order(customer, coupon, amount="4000")
+        order.phone_number = "09121112233"
+        order.save(update_fields=["phone_number"])
+
+        res = self.client.get(f"{self.LIST}{coupon.pk}/redemptions/")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.data), 1)
+        row = res.data[0]
+        self.assertEqual(row["order_id"], order.pk)
+        self.assertEqual(row["customer_name"], "آزمون کاربر")
+        self.assertEqual(row["phone_number"], "09121112233")
+        self.assertEqual(row["amount"], "4000.00")
+
+    def test_the_redemption_phone_falls_back_to_the_customer(self):
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        customer = make_customer("09120000011")
+        paid_order(customer, coupon)
+
+        res = self.client.get(f"{self.LIST}{coupon.pk}/redemptions/")
+        self.assertEqual(res.data[0]["phone_number"], "09120000011")
+
+    def test_the_admin_order_payload_carries_the_coupon(self):
+        customer = make_customer("09120000012")
+        coupon = Coupon.objects.create(code="TEN", percent=10)
+        order = Order.objects.create(
+            customer=customer,
+            method=Order.ONLINE,
+            coupon=coupon,
+            coupon_code="TEN",
+            discount_amount=Decimal("5000"),
+            total_amount=Decimal("45000"),
+        )
+
+        res = self.client.get(f"/api/admin/orders/{order.pk}/")
+        self.assertEqual(res.data["coupon_code"], "TEN")
+        self.assertEqual(res.data["discount_amount"], "5000.00")

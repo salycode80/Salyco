@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-from django.db.models import Q
-from rest_framework import generics
+from django.db.models import ProtectedError, Q
+from rest_framework import generics, status
+from rest_framework.response import Response
 
 from mattress.permissions import IsAdminUser
 from mattress.admin_views import apply_ordering
 
-from .admin_serializers import AdminAllowedLocationSerializer, AdminOrderSerializer
-from .models import AllowedLocation, Order
+from .admin_serializers import (
+    AdminAllowedLocationSerializer,
+    AdminCouponRedemptionSerializer,
+    AdminCouponSerializer,
+    AdminOrderSerializer,
+)
+from .models import AllowedLocation, Coupon, CouponRedemption, Order
 from .notifications import send_order_confirmation
 
 # Whitelisted sort options, same shape as the instance list. Every choice ends
@@ -70,10 +76,10 @@ class AdminOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.select_related("customer").prefetch_related("items")
 
     def perform_update(self, serializer):
-        """Retry the order SMS if checkout's attempt never landed.
+        """Retry the order SMS if settlement's attempt never landed.
 
-        The customer is normally notified at checkout, in OrderCreateView. This
-        is the backstop for when that send failed — a gateway outage, say —
+        The customer is normally notified when their online payment is verified.
+        This is the backstop for when that send failed — a gateway outage, say —
         since send_order_confirmation() latches on success and so does nothing
         here for the overwhelming majority of orders.
         """
@@ -92,3 +98,59 @@ class AdminAllowedLocationDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = AdminAllowedLocationSerializer
     queryset = AllowedLocation.objects.all()
+
+
+# A coupon referenced by an order cannot be deleted — Order.coupon is PROTECT so
+# that a discounted order keeps the code that discounted it. Reported as a
+# sentence rather than a 500, and the panel offers deactivation instead.
+COUPON_IN_USE_MESSAGE = (
+    "این کد تخفیف استفاده شده و قابل حذف نیست؛ آن را غیرفعال کنید."
+)
+
+
+class AdminCouponListView(generics.ListCreateAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminCouponSerializer
+    pagination_class = None
+    # prefetch_related so the `products` read field does not cost one query per
+    # row in the list.
+    queryset = Coupon.objects.prefetch_related("products__mattress")
+
+
+class AdminCouponDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminCouponSerializer
+    queryset = Coupon.objects.prefetch_related("products__mattress")
+
+    def destroy(self, request, *args, **kwargs):
+        """Refuse to delete a coupon an order still points at.
+
+        Overridden rather than done in perform_destroy() because raising DRF's
+        ValidationError with a {"detail": str} body wraps the string in a list
+        (see _get_error_details), so the client would receive ["..."] where it
+        expects a sentence. Returning the Response directly keeps the shape the
+        rest of the admin API uses.
+        """
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {"detail": COUPON_IN_USE_MESSAGE},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class AdminCouponRedemptionsView(generics.ListAPIView):
+    """Who used this code, newest first. A separate endpoint rather than an
+    embedded field so the coupon list stays light."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminCouponRedemptionSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return (
+            CouponRedemption.objects.filter(coupon_id=self.kwargs["pk"])
+            .select_related("order", "customer")
+            .order_by("-created_at")
+        )
