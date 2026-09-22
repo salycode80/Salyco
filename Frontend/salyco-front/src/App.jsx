@@ -1,9 +1,11 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { ToastProvider } from "./context/ToastContext";
 import ScrollToTop from "./components/ScrollToTop";
 import Navbar from "./components/Navbar";
+import MobileTopBar from "./components/MobileTopBar";
+import MobileTabBar from "./components/MobileTabBar";
 import AboutFooter from "./components/AboutFooter";
 import SessionTimeoutModal from "./components/SessionTimeoutModal";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -34,17 +36,32 @@ import PaymentResult from "./pages/PaymentResult";
 import OrderPublicPage from "./pages/OrderPublicPage";
 import OrdersPanel from "./pages/admin/OrdersPanel";
 import AllowedLocationsPanel from "./pages/admin/AllowedLocationsPanel";
+import CouponsPanel from "./pages/admin/CouponsPanel";
+
+// Flows that should not offer five ways to leave mid-task: signing in, paying,
+// the staff console, and the SMS-opened order page.
+const NO_TAB_BAR = ["/auth", "/checkout", "/payment", "/admin", "/orders"];
 
 function App() {
+  const { pathname } = useLocation();
+  const showTabBar = !NO_TAB_BAR.some((p) => pathname.startsWith(p));
+
   return (
     // AuthProvider is outermost so every consumer — including CartProvider, if it
     // ever moves off its localStorage poll — sees the same session state.
     <AuthProvider>
       <CartProvider>
         <ToastProvider>
-          <div>
+          {/* The bottom gutter keeps the tab bar off the footer's last row. It is
+              only applied while the bar is actually rendered — otherwise the
+              auth and checkout pages would carry dead space below the fold. */}
+          <div className={showTabBar ? "pb-[var(--tabbar-height)] lg:pb-0" : ""}>
             <ScrollToTop />
             <Navbar />
+            {/* Not gated by showTabBar: the logo and the account control are
+                meant to be on every page, including the flows that deliberately
+                have no bottom bar. */}
+            <MobileTopBar />
             <Routes>
             <Route path="/" element={<Home />} />
             {/* Product catalogue. `mattress` is just one :category value, so the
@@ -122,9 +139,11 @@ function App() {
               <Route path="suggestions" element={<SuggestionsPanel />} />
               <Route path="orders" element={<OrdersPanel />} />
               <Route path="locations" element={<AllowedLocationsPanel />} />
+              <Route path="coupons" element={<CouponsPanel />} />
             </Route>
           </Routes>
           <AboutFooter />
+          {showTabBar && <MobileTabBar />}
           {/* Rendered once; returns null unless the idle warning is up. */}
           <SessionTimeoutModal />
           </div>

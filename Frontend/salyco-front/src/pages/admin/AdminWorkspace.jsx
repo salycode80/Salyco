@@ -11,6 +11,7 @@ import {
   Inbox,
   ShoppingBag,
   MapPin,
+  TicketPercent,
 } from "lucide-react";
 import PageBackground from "../../components/PageBackground";
 
@@ -49,6 +50,12 @@ const controls = [
     icon: MapPin,
   },
   {
+    to: "/admin/coupons",
+    label: "کدهای تخفیف",
+    hint: "تعریف و مدیریت کدهای تخفیف",
+    icon: TicketPercent,
+  },
+  {
     to: "/admin/reviews",
     label: "مدیریت نظرات",
     hint: "تأیید یا رد نظرات کاربران",
@@ -78,7 +85,7 @@ export default function AdminWorkspace() {
   if (isAdmin === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white pt-[var(--navbar-height)]">
-        <Loader2 className="h-10 w-10 animate-spin text-[#003087]" />
+        <Loader2 className="h-10 w-10 animate-spin text-brand-navy" />
       </div>
     );
   }
@@ -86,17 +93,17 @@ export default function AdminWorkspace() {
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white pt-[var(--navbar-height)]">
-        <div className="rounded-xl border border-[#CBD2D6] bg-white p-12 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-          <Lock size={56} className="mx-auto mb-4 text-[#D20000]" strokeWidth={1.5} />
-          <h2 className="font-persian text-xl font-semibold text-[#1A1A2E]" dir="rtl">
+        <div className="rounded-xl border border-brand-mist bg-white p-12 text-center shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
+          <Lock size={56} className="mx-auto mb-4 text-status-error" strokeWidth={1.5} />
+          <h2 className="font-persian text-xl font-semibold text-text-primary" dir="rtl">
             دسترسی ندارید
           </h2>
-          <p className="mt-2 font-persian text-sm text-[#687173]" dir="rtl">
+          <p className="mt-2 font-persian text-sm text-text-secondary" dir="rtl">
             فقط مدیران سیستم به پنل مدیریت دسترسی دارند.
           </p>
           <button
             onClick={() => navigate("/")}
-            className="mt-6 rounded-lg border-2 border-[#003087] bg-white px-6 py-3 font-persian font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
+            className="mt-6 rounded-lg border-2 border-brand-navy bg-white px-6 py-3 font-persian font-medium text-brand-navy transition hover:bg-brand-warm-white"
           >
             بازگشت به صفحه اصلی
           </button>
@@ -109,19 +116,19 @@ export default function AdminWorkspace() {
     <section className="relative min-h-screen overflow-hidden bg-white pt-[var(--navbar-height)]">
       <PageBackground />
 
-      <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:py-10">
+      <div className="relative mx-auto flex max-w-[1200px] flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:py-10">
         {/* ── Sidebar: admin controls ── */}
         <aside className="lg:w-72 lg:shrink-0" dir="rtl">
           <div className="lg:sticky lg:top-[calc(var(--navbar-height)+1.5rem)]">
             <div className="mb-4 flex items-center gap-2 px-1">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#003087] text-white">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-navy text-white">
                 <ShieldCheck size={18} />
               </span>
               <div>
-                <p className="font-sans text-[0.65rem] uppercase tracking-[0.25em] text-[#687173]">
+                <p className="font-sans text-[0.65rem] uppercase tracking-[0.25em] text-text-secondary">
                   Admin Panel
                 </p>
-                <h2 className="font-persian text-base font-bold text-[#1A1A2E]">
+                <h2 className="font-persian text-base font-bold text-text-primary">
                   پنل مدیریت
                 </h2>
               </div>
@@ -136,8 +143,8 @@ export default function AdminWorkspace() {
                   className={({ isActive }) =>
                     `group flex shrink-0 items-center gap-3 rounded-xl border px-4 py-3 transition ${
                       isActive
-                        ? "border-transparent bg-[#003087] text-white shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
-                        : "border-[#CBD2D6] bg-white text-[#1A1A2E] hover:bg-[#F5F7FA]"
+                        ? "border-transparent bg-brand-navy text-white shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
+                        : "border-brand-mist bg-white text-text-primary hover:bg-brand-warm-white"
                     }`
                   }
                 >
@@ -145,7 +152,7 @@ export default function AdminWorkspace() {
                     <>
                       <span
                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                          isActive ? "bg-white/15 text-white" : "bg-[#F5F7FA] text-[#003087]"
+                          isActive ? "bg-white/15 text-white" : "bg-brand-warm-white text-brand-navy"
                         }`}
                       >
                         <Icon size={20} strokeWidth={1.75} />
@@ -154,7 +161,7 @@ export default function AdminWorkspace() {
                         <p className="font-persian text-sm font-semibold">{label}</p>
                         <p
                           className={`mt-0.5 truncate font-persian text-xs ${
-                            isActive ? "text-white/80" : "text-[#687173]"
+                            isActive ? "text-white/80" : "text-text-secondary"
                           }`}
                         >
                           {hint}

@@ -265,3 +265,69 @@ export async function reviewAdminWarrantyRequest(serialNumber, data) {
     throw new Error(firstError || "خطا در بررسی درخواست گارانتی");
   }
 }
+
+// ── Discount codes (کدهای تخفیف) ──────────────────────────────────────────────
+
+export async function listAdminCoupons() {
+  try {
+    const res = await api.get("/api/admin/coupons/");
+    return res.data;
+  } catch (err) {
+    const msg = err.response?.data?.detail || "خطا در دریافت کدهای تخفیف";
+    // `cause` keeps the axios error (status, response) reachable from the
+    // console — the message alone is what the panel shows.
+    throw new Error(msg, { cause: err });
+  }
+}
+
+export async function createAdminCoupon(data) {
+  try {
+    const res = await api.post("/api/admin/coupons/", data);
+    return res.data;
+  } catch (err) {
+    const data_ = err.response?.data;
+    const firstError =
+      data_ && typeof data_ === "object"
+        ? data_.detail || Object.values(data_).flat()[0]
+        : null;
+    throw new Error(firstError || "خطا در افزودن کد تخفیف", { cause: err });
+  }
+}
+
+export async function updateAdminCoupon(id, data) {
+  try {
+    const res = await api.patch(`/api/admin/coupons/${id}/`, data);
+    return res.data;
+  } catch (err) {
+    const data_ = err.response?.data;
+    const firstError =
+      data_ && typeof data_ === "object"
+        ? data_.detail || Object.values(data_).flat()[0]
+        : null;
+    throw new Error(firstError || "خطا در بروزرسانی کد تخفیف", { cause: err });
+  }
+}
+
+export async function deleteAdminCoupon(id) {
+  try {
+    await api.delete(`/api/admin/coupons/${id}/`);
+  } catch (err) {
+    // "این کد تخفیف استفاده شده و قابل حذف نیست" arrives here.
+    const msg = err.response?.data?.detail || "خطا در حذف کد تخفیف";
+    // `cause` keeps the axios error (status, response) reachable from the
+    // console — the message alone is what the panel shows.
+    throw new Error(msg, { cause: err });
+  }
+}
+
+export async function listAdminCouponRedemptions(id) {
+  try {
+    const res = await api.get(`/api/admin/coupons/${id}/redemptions/`);
+    return res.data;
+  } catch (err) {
+    const msg = err.response?.data?.detail || "خطا در دریافت استفاده‌ها";
+    // `cause` keeps the axios error (status, response) reachable from the
+    // console — the message alone is what the panel shows.
+    throw new Error(msg, { cause: err });
+  }
+}
