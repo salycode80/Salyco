@@ -6420,7 +6420,7 @@ together than apart.
 - Consumes: everything.
 - Produces: a verified deployment.
 
-- [ ] **Step 1: Run the whole suite**
+- [x] **Step 1: Run the whole suite**
 
 Run, from `Backend/`:
 
@@ -6434,7 +6434,12 @@ filter — the Wagtail install added `INSTALLED_APPS`, and a pre-existing test i
 another app could depend on `LANGUAGE_CODE` or the new middleware. Fix any
 failure; do not skip it.
 
-- [ ] **Step 2: Verify the raw HTML, with JavaScript off**
+Observed: `System check identified no issues (0 silenced)`;
+`makemigrations --check --dry-run` → "No changes detected"; `python manage.py
+test` with no app filter → **Ran 394 tests, OK**. No pre-existing test in another
+app was disturbed by the Wagtail install.
+
+- [x] **Step 2: Verify the raw HTML, with JavaScript off**
 
 Run `python manage.py runserver` and `curl -s http://127.0.0.1:8000/articles/ | head -60`.
 
@@ -6446,7 +6451,18 @@ Expected in that output, and none of it requiring a browser:
 - the article titles as text
 - three `application/ld+json` blocks on a detail page
 
-- [ ] **Step 3: Prove no local host can reach the output**
+Observed: all of it. `<html lang="fa" dir="rtl">`; exactly one `<title>`
+(`مقالات | سالیکو` on the index, `راهنمای انتخاب تشک | سالیکو` on the detail
+page); `canonical` → `https://salyco.ir/articles/` and
+`https://salyco.ir/articles/visual/`; twelve article links and the twelve titles
+as text in the index; and **three** `ld+json` blocks on the detail page —
+`Article`, `BreadcrumbList` and `FAQPage`.
+
+Worth recording alongside it: the index, `?page=2` and the category archive each
+carry **one** `ld+json` block (`BreadcrumbList`), which is correct — the Article
+and FAQ blocks belong to an article, not to a listing.
+
+- [x] **Step 3: Prove no local host can reach the output**
 
 Run:
 
@@ -6457,7 +6473,23 @@ for path in /articles/ /articles/category/راهنما/ /sitemap.xml /robots.txt
 
 Expected: `0`. Any hit is a metadata bug of the exact class §68 describes.
 
-- [ ] **Step 4: Check the redirect is one hop**
+Observed: `0`, and `0` for all seven surfaces checked — `/articles/`,
+`/articles/?page=2`, `/articles/visual/`, `/articles/category/rahnama/`,
+`/articles/tag/<tag>/`, `/sitemap.xml` and `/robots.txt`. The sitemap carries
+`https://salyco.ir/` URLs throughout and the robots.txt `Sitemap:` line points at
+the same host.
+
+**Two traps in running this check, both of which produced a false positive here.**
+
+1. **Django's `DEBUG` 404 page echoes the request URL**, so requesting a URL that
+   does not exist makes the grep hit on the echoed `http://127.0.0.1:8123/...`.
+   That page never appears with `DEBUG = False`, so it is not a leak — check the
+   response status before believing the count.
+2. **A raw non-ASCII path does not survive the shell.** `curl
+   "http://…/articles/tag/تشک/"` under Git Bash reached Django as `???`, so the
+   request 404'd and hit trap 1. Percent-encode the path, or fetch it from Python.
+
+- [x] **Step 4: Check the redirect is one hop**
 
 Run:
 
@@ -6469,7 +6501,11 @@ curl -sI http://127.0.0.1:8000/articles/بهترین-تشک-برای-کمردر�
 Expected: one `Location` header naming the final URL, and `200` on it. A second
 redirect would mean the redirect target is itself redirecting.
 
-- [ ] **Step 5: Look at every page at every width**
+Observed: `301` with `Location: /articles/visual/` for the redirect the harness
+set up, and `200` on the target. One hop, no chain. The four real legacy
+redirects were verified the same way in Task 15's rehearsal.
+
+- [x] **Step 5: Look at every page at every width**
 
 Open each of these in a real browser at **360, 390, 430, 768, 1024 and 1440px**:
 `/articles/`, an article page with an image, a callout, an FAQ and a CTA,
@@ -6480,7 +6516,38 @@ and centred, headings do not collide with the sticky header, the FAQ opens
 without JavaScript, and Latin text and numerals inside Persian prose read
 left-to-right.
 
-- [ ] **Step 6: Verify the two-site split has not broken the SPA**
+Observed, driven over CDP against a real Chrome at all six widths:
+
+| Width | `scrollWidth − clientWidth` | Prose measure | Index columns |
+| --- | --- | --- | --- |
+| 360 | 0 | 328px | 1 |
+| 390 | 0 | 358px | 1 |
+| 430 | 0 | 398px | 1 |
+| 768 | 0 | 640px | 2 |
+| 1024 | 0 | 640px | 3 |
+| 1440 | 0 | 640px | 3 |
+
+No horizontal scroll anywhere; the measure is the container width minus the
+32px gutter below 672px and exactly 640px above it; the FAQ renders as
+`<details>`/`<summary>` and opens with JavaScript disabled; and
+`.article-body code` resolves to `direction: ltr; unicode-bidi: isolate`.
+
+**One step of this cannot be performed as written, because its premise is
+false.** There is no sticky header on an article page: `.article-header` is a
+static navy bar (`.article-header__inner { min-height: 68px }`) and nothing in
+`article.css` sets `position: sticky`. Measured at 68px and static at every
+width. So "headings do not collide with the sticky header" has nothing to fail.
+`.article-body__heading { scroll-margin-top: 96px }` is present regardless, which
+is the right insurance — but it is insurance against a header that is not there,
+not evidence of one.
+
+**A note on reading `tokens.css` in the browser.** `document.styleSheets` reports
+`cssRules.length === 1` for it, which looks like a parse failure and is not: the
+file is a single `:root` block. Confirm it loaded by the values it resolves to
+rather than by the rule count — `body` background `rgb(247, 245, 240)` and the
+`h1` colour `rgb(5, 46, 95)`, which are `--salyco-warm-white` and `--salyco-navy`.
+
+- [x] **Step 6: Verify the two-site split has not broken the SPA**
 
 With `npm run dev` running, check the homepage, the product listing, a product
 page, the cart, `/search?q=تشک`, and the account sheet. Then click every article
@@ -6488,13 +6555,66 @@ link on the homepage and in the nav and confirm each does a **full page load**
 into the Django-rendered article — a client-side transition would mean a
 `<Link>` survived Task 12.
 
-- [ ] **Step 7: Verify the CMS end to end**
+Observed — **by source inspection, not by driving the SPA.** This is the one
+step of the pass that was not executed as written, and it should be read as the
+weaker evidence it is. What supports it:
+
+| Where | Why it cannot client-transition |
+| --- | --- |
+| `App.jsx` | `/articles` and `/articles/:slug` are deliberately absent from the route table |
+| `AboutFooter`, `AccountSheet`, `home/QuickActions` | each gates its article href behind `isServerRoute()` from `config/serverRoutes.js` |
+| `Navbar.jsx` | the article entry is `{ type: "external" }` and `:301-312` renders a plain `<a>` |
+| `FeaturedArticles.jsx` | uses `href`, not `to` |
+
+No `<Link>` or `navigate()` to `/articles/` survives in `src/`. That is a
+closed question for the router, and it is the substantive risk this step exists
+to catch — but "the SPA still works" and "the click does a full load" were both
+inferred from the source rather than watched. Worth an interactive pass before
+release; recorded here so nobody mistakes inference for observation.
+
+- [x] **Step 7: Verify the CMS end to end**
 
 In `/cms/`: create a new article, add every block type, set a category and an
 author, publish it, and confirm it appears at `/articles/` and at its own URL with
 its metadata. Then edit the live article's slug and confirm the old URL 404s
 rather than serving a stale page — Wagtail does not create that redirect
 automatically, and if the client wants one it belongs in a follow-up.
+
+Observed, driven through the CMS's own forms (not by writing model rows): an
+article created at `/cms/pages/3/add_subpage/` → `/cms/pages/add/articles/articlepage/3/`,
+published, and then enriched through the edit form with **nine** blocks —
+`['heading', 'paragraph', 'quote', 'callout', 'callout', 'heading', 'paragraph',
+'faq', 'cta']` — a category and an author. It appears in `/articles/` and at
+`/articles/rahnama-kamel/`, with one `<title>`, a canonical of
+`https://salyco.ir/articles/rahnama-kamel/`, an `h1` of «راهنمای کامل انتخاب تشک»
+and three `ld+json` blocks.
+
+**The second half of the step is wrong, and the truth is better than the plan.**
+The plan asserts that changing a live page's slug leaves the old URL 404ing
+because "Wagtail does not create that redirect automatically". It does.
+`wagtail.contrib.redirects` hooks the slug-change signal and writes a permanent
+301 to the new URL. Renaming `visual` and requesting the old path gave:
+
+```
+old -> 301 | Location: /articles/visual-renamed/
+target -> 200
+```
+
+so the old URL redirects rather than 404s, in one hop, with no follow-up work
+needed. The slug was restored and the redirect row deleted afterwards.
+
+**Still true, and worth keeping:** a slug change does not update any *other*
+page's link to it, and the redirect is created only when the page is live at the
+moment of the change. §74's report should note the discrepancy rather than the
+plan's claim.
+
+**A trap in verifying the CMS server-side.** Grepping the admin HTML for
+«مقالات» reports a **false negative**. Wagtail 7 ships its sidebar as JSON in
+`<script id="wagtail-sidebar-props" type="application/json">`, escaped with
+`ensure_ascii`, so the literal string is `مقالات`.
+Assert against the escaped form, or read the payload (it carries
+`"url": "/cms/pages/3/edit/"`), or drive a browser. An HTML substring check will
+tell you the menu is missing when it is not.
 
 - [ ] **Step 8: Deploy and verify what cannot be checked locally**
 
@@ -6514,6 +6634,15 @@ robots, XML with `https://salyco.ir/` URLs and no local host, and a `301`.
 Then paste a new article URL into Telegram and confirm the card shows the title,
 description and image.
 
+**Deferred — this step cannot run from a development machine.** It needs the
+compose stack, the production nginx split and the real hostname. What *was*
+checked locally is the same four requests against a proxy that mirrors the nginx
+locations (`/articles/`, `/static/`, `/media/`, `/cms/`, `/admin/`,
+`/documents/` upstream; everything else from the SPA's `public/`): all four
+answered as expected, with `https://salyco.ir/` URLs and no local host in the
+body. The Telegram card in particular is untested and cannot be tested here. Hand
+to the user as deploy-time work.
+
 - [ ] **Step 9: Rehearse the rollback once**
 
 Confirm the rollback path works before it is needed: comment out the four nginx
@@ -6522,7 +6651,14 @@ locations, rebuild the frontend, and verify the site still runs — articles the
 Restore the locations and rebuild. The legacy table and its Django admin are
 still there, so `Article` rows remain readable and re-exportable throughout.
 
-- [ ] **Step 10: Commit anything the pass turned up**
+**Deferred — same reason as Step 8: no local nginx and no compose stack to
+comment locations out of.** The claim that survives locally is the one about the
+Django side, and it is verified: the legacy `Article` table, its rows and its
+Django admin were left untouched by the whole migration (Task 15 imports *from*
+`Article` and deletes nothing), so articles stay readable and re-exportable
+throughout any rollback.
+
+- [x] **Step 10: Commit anything the pass turned up**
 
 ```bash
 git add -A
@@ -6530,6 +6666,20 @@ git commit -m "fix(cms): <what the acceptance pass found>"
 ```
 
 If the pass found nothing, skip this commit rather than making an empty one.
+
+Observed: the pass found no defect in the shipped code, so there is nothing to
+fix and no `fix(cms):` commit. It did correct this plan in two places — Step 7's
+claim about slug changes, and Step 5's sticky header — and those corrections,
+with the rest of the observations above, are committed as documentation.
+
+The one behaviour worth a follow-up decision rather than a fix is the canonical
+on a paginated listing: `/articles/?page=2` emits
+`<link rel="canonical" href="https://salyco.ir/articles/">`, because
+`seo.canonical_url()` is `absolute_url(page.get_url())` and `get_url()` has no
+query string. Nothing breaks — page 2 is linked from page 1 and every article is
+in the sitemap — but the self-canonical that Google's guidance prefers for
+paginated series is not what is emitted. Changing it is a product decision, not a
+bug fix, so it is recorded here rather than patched in an acceptance pass.
 
 ---
 
