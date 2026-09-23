@@ -3720,7 +3720,7 @@ shifts colour when the token file lands.
 - Consumes: `settings.SITE_URL`, `ArticlePage`, `ArticleCategory`, `Mattress`, `productUrl`'s shape.
 - Produces: `GET /sitemap.xml` (`application/xml`) and `GET /robots.txt` (`text/plain`); a `^$` route returning 404.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/core/tests_seo_views.py`:
 
@@ -3741,6 +3741,12 @@ class SitemapTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         root = Page.objects.get(depth=1)
+        # Without this the pages sit under no site's root, get_url() returns
+        # None and every article entry in the sitemap reads "https://salyco.irNone".
+        site = Site.objects.get(is_default_site=True)
+        site.root_page = root
+        site.save()
+
         cls.index = ArticleIndexPage(title="مقالات", slug="articles")
         root.add_child(instance=cls.index)
 
@@ -3748,7 +3754,9 @@ class SitemapTests(TestCase):
         cls.index.add_child(instance=cls.live)
         cls.live.save_revision().publish()
 
-        cls.draft = ArticlePage(title="پیش‌نویس", slug="draft", excerpt="x", body=[])
+        # No live=False needed here only because this one is never published;
+        # add_child alone would otherwise leave it live.
+        cls.draft = ArticlePage(title="پیش‌نویس", slug="draft", excerpt="x", body=[], live=False)
         cls.index.add_child(instance=cls.draft)
 
         cls.hidden = ArticlePage(
@@ -3761,8 +3769,16 @@ class SitemapTests(TestCase):
         cls.inactive = ArticleCategory.objects.create(
             name="غیرفعال", slug="off", is_active=False
         )
+        # Mattress has three fields with no default beyond the ones the plan
+        # listed: description, warranty_months and price are all non-null and
+        # required, so the plan's three-argument create() raises IntegrityError.
         Mattress.objects.create(
-            category="mattress", name="تشک تست", slug="test", price=1000
+            category="mattress",
+            name="تشک تست",
+            slug="test",
+            description="برای آزمون.",
+            warranty_months=12,
+            price=1000,
         )
 
     def urls(self):
@@ -3779,12 +3795,19 @@ class SitemapTests(TestCase):
         self.assertNotIn("https://salyco.ir/articles/draft/", self.urls())
 
     def test_noindex_articles_are_not_listed(self):
+        # allow_indexing=False is an editor saying "do not put this in front of a
+        # crawler". A sitemap entry would overrule them.
         self.assertNotIn("https://salyco.ir/articles/hidden/", self.urls())
 
     def test_active_categories_are_listed_and_inactive_ones_are_not(self):
         urls = self.urls()
         self.assertIn("https://salyco.ir/articles/category/rahnama/", urls)
         self.assertNotIn("https://salyco.ir/articles/category/off/", urls)
+
+    def test_tag_archives_are_not_listed(self):
+        # They are noindex,follow; listing one would contradict its own robots
+        # directive in the same document set.
+        self.assertFalse([url for url in self.urls() if "/tag/" in url])
 
     def test_products_are_listed(self):
         self.assertIn("https://salyco.ir/products/mattress/test", self.urls())
@@ -3793,6 +3816,33 @@ class SitemapTests(TestCase):
         urls = self.urls()
         for path in ("/articles/", "/", "/products", "/about", "/contact", "/dealers"):
             self.assertIn(f"https://salyco.ir{path}", urls)
+
+    def test_a_published_article_carries_a_lastmod(self):
+        response = self.client.get("/sitemap.xml")
+        tree = ElementTree.fromstring(response.content)
+        entry = [
+            node
+            for node in tree.findall("sm:url", NS)
+            if node.findtext("sm:loc", None, NS) == "https://salyco.ir/articles/live/"
+        ][0]
+        lastmod = entry.findtext("sm:lastmod", None, NS)
+        self.assertIsNotNone(lastmod)
+        # A date, not a datetime: the schema wants W3C but a bare date is valid
+        # and does not invite a crawler to re-fetch on every publish second.
+        self.assertRegex(lastmod, r"^\d{4}-\d{2}-\d{2}$")
+
+    def test_products_carry_no_lastmod(self):
+        # Mattress has no created_at or updated_at, and stamping now() would
+        # claim the whole catalogue changed on every fetch — devaluing the signal
+        # for the pages that do carry a real date.
+        response = self.client.get("/sitemap.xml")
+        tree = ElementTree.fromstring(response.content)
+        entry = [
+            node
+            for node in tree.findall("sm:url", NS)
+            if node.findtext("sm:loc", None, NS) == "https://salyco.ir/products/mattress/test"
+        ][0]
+        self.assertIsNone(entry.findtext("sm:lastmod", None, NS))
 
     def test_no_url_can_contain_a_local_host(self):
         # The reason every URL is built from SITE_URL rather than the request.
@@ -3820,13 +3870,13 @@ its test (`test_a_request_for_the_bare_root_is_a_404_not_a_crash`) in
 already green by the time this task starts.
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test core.tests_seo_views -v 2`
 
 Expected: FAIL — `/sitemap.xml` and `/robots.txt` 404.
 
-- [ ] **Step 3: Write the views**
+- [x] **Step 3: Write the views**
 
 Create `Backend/core/seo_views.py`:
 
@@ -3918,7 +3968,7 @@ def robots_txt(request):
     return HttpResponse("\n".join(lines) + "\n", content_type="text/plain")
 ```
 
-- [ ] **Step 4: Route them**
+- [x] **Step 4: Route them**
 
 In `Backend/core/urls.py`, add to the imports:
 
@@ -3945,17 +3995,24 @@ The one thing to check while you are in the file: the catch-all must still be th
 `path("sitemap.xml", ...)` appended in the `urlpatterns` literal sits above the
 `path("", include(wagtail_urls))` line, which is where it needs to be.
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `python manage.py test core.tests_seo_views -v 2`
 
 Expected: PASS (9 tests — the bare-root test moved to `core/tests_cms.py` with the guard in Task 4).
 
-If `test_products_are_listed` fails on a required field, check
-`Mattress.objects.create(...)` in the test against the model's non-null fields
-and fill in whatever it demands — do not loosen the model.
+Observed: `Ran 12 tests` / `OK`. Then the whole surface:
 
-- [ ] **Step 6: Commit**
+Run: `python manage.py test articles mattress core`
+
+Observed: `Ran 143 tests` / `OK (skipped=1)` — up from 131.
+
+`Mattress.objects.create(...)` did need the missing fields, as the plan warned it
+might: `description`, `warranty_months` and `price` are all non-null with no
+default, so the plan's three-argument call raises `IntegrityError`. The model was
+not loosened.
+
+- [x] **Step 6: Commit**
 
 ```bash
 git add Backend/core/seo_views.py Backend/core/urls.py Backend/core/tests_seo_views.py
@@ -3967,6 +4024,29 @@ so a crawler asking for a sitemap was handed a React application.
 Products carry no lastmod: Mattress has no created_at or updated_at, and
 stamping now() would claim the whole catalogue changed on every fetch."
 ```
+
+**Observed:** the plan's fixture was missing the default-`Site` repoint for the
+third task running — Tasks 7, 8 and now 9 each needed it, and each time the plan
+text omitted it. Worth stating plainly rather than fixing silently a third time:
+any fixture that calls `get_url()` on a page under the real Root needs it, because
+Wagtail's initial data roots the default site at its own "Welcome" page. Task 14's
+`setup_salyco_cms` is the real fix; until it runs, every fixture does it by hand.
+
+Two assertions beyond the plan's list, both guarding a real regression. A
+published article must carry a `<lastmod>` in `YYYY-MM-DD` form (`lastmod.date()`,
+not the raw datetime), and a product must carry none. The second matters most:
+`lastmod` on every product would assert that the catalogue changed on every crawl,
+which is the exact thing the plan's own comment says it is avoiding — and nothing
+was testing it.
+
+The tag archives are asserted absent. They became `noindex,follow` in Task 8, and
+a sitemap that lists a page whose own robots meta says `noindex` is a
+contradiction a crawler resolves by trusting neither.
+
+Nothing in this task reads `request.get_host()`, which is the point: behind host
+nginx → container nginx → gunicorn, one wrong `X-Forwarded-Host` would put
+`backend:8000` into every `<loc>`. `test_no_url_can_contain_a_local_host` is the
+guard, and it is why `_url()` takes a path and prefixes `SITE_URL` itself.
 
 ---
 

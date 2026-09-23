@@ -22,6 +22,8 @@ from django.conf.urls.static import static
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
+
+from core.seo_views import robots_txt, sitemap_xml
 from users.views import (
     AuthCompleteView,
     AuthStartView,
@@ -71,6 +73,12 @@ urlpatterns = [
     # the document chooser.
     path("cms/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
+
+    # ── Crawler surface ───────────────────────────────────────────────────────
+    # Above the Wagtail catch-all below, which would otherwise answer both paths
+    # with a page lookup (and a 404, since no page has those slugs).
+    path("sitemap.xml", sitemap_xml, name="sitemap"),
+    path("robots.txt", robots_txt, name="robots"),
 
     # ── Article pages ─────────────────────────────────────────────────────────
     # The pages themselves, at /articles/<slug>/. This is a fallback and must stay
