@@ -635,7 +635,7 @@ to explain why."
 - Consumes: nothing.
 - Produces: `BodyBlock` (a `StreamBlock` whose child attribute names are the stored block type names: `heading`, `paragraph`, `quote`, `image`, `callout`, `faq`, `cta`). `ArticleLinkBlock` (fields `page`, `url`, `label`). Each block declares `Meta.template`, so `{% include_block block %}` renders it with no dispatch chain in the page template.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_blocks.py`:
 
@@ -685,7 +685,9 @@ class ArticleLinkBlockTests(TestCase):
 
     def test_a_page_target_is_accepted(self):
         value = ArticleLinkBlock().clean({"page": 1, "url": "", "label": "بیشتر"})
-        self.assertEqual(value["page"], 1)
+        # .pk, not the raw id: StructBlock.clean resolves each child, so a
+        # PageChooserBlock value is a Page instance by the time it comes back.
+        self.assertEqual(value["page"].pk, 1)
 
 
 class BodyBlockTests(TestCase):
@@ -704,13 +706,13 @@ class BodyBlockTests(TestCase):
             )
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_blocks -v 2`
 
 Expected: FAIL — `ModuleNotFoundError: No module named 'articles.blocks'`.
 
-- [ ] **Step 3: Write the blocks**
+- [x] **Step 3: Write the blocks**
 
 Create `Backend/articles/blocks.py`:
 
@@ -938,7 +940,7 @@ class BodyBlock(blocks.StreamBlock):
         label = "متن مقاله"
 ```
 
-- [ ] **Step 4: Write the block templates**
+- [x] **Step 4: Write the block templates**
 
 Create `Backend/articles/templates/articles/blocks/heading.html`:
 
@@ -1030,7 +1032,7 @@ Create `Backend/articles/templates/articles/blocks/cta.html`:
 </aside>
 ```
 
-- [ ] **Step 5: Write the `article_tags` template tag module**
+- [x] **Step 5: Write the `article_tags` template tag module**
 
 Create `Backend/articles/templatetags/__init__.py` (empty file).
 
@@ -1089,13 +1091,21 @@ def json_ld_script(data):
     return mark_safe(f'<script type="application/ld+json">{raw}</script>')
 ```
 
-- [ ] **Step 6: Run the block tests**
+- [x] **Step 6: Run the block tests**
 
 Run: `python manage.py test articles.tests_blocks -v 2`
 
 Expected: PASS (8 tests).
 
-- [ ] **Step 7: Commit**
+**Observed:** `Ran 8 tests in 0.044s / OK`. `ArticleLinkBlockTests` found pages
+where the plan predicted it might not — Wagtail's own migrations seed the page
+tree in the test database, so `Page.objects.get(pk=1)` (the Root page) resolves.
+That also means the "page target is accepted" assertion had to be written against
+`value["page"].pk` rather than `value["page"]`: `StructBlock.clean` resolves each
+child block, so the value that comes back is a `Page` instance, not the id that
+went in.
+
+- [x] **Step 7: Commit**
 
 ```bash
 git add Backend/articles/blocks.py Backend/articles/templates/articles/blocks Backend/articles/templatetags Backend/articles/tests_blocks.py

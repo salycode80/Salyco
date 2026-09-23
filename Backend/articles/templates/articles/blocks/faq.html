@@ -1,0 +1,12 @@
+{# <details> rather than a scripted accordion: it is keyboard accessible for
+   free, and the answers are in the served HTML, so a crawler and a reader with
+   JavaScript off get the same content a browser does. #}
+<section class="article-faq">
+  <h2 class="article-faq__heading">پرسش‌های متداول</h2>
+  {% for item in value.items %}
+    <details class="article-faq__item">
+      <summary class="article-faq__question">{{ item.question }}</summary>
+      <p class="article-faq__answer">{{ item.answer }}</p>
+    </details>
+  {% endfor %}
+</section>

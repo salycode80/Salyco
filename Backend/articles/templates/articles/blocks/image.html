@@ -1,0 +1,13 @@
+{% load wagtailimages_tags %}
+<figure class="article-figure">
+  {% if value.decorative %}
+    {% image value.image width-1200 class="article-figure__img" alt="" %}
+  {% else %}
+    {% image value.image width-1200 class="article-figure__img" alt=value.alt_text %}
+  {% endif %}
+  {% if value.caption or value.credit %}
+    <figcaption class="article-figure__caption">
+      {{ value.caption }}{% if value.credit %} <span class="article-figure__credit">{{ value.credit }}</span>{% endif %}
+    </figcaption>
+  {% endif %}
+</figure>

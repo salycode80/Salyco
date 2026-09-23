@@ -1,0 +1,7 @@
+{% load article_tags %}
+<aside class="article-cta article-cta--{{ value.variant }}">
+  {% if value.eyebrow %}<p class="article-cta__eyebrow">{{ value.eyebrow }}</p>{% endif %}
+  <p class="article-cta__title">{{ value.title }}</p>
+  {% if value.description %}<p class="article-cta__description">{{ value.description }}</p>{% endif %}
+  <a class="article-cta__link" href="{% link_href value.link %}">{{ value.link.label }}</a>
+</aside>

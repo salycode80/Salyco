@@ -1,0 +1,6 @@
+{% load article_tags %}
+{% with anchor=value.anchor_id|default:value.text|heading_anchor %}
+  <{{ value.level }} id="{{ anchor }}" class="article-body__heading article-body__heading--{{ value.level }}">
+    {{ value.text }}
+  </{{ value.level }}>
+{% endwith %}

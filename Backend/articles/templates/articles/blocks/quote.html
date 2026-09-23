@@ -1,0 +1,12 @@
+<figure class="article-quote">
+  <blockquote class="article-quote__text">
+    {{ value.quote }}
+  </blockquote>
+  {% if value.source_name %}
+    <figcaption class="article-quote__source">
+      {% if value.source_url %}<a href="{{ value.source_url }}" rel="nofollow noopener" target="_blank">{% endif %}
+      {{ value.source_name }}{% if value.source_title %}، {{ value.source_title }}{% endif %}
+      {% if value.source_url %}</a>{% endif %}
+    </figcaption>
+  {% endif %}
+</figure>
