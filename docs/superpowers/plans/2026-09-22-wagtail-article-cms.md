@@ -4658,7 +4658,7 @@ literal tags for any consumer still reading the field."
 - Consumes: `/articles/` served by Django (Tasks 7, 8) and `/cms/` (Task 1).
 - Produces: `SERVER_ROUTES` and `isServerRoute(path)` from `src/config/serverRoutes.js`.
 
-- [ ] **Step 1: Write the helper**
+- [x] **Step 1: Write the helper**
 
 Create `Frontend/salyco-front/src/config/serverRoutes.js`:
 
@@ -4681,7 +4681,7 @@ export const isServerRoute = (path) =>
   SERVER_ROUTES.some((root) => path === root || path.startsWith(`${root}/`));
 ```
 
-- [ ] **Step 2: Remove the routes**
+- [x] **Step 2: Remove the routes**
 
 In `Frontend/salyco-front/src/App.jsx`:
 
@@ -4703,7 +4703,7 @@ git rm Frontend/salyco-front/src/pages/Articles.jsx \
 from `src/utils/articleImage.js`; `FeaturedArticles.jsx` still imports both, so
 that util file stays.
 
-- [ ] **Step 3: Make the homepage links real anchors**
+- [x] **Step 3: Make the homepage links real anchors**
 
 In `Frontend/salyco-front/src/components/FeaturedArticles.jsx`, add the import:
 
@@ -4743,7 +4743,7 @@ Note the trailing slash on every one: Wagtail's `WAGTAIL_APPEND_SLASH` would
 301 `/articles/foo` to `/articles/foo/`, and a redirect on every article click is
 a needless round trip.
 
-- [ ] **Step 4: Make the nav link a real anchor**
+- [x] **Step 4: Make the nav link a real anchor**
 
 In `Frontend/salyco-front/src/components/Navbar.jsx`, flag the articles entry the
 same way the products entry is already flagged:
@@ -4787,7 +4787,7 @@ current JSX and copy its classes rather than trusting the transcription here,
 because the active-state classes on the `NavLink` branch are driven by its
 `isActive` callback and do not belong on an anchor.
 
-- [ ] **Step 5: Make the remaining `/articles` links real anchors**
+- [x] **Step 5: Make the remaining `/articles` links real anchors**
 
 In `Frontend/salyco-front/src/components/AccountSheet.jsx`, the row map at line
 ~208 renders `<Link key={to} to={to} onClick={onClose} className={rowClass}>`.
@@ -4836,19 +4836,24 @@ the condition:
 
 with `import { isServerRoute } from "../config/serverRoutes";` added.
 
-- [ ] **Step 6: Prove no React Router article link survives**
+- [x] **Step 6: Prove no React Router article link survives**
 
 Run, from `Frontend/salyco-front/`:
 
 ```bash
-grep -rn 'to="/articles\|to={`/articles' src/ || echo "clean"
+# serverRoutes.js is excluded deliberately: its doc comment *is* the string
+# `to="/articles/…"`, so a repo-wide grep for that pattern can never come back
+# clean and would train the next reader to ignore it. A check that cannot pass is
+# worse than no check — the same trap Task 10's grep had.
+grep -rn 'to="/articles\|to={`/articles' src/ --exclude=serverRoutes.js || echo "clean"
 grep -rn "pages/Articles\|pages/ArticleDetail\|components/ArticleCard" src/ || echo "clean"
+grep -rn '<Link' src/ | grep -i articles || echo "clean"
 ```
 
-Expected: both print `clean`. Any hit is a link that would client-render a route
-`App.jsx` no longer declares.
+Expected: all three print `clean`. Any hit beyond the excluded helper is a link
+that would client-render a route `App.jsx` no longer declares.
 
-- [ ] **Step 7: Route the paths to Django in nginx**
+- [x] **Step 7: Route the paths to Django in nginx**
 
 In `Frontend/salyco-front/nginx.conf`, add these locations **before** the
 image-negotiation regex and the SPA fallback, next to the existing `^~ /api/`
@@ -4898,7 +4903,7 @@ block:
 Vite copies it to the document root and the existing `location /` serves it, the
 way `/fonts/` is already served.
 
-- [ ] **Step 8: Verify the container config parses**
+- [x] **Step 8: Verify the container config parses**
 
 Run:
 
@@ -4911,7 +4916,7 @@ Expected: `syntax is ok` / `test is successful`. If `nginx -t` is not available
 in the image, `docker compose up -d frontend` and check
 `docker compose logs frontend` for a config error instead.
 
-- [ ] **Step 9: Build the SPA and check nothing is broken**
+- [x] **Step 9: Build the SPA and check nothing is broken**
 
 Run, from `Frontend/salyco-front/`:
 
@@ -4923,7 +4928,7 @@ node verify-tokens.mjs
 Expected: the build succeeds with no unresolved import — a leftover
 `pages/Articles` reference fails here — and the token check passes.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add -A Frontend/salyco-front
@@ -4941,6 +4946,50 @@ Django, so a second server-rendered section later is a one-line change.
 nginx routes /articles/, /cms/, /sitemap.xml and /robots.txt to Django; the bare
 /articles is an exact match that 301s to the directory form."
 ```
+
+**Observed:**
+
+1. **`/documents/` was missing from the location list above, and it is not
+   cosmetic.** `core/urls.py` routes `wagtaildocs_urls` at `/documents/`, and
+   Wagtail's document handler is the *only* URL a protected document has (an
+   unprotected one redirects on to `/media/`). Without the location, a request
+   for one falls through to `location /` and the SPA answers 200 with
+   `index.html` — so the failure is an HTML page where a PDF was expected,
+   surfacing downstream as a corrupt file rather than as a 404. Added to
+   nginx.conf with the same `^~` and the same headers as `/cms/`, so the commit
+   message in Step 10 is one location longer than the text above.
+
+2. **Step 6's grep could never pass as written.** `config/serverRoutes.js`'s own
+   doc comment contains the literal text `to="/articles/…"`, so the first grep
+   matched the helper that the check exists to justify. This is the same
+   "a check that cannot pass is worse than no check" trap Task 10's
+   `bg-brand-navy{…}` grep had — and worth noting that both greps in this plan
+   were written against imagined output rather than run.
+
+3. **`nginx -t` did not run.** Docker's daemon is not running on this machine and
+   there is no local nginx, so Step 8's verification — and its
+   `docker compose up -d frontend` fallback — could not be performed. What was
+   checked instead is structural: braces balance, every one of the 14 `location`
+   blocks is complete, and each has a handler. That catches a missing `;` or `}`
+   but it is **not** `nginx -t` and does not prove the config loads. The five new
+   locations should be confirmed on the next machine with a working Docker.
+
+4. **The branch did not build before this task, and that predates the session.**
+   `App.jsx` and `AboutFooter.jsx` at HEAD import `MobileTopBar`, `MobileTabBar`,
+   `config/brand`, `pages/admin/GalleryPanel` and the four `components/home/*`
+   files, none of which were tracked — `vite build` fails with "Could not
+   resolve" on a file that exists in only one working tree. Committed separately
+   as `chore(frontend): commit the in-flight work the tree was carrying
+   untracked`, so the article change stays legible. `public/catalog.pdf` is left
+   untracked on purpose: 31 MB, never in this repository's history, and three
+   components link to it with `download` — whether it belongs in git or in
+   object storage is worth deciding deliberately rather than as a side effect.
+
+5. **`FeaturedArticles.jsx` carries a pre-existing truncated class** on the
+   featured image: `className="… duration-700 group-"`. The `group-` is a
+   dangling fragment, almost certainly a lost `group-hover:scale-105`. Left
+   alone — unrelated to this task — but it means the featured image never zooms
+   on hover despite the transition being set up for exactly that.
 
 ---
 
