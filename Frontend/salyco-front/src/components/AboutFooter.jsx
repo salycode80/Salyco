@@ -1,5 +1,6 @@
+import { BRAND } from "../config/brand";
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Camera, MapPin, Globe } from "lucide-react";
 
 // Enamad (نماد اعتماد الکترونیکی) seal credentials. Kept as constants so the
 // query strings are built in JS — a raw "&Code=" inside a JSX attribute string
@@ -9,7 +10,8 @@ const ENAMAD_CODE = "H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4";
 
 const footerLinks = [
   { label: "محصولات", href: "/products" },
-  { label: "مقالات", href: "/articles" },
+  { label: "راهنمای انتخاب تشک", href: "/articles" },
+  { label: "خدمات پس از فروش", href: "/warranty/my" },
   { label: "تماس با ما", href: "/contact" },
   { label: "درباره ما", href: "/about" },
 ];
@@ -18,34 +20,34 @@ export default function AboutFooter() {
   return (
     <footer
       id="about"
-      className="relative overflow-hidden bg-[#003087] border-t border-white/15"
+      className="relative overflow-hidden bg-brand-navy border-t border-white/15"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(0,156,222,0.15),transparent_50%)]" />
+      {/* Soft sheen at the top-right. Was rgba(5,46,95,.15) — the same navy as
+          the footer surface, so it painted nothing. White at low alpha keeps the
+          intended glow and stays within §6's low-intensity page-end texture. */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.07),transparent_55%)]" />
 
-      <div className="relative mx-auto max-w-7xl px-6 py-16">
+      <div className="relative mx-auto max-w-[1200px] px-6 py-16">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
           {/* Brand & about */}
           <div dir="rtl">
             <Link to="/" className="inline-flex items-center gap-2">
-              <span className="font-sans text-2xl font-bold tracking-[0.2em] text-white uppercase">
-                <span className="text-[#009CDE]">S</span>ALYCO
-              </span>
               <img
-                src="/logo3.png"
-                alt="Salyco logo"
-                className="h-12 w-12 object-contain"
+                src="/salyco-logo-white.svg"
+                alt="لوگوی سالیکو"
+                className="h-24 w-auto object-contain"
               />
             </Link>
 
             <h2 className="mt-6 font-persian text-2xl font-bold text-white">
               درباره سالیکو
             </h2>
-            <hr className="mt-3 w-16 border-t-2 border-[#009CDE]/40" />
+            <hr className="mt-3 w-16 border-t-2 border-white/25" />
 
             <p className="mt-4 font-persian text-sm leading-relaxed text-white/75">
               سالیکو با بیش از دو دهه تجربه در تولید تشک و محصولات خواب، ترکیبی
               از فناوری مدرن و کیفیت ممتاز را برای خوابی آرام و سالم ارائه
-              می‌دهد. شعار ما: آن جا که خواب بر بال‌های قو آرام می‌گیرد.
+              می‌دهد. شعار ما: {BRAND.slogan}.
             </p>
 
             <p className="mt-4 font-sans text-sm leading-relaxed text-white/60">
@@ -59,9 +61,10 @@ export default function AboutFooter() {
             <h3 className="font-persian text-lg font-bold text-white">
               دسترسی سریع
             </h3>
-            <hr className="mt-3 w-12 border-t-2 border-[#009CDE]/40" />
+            <hr className="mt-3 w-12 border-t-2 border-white/25" />
 
             <ul className="mt-5 space-y-3">
+              <li><a href="/catalog.pdf" download className="font-persian text-sm text-white/75 hover:text-white">دانلود کاتالوگ</a></li>
               {footerLinks.map(({ label, href }) => (
                 <li key={label}>
                   {href.startsWith("/") ? (
@@ -89,36 +92,65 @@ export default function AboutFooter() {
             <h3 className="font-persian text-lg font-bold text-white">
               تماس با ما
             </h3>
-            <hr className="mt-3 w-12 border-t-2 border-[#009CDE]/40" />
+            <hr className="mt-3 w-12 border-t-2 border-white/25" />
 
             <ul className="mt-5 space-y-4">
               <li>
                 <a
-                  href="tel:+985142222687"
+                  href={BRAND.phoneHref}
                   className="flex items-center gap-3 font-persian text-sm text-white/75 transition-colors hover:text-white"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5">
-                    <Phone size={16} className="text-[#009CDE]" />
+                    <Phone size={20} className="text-white" />
                   </span>
-                  <span dir="ltr">051-42222687</span>
+                  <span dir="ltr">{BRAND.phone}</span>
                 </a>
               </li>
               <li>
                 <a
-                  href="mailto:info@salyco.com"
+                  href={`tel:${BRAND.mobile}`}
                   className="flex items-center gap-3 font-persian text-sm text-white/75 transition-colors hover:text-white"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5">
-                    <Mail size={16} className="text-[#009CDE]" />
+                    <Phone size={20} className="text-white" />
                   </span>
-                  thisissalyco@gmail.com
+                  <bdi>{BRAND.mobile}</bdi>
                 </a>
               </li>
               <li className="flex items-start gap-3 font-persian text-sm text-white/75">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5">
-                  <MapPin size={16} className="text-[#009CDE]" />
+                  <MapPin size={20} className="text-white" />
                 </span>
-                خراسان رضوی، ایران
+                {BRAND.address}
+              </li>
+              <li>
+                <a
+                  href={BRAND.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 font-persian text-sm text-white/75 transition-colors hover:text-white"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5">
+                    <Globe size={20} className="text-white" />
+                  </span>
+                  <span dir="ltr">www.salyco.ir</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={BRAND.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="اینستاگرام سالیکو"
+                  className="flex items-center gap-3 font-persian text-sm text-white/75 transition-colors hover:text-white"
+                >
+                  {/* lucide-react no longer ships brand glyphs, so the Instagram
+                      link keeps the generic camera mark with a naming label. */}
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5">
+                    <Camera size={20} className="text-white" />
+                  </span>
+                  <bdi>@salyco.ir</bdi>
+                </a>
               </li>
             </ul>
           </div>
@@ -141,7 +173,7 @@ export default function AboutFooter() {
               target="_blank"
               rel="noopener"
               referrerPolicy="origin"
-              className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-lg transition-transform hover:scale-105"
+              className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-lg transition-transform "
             >
               <img
                 src={`https://trustseal.enamad.ir/logo.aspx?id=${ENAMAD_ID}&Code=${ENAMAD_CODE}`}

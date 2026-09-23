@@ -18,16 +18,13 @@ import {
   updateAdminOrder,
   deleteAdminOrder,
 } from "../../api/admin";
+import { formatJalali } from "../../utils/jalali";
 import { toPersianNumber, formatPersianPrice } from "../../utils/persian";
 
-const faDate = (iso) => {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString("fa-IR");
-  } catch {
-    return iso;
-  }
-};
+// Jalali, through the shared converter. The browser's own fa-IR rendering is
+// only as good as its ICU data and would drift from the dates the backend
+// writes into SMS text; formatJalali is the same arithmetic on both sides.
+const faDate = (iso) => (iso ? formatJalali(iso) || "—" : "—");
 
 // Order lifecycle → badge colors.
 const STATUS_META = {

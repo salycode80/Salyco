@@ -20,36 +20,31 @@ import {
   listAdminWarrantyRequests,
   reviewAdminWarrantyRequest,
 } from "../../api/admin";
+import { formatJalaliDateTime } from "../../utils/jalali";
 import { getProductImageUrl } from "../../utils/productImage";
 
 const faNum = (n) => Number(n ?? 0).toLocaleString("fa-IR");
 
-const faDateTime = (iso) => {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString("fa-IR");
-  } catch {
-    return iso;
-  }
-};
+// Jalali date plus the local clock time, from the shared converter.
+const faDateTime = (iso) => (iso ? formatJalaliDateTime(iso) || "—" : "—");
 
 const STATES = {
   PENDING: {
     label: "در انتظار تأیید",
-    fill: "bg-[#E7F3FB]",
-    text: "text-[#009CDE]",
+    fill: "bg-status-info-bg",
+    text: "text-brand-navy",
     Icon: Clock,
   },
   APPROVED: {
     label: "تأیید شده",
-    fill: "bg-[#E6F4EA]",
-    text: "text-[#019C34]",
+    fill: "bg-status-success-bg",
+    text: "text-status-success",
     Icon: CheckCircle2,
   },
   REJECTED: {
     label: "رد شده",
-    fill: "bg-[#FDE7E7]",
-    text: "text-[#D20000]",
+    fill: "bg-status-error-bg",
+    text: "text-status-error",
     Icon: XCircle,
   },
 };
@@ -69,9 +64,9 @@ function StatusPill({ status }) {
 function InfoRow({ icon: Icon, value, ltr }) {
   return (
     <div className="flex items-start gap-2">
-      <Icon size={14} className="mt-0.5 shrink-0 text-[#003087]" />
+      <Icon size={14} className="mt-0.5 shrink-0 text-brand-navy" />
       <span
-        className={`font-persian text-sm text-[#1A1A2E] ${ltr ? "font-mono" : ""}`}
+        className={`font-persian text-sm text-text-primary ${ltr ? "font-mono" : ""}`}
         dir={ltr ? "ltr" : "rtl"}
       >
         {value || "—"}
@@ -152,18 +147,18 @@ export default function WarrantyRequestsPanel() {
     <>
       {/* header */}
       <header className="mb-8" dir="rtl">
-        <p className="flex items-center gap-2 font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+        <p className="flex items-center gap-2 font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
           <ShieldCheck size={16} /> Warranty Approvals
         </p>
-        <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+        <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
           تأیید گارانتی‌ها
         </h1>
-        <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
-        <p className="mt-4 font-persian text-sm text-[#687173]">
+        <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
+        <p className="mt-4 font-persian text-sm text-text-secondary">
           درخواست‌های ثبت گارانتی را بررسی کنید. تصویر محصول را با اطلاعات
           خریدار مقایسه کنید؛ گارانتی فقط پس از تأیید شما فعال می‌شود.
           {pending > 0 && (
-            <span className="mr-1 font-semibold text-[#009CDE]">
+            <span className="mr-1 font-semibold text-brand-navy">
               ({faNum(pending)} درخواست در انتظار تأیید)
             </span>
           )}
@@ -172,27 +167,27 @@ export default function WarrantyRequestsPanel() {
 
       {/* filters */}
       <div
-        className="mb-6 rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
+        className="mb-6 rounded-xl border border-brand-mist bg-white p-4 shadow-[0_1px_4px_rgba(5,46,95,0.06)]"
         dir="rtl"
       >
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[220px] flex-1">
             <Search
               size={16}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#687173]"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary"
             />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="جستجوی سریال، نام یا تلفن خریدار..."
-              className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white pr-11 pl-4 text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+              className="h-12 w-full rounded-lg border border-brand-mist bg-white pr-11 pl-4 text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-12 rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+            className="h-12 rounded-lg border border-brand-mist bg-white px-4 font-persian text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
           >
             <option value="">وضعیت (همه)</option>
             <option value="PENDING">در انتظار تأیید</option>
@@ -203,7 +198,7 @@ export default function WarrantyRequestsPanel() {
           {hasFilters && (
             <button
               onClick={resetFilters}
-              className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#003087] bg-white px-4 py-2.5 font-persian text-sm text-[#003087] transition hover:bg-[#F5F7FA]"
+              className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-navy bg-white px-4 py-2.5 font-persian text-sm text-brand-navy transition hover:bg-brand-warm-white"
             >
               <RotateCcw size={14} /> پاک کردن
             </button>
@@ -213,7 +208,7 @@ export default function WarrantyRequestsPanel() {
 
       {error && (
         <div
-          className="mb-6 rounded-lg border border-[#D20000] bg-[#FDE7E7] px-5 py-3 font-persian text-sm text-[#D20000]"
+          className="mb-6 rounded-lg border border-status-error bg-status-error-bg px-5 py-3 font-persian text-sm text-status-error"
           dir="rtl"
         >
           {error}
@@ -223,12 +218,12 @@ export default function WarrantyRequestsPanel() {
       {/* list */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-[#003087]" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand-navy" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-xl border border-[#CBD2D6] bg-white py-20 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-          <Filter size={40} className="mx-auto mb-3 text-[#CBD2D6]" />
-          <p className="font-persian text-sm text-[#687173]">
+        <div className="rounded-xl border border-brand-mist bg-white py-20 text-center shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
+          <Filter size={40} className="mx-auto mb-3 text-brand-mist" />
+          <p className="font-persian text-sm text-text-secondary">
             درخواستی یافت نشد.
           </p>
         </div>
@@ -237,7 +232,7 @@ export default function WarrantyRequestsPanel() {
           {rows.map((r) => (
             <div
               key={r.serial_number}
-              className="rounded-xl border border-[#CBD2D6] bg-white p-5 shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
+              className="rounded-xl border border-brand-mist bg-white p-5 shadow-[0_1px_4px_rgba(5,46,95,0.06)]"
             >
               <div className="flex flex-col gap-4 sm:flex-row">
                 {/* The photo the customer saw. Approving is a verification
@@ -245,22 +240,22 @@ export default function WarrantyRequestsPanel() {
                 <img
                   src={getProductImageUrl(r.mattress_image)}
                   alt={r.mattress_name}
-                  className="h-28 w-28 shrink-0 self-center rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] object-cover"
+                  className="h-28 w-28 shrink-0 self-center rounded-xl border border-brand-mist bg-brand-warm-white object-cover"
                 />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="font-persian text-base font-semibold text-[#1A1A2E]">
+                    <h3 className="font-persian text-base font-semibold text-text-primary">
                       {r.mattress_name}
                     </h3>
                     <StatusPill status={r.warranty_status} />
-                    <span className="font-persian text-xs text-[#687173]">
+                    <span className="font-persian text-xs text-text-secondary">
                       {faNum(r.warranty_months)} ماه گارانتی
                     </span>
                   </div>
 
                   <p
-                    className="mt-1 font-mono text-sm text-[#003087]"
+                    className="mt-1 font-mono text-sm text-brand-navy"
                     dir="ltr"
                   >
                     {r.serial_number}
@@ -273,20 +268,20 @@ export default function WarrantyRequestsPanel() {
                     <InfoRow icon={Mail} value={r.buyer_postal_code} ltr />
                   </div>
 
-                  <p className="mt-3 inline-flex items-center gap-1.5 font-persian text-xs text-[#687173]">
+                  <p className="mt-3 inline-flex items-center gap-1.5 font-persian text-xs text-text-secondary">
                     <CalendarClock size={13} />
                     ثبت درخواست: {faDateTime(r.warranty_submitted_at)}
                   </p>
 
                   {r.warranty_status !== "PENDING" && (
-                    <p className="mt-1 font-persian text-xs text-[#687173]">
+                    <p className="mt-1 font-persian text-xs text-text-secondary">
                       بررسی‌شده توسط {r.reviewed_by_name || "—"} ·{" "}
                       {faDateTime(r.warranty_reviewed_at)}
                     </p>
                   )}
 
                   {r.warranty_rejection_reason && (
-                    <p className="mt-3 rounded-lg border border-[#D20000] bg-[#FDE7E7] px-4 py-2 font-persian text-xs leading-6 text-[#D20000]">
+                    <p className="mt-3 rounded-lg border border-status-error bg-status-error-bg px-4 py-2 font-persian text-xs leading-6 text-status-error">
                       دلیل رد: {r.warranty_rejection_reason}
                     </p>
                   )}
@@ -294,7 +289,7 @@ export default function WarrantyRequestsPanel() {
               </div>
 
               {r.warranty_status === "PENDING" && (
-                <div className="mt-4 border-t border-[#CBD2D6] pt-4">
+                <div className="mt-4 border-t border-brand-mist pt-4">
                   {rejecting === r.serial_number ? (
                     <div className="space-y-3">
                       <textarea
@@ -302,7 +297,7 @@ export default function WarrantyRequestsPanel() {
                         onChange={(e) => setReason(e.target.value)}
                         rows={3}
                         placeholder="دلیل رد درخواست — این متن به مشتری نشان داده می‌شود."
-                        className="w-full rounded-lg border border-[#CBD2D6] bg-white p-3 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+                        className="w-full rounded-lg border border-brand-mist bg-white p-3 font-persian text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
                       />
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -315,7 +310,7 @@ export default function WarrantyRequestsPanel() {
                           disabled={
                             !reason.trim() || busyId === r.serial_number
                           }
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#D20000] px-4 py-2 font-persian text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-status-error px-4 py-2 font-persian text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {busyId === r.serial_number ? (
                             <Loader2 size={14} className="animate-spin" />
@@ -329,7 +324,7 @@ export default function WarrantyRequestsPanel() {
                             setRejecting(null);
                             setReason("");
                           }}
-                          className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#CBD2D6] bg-white px-4 py-2 font-persian text-sm text-[#687173] transition hover:bg-[#F5F7FA]"
+                          className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-mist bg-white px-4 py-2 font-persian text-sm text-text-secondary transition hover:bg-brand-warm-white"
                         >
                           انصراف
                         </button>
@@ -342,7 +337,7 @@ export default function WarrantyRequestsPanel() {
                           applyDecision(r.serial_number, { action: "approve" })
                         }
                         disabled={busyId === r.serial_number}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#019C34] px-4 py-2 font-persian text-sm font-semibold text-white transition hover:bg-[#017a29] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-status-success px-4 py-2 font-persian text-sm font-semibold text-white transition hover:bg-status-success disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {busyId === r.serial_number ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -354,7 +349,7 @@ export default function WarrantyRequestsPanel() {
                       <button
                         onClick={() => openReject(r.serial_number)}
                         disabled={busyId === r.serial_number}
-                        className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#D20000] bg-white px-4 py-2 font-persian text-sm font-semibold text-[#D20000] transition hover:bg-[#FDE7E7] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 rounded-lg border-2 border-status-error bg-white px-4 py-2 font-persian text-sm font-semibold text-status-error transition hover:bg-status-error-bg disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <X size={14} /> رد درخواست
                       </button>
@@ -368,7 +363,7 @@ export default function WarrantyRequestsPanel() {
       )}
 
       <p
-        className="mt-4 text-center font-persian text-xs text-[#687173]"
+        className="mt-4 text-center font-persian text-xs text-text-secondary"
         dir="rtl"
       >
         {faNum(rows.length)} درخواست نمایش داده شد

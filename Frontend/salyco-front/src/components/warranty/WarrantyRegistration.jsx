@@ -7,6 +7,7 @@ import StatusBadge from "./StatusBadge";
 import ActionButton from "./ActionButton";
 import RegistrationForm from "./RegistrationForm";
 import MessageToast from "./MessageToast";
+import { formatJalali } from "../../utils/jalali";
 
 const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSuccess }) => {
   // The one component that needs all four states rather than a boolean — which
@@ -58,7 +59,7 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
 
   const handleShowWarrantyInfo = () => {
     const expDate = warrantyData.warranty_expiration_date
-      ? new Date(warrantyData.warranty_expiration_date).toLocaleDateString("fa-IR")
+      ? formatJalali(warrantyData.warranty_expiration_date) || "—"
       : "—";
     setMessage({
       type: "success",
@@ -70,13 +71,13 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
   const clearMessage = () => setMessage({ type: null, text: "" });
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]">
+    <div className="overflow-hidden rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition-all duration-200 hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)]">
       <div className="p-6 sm:p-8">
         <ProductHeader product={product} onCopy={clearMessage} />
 
         <ProductPreviewCard warrantyData={warrantyData} />
 
-        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-4 sm:p-5">
+        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-brand-mist bg-brand-warm-white p-4 sm:p-5">
           {/* activation_date is set at submission, so warranty_remaining_days
               returns a real positive number while a request is still PENDING.
               Rendering the dial then would tell the customer their coverage had
@@ -87,7 +88,7 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
           {isApproved ? (
             <GuaranteeDisk product={product} />
           ) : (
-            <p className="font-persian text-sm text-[#687173]" dir="rtl">
+            <p className="font-persian text-sm text-text-secondary" dir="rtl">
               {status === "PENDING"
                 ? "پوشش گارانتی پس از تأیید کارشناسان، از تاریخ ثبت درخواست محاسبه می‌شود."
                 : status === "REJECTED"
@@ -102,18 +103,18 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
 
         {status === "REJECTED" && (
           <div
-            className="mb-4 rounded-lg border border-[#D20000] bg-[#FDE7E7] px-5 py-3"
+            className="mb-4 rounded-lg border border-status-error bg-status-error-bg px-5 py-3"
             dir="rtl"
           >
-            <p className="font-persian text-sm font-semibold text-[#D20000]">
+            <p className="font-persian text-sm font-semibold text-status-error">
               درخواست قبلی شما رد شد
             </p>
             {warrantyData.warranty_rejection_reason && (
-              <p className="mt-1 font-persian text-sm leading-6 text-[#D20000]">
+              <p className="mt-1 font-persian text-sm leading-6 text-status-error">
                 {warrantyData.warranty_rejection_reason}
               </p>
             )}
-            <p className="mt-1 font-persian text-xs text-[#D20000]/80">
+            <p className="mt-1 font-persian text-xs text-status-error/80">
               اطلاعات را اصلاح کنید و درخواست را دوباره ثبت کنید.
             </p>
           </div>
@@ -140,7 +141,7 @@ const WarrantyRegistration = ({ warrantyData, serialNumber, onRegistrationSucces
           />
         )}
 
-        <div className="mt-6 flex items-center justify-center gap-2 border-t border-[#CBD2D6] pt-4 text-center text-xs text-[#687173]">
+        <div className="mt-6 flex items-center justify-center gap-2 border-t border-brand-mist pt-4 text-center text-xs text-text-secondary">
           <span>اسکن QR یا وارد کردن سریال · پورتال گارانتی سالیکو</span>
         </div>
       </div>

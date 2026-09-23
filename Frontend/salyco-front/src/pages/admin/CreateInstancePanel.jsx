@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createMattressInstance, listMattresses } from "../../api/warranty";
+import JalaliDatePicker from "../../components/JalaliDatePicker";
 import {
   ShieldCheck,
   Plus,
@@ -74,14 +75,14 @@ export default function CreateInstancePanel() {
   return (
     <div className="mx-auto max-w-2xl">
       <header className="mb-8" dir="rtl">
-        <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+        <p className="font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
           Admin Panel
         </p>
-        <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+        <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
           ساخت نمونه محصول
         </h1>
-        <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
-        <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
+        <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
+        <p className="mt-4 max-w-xl font-persian text-base text-text-secondary">
           نوع محصول و تاریخ تولید را انتخاب کنید تا شماره سریال و QR کد تولید
           شود. تنها محصولات سریال‌دار (تشک، باکس تخت خواب و تاپر) در این لیست
           نمایش داده می‌شوند.
@@ -89,18 +90,18 @@ export default function CreateInstancePanel() {
       </header>
 
       {!result ? (
-        <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+        <div className="overflow-hidden rounded-xl border border-brand-mist bg-white p-8 shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div dir="rtl">
-              <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[#1A1A2E]">
-                <ShieldCheck size={16} className="text-[#003087]" strokeWidth={2} />
+              <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-text-primary">
+                <ShieldCheck size={16} className="text-brand-navy" strokeWidth={2} />
                 <span className="font-persian">نوع محصول</span>
               </label>
               <select
                 value={mattressId}
                 onChange={(e) => setMattressId(e.target.value)}
                 required
-                className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+                className="h-12 w-full rounded-lg border border-brand-mist bg-white px-4 text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
               >
                 <option value="">انتخاب کنید...</option>
                 {Object.entries(groupedMattresses).map(([label, items]) => (
@@ -116,32 +117,34 @@ export default function CreateInstancePanel() {
             </div>
 
             <div dir="rtl">
-              <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[#1A1A2E]">
+              <label htmlFor="ci-date" className="mb-1.5 flex items-center gap-2 text-sm font-medium text-text-primary">
                 <span className="font-persian">تاریخ تولید</span>
               </label>
-              <input
-                type="date"
+              {/* Jalali, because a manufacture date is read by Iranians. The
+                  control still hands the API a Gregorian "YYYY-MM-DD", which is
+                  what it stored before this was a picker at all. */}
+              <JalaliDatePicker
+                id="ci-date"
                 value={manufactureDate}
-                onChange={(e) => setManufactureDate(e.target.value)}
-                required
-                className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+                onChange={setManufactureDate}
+                clearable={false}
               />
             </div>
 
             {error && (
               <div
-                className="flex items-center gap-2 rounded-lg border border-[#CBD2D6] bg-[#FDE7E7] p-3"
+                className="flex items-center gap-2 rounded-lg border border-brand-mist bg-status-error-bg p-3"
                 dir="rtl"
               >
-                <AlertTriangle size={16} className="text-[#D20000]" />
-                <span className="font-persian text-sm text-[#D20000]">{error}</span>
+                <AlertTriangle size={16} className="text-status-error" />
+                <span className="font-persian text-sm text-status-error">{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white transition hover:bg-[#00246B] disabled:bg-[#CBD2D6] disabled:text-[#687173]"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-navy px-6 font-persian font-semibold text-white transition hover:bg-action-hover disabled:bg-brand-mist disabled:text-text-secondary"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -158,31 +161,31 @@ export default function CreateInstancePanel() {
           </form>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white p-8 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+        <div className="overflow-hidden rounded-xl border border-brand-mist bg-white p-8 shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
           <div className="text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#E6F4EA]">
-              <ShieldCheck size={32} className="text-[#019C34]" strokeWidth={1.5} />
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-success-bg">
+              <ShieldCheck size={32} className="text-status-success" strokeWidth={1.5} />
             </div>
-            <h2 className="font-persian text-xl font-semibold text-[#1A1A2E]" dir="rtl">
+            <h2 className="font-persian text-xl font-semibold text-text-primary" dir="rtl">
               نمونه با موفقیت ساخته شد
             </h2>
           </div>
 
           <div className="mt-8 space-y-4" dir="rtl">
-            <div className="flex items-center justify-between rounded-lg border border-[#CBD2D6] bg-[#F5F7FA] p-4">
-              <span className="font-persian text-sm font-medium text-[#687173]">
+            <div className="flex items-center justify-between rounded-lg border border-brand-mist bg-brand-warm-white p-4">
+              <span className="font-persian text-sm font-medium text-text-secondary">
                 شماره سریال
               </span>
-              <span className="font-mono text-sm font-semibold text-[#1A1A2E]" dir="ltr">
+              <span className="font-mono text-sm font-semibold text-text-primary" dir="ltr">
                 {result.serial_number}
               </span>
             </div>
             {result.warranty_url && (
-              <div className="flex items-center justify-between rounded-lg border border-[#CBD2D6] bg-[#F5F7FA] p-4">
-                <span className="font-persian text-sm font-medium text-[#687173]">
+              <div className="flex items-center justify-between rounded-lg border border-brand-mist bg-brand-warm-white p-4">
+                <span className="font-persian text-sm font-medium text-text-secondary">
                   لینک گارانتی
                 </span>
-                <span className="font-mono text-xs text-[#009CDE] break-all" dir="ltr">
+                <span className="font-mono text-xs text-brand-navy break-all" dir="ltr">
                   {result.warranty_url}
                 </span>
               </div>
@@ -191,7 +194,7 @@ export default function CreateInstancePanel() {
 
           {result.qr_code && (
             <div className="mt-8 flex flex-col items-center">
-              <div className="rounded-xl border border-[#CBD2D6] bg-white p-4">
+              <div className="rounded-xl border border-brand-mist bg-white p-4">
                 <img
                   src={result.qr_code}
                   alt={`QR Code - ${result.serial_number}`}
@@ -204,14 +207,14 @@ export default function CreateInstancePanel() {
           <div className="mt-8 flex flex-wrap gap-3">
             <button
               onClick={handleDownloadQR}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 font-persian font-semibold text-white transition hover:bg-[#00246B]"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-brand-navy px-6 font-persian font-semibold text-white transition hover:bg-action-hover"
             >
               <Download size={18} strokeWidth={2} />
               دانلود QR
             </button>
             <button
               onClick={handleReset}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-6 font-persian font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-brand-navy bg-white px-6 font-persian font-medium text-brand-navy transition hover:bg-brand-warm-white"
             >
               <RotateCcw size={18} strokeWidth={2} />
               ساخت نمونه جدید

@@ -1,3 +1,5 @@
+import { formatJalaliLong } from "./jalali";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 export function getArticleImageUrl(image) {
@@ -7,9 +9,5 @@ export function getArticleImageUrl(image) {
 }
 
 export function formatArticleDate(dateString) {
-  return new Date(dateString).toLocaleDateString("fa-IR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return formatJalaliLong(dateString);
 }

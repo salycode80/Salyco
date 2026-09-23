@@ -1,10 +1,10 @@
 import { ClipboardCheck, User, Phone, MapPin, Hash, X, CheckCircle2 } from "lucide-react";
 
 const inputClass =
-  "h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20";
+  "h-12 w-full rounded-lg border border-brand-mist bg-white px-4 text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20";
 
 const labelClass =
-  "mb-1.5 flex items-center gap-2 text-sm font-medium text-[#1A1A2E]";
+  "mb-1.5 flex items-center gap-2 text-sm font-medium text-text-primary";
 
 const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }) => {
   const handleChange = (e) => {
@@ -18,16 +18,16 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }
   };
 
   return (
-    <div className="mt-6 rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] p-5 sm:p-6">
-      <h4 className="mb-4 flex items-center gap-2 font-persian text-lg font-semibold text-[#1A1A2E]" dir="rtl">
-        <ClipboardCheck size={20} className="text-[#009CDE]" strokeWidth={2} />
+    <div className="mt-6 rounded-xl border border-brand-mist bg-brand-warm-white p-5 sm:p-6">
+      <h4 className="mb-4 flex items-center gap-2 font-persian text-lg font-semibold text-text-primary" dir="rtl">
+        <ClipboardCheck size={20} className="text-brand-navy" strokeWidth={2} />
         تکمیل ثبت‌نام
       </h4>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div dir="rtl">
             <label className={labelClass}>
-              <User size={16} className="text-[#687173]" strokeWidth={2} />
+              <User size={16} className="text-text-secondary" strokeWidth={2} />
               <span className="font-persian">نام</span>
             </label>
             <input
@@ -42,7 +42,7 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }
           </div>
           <div dir="rtl">
             <label className={labelClass}>
-              <User size={16} className="text-[#687173]" strokeWidth={2} />
+              <User size={16} className="text-text-secondary" strokeWidth={2} />
               <span className="font-persian">نام خانوادگی</span>
             </label>
             <input
@@ -59,7 +59,7 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }
 
         <div dir="rtl">
           <label className={labelClass}>
-            <Phone size={16} className="text-[#687173]" strokeWidth={2} />
+            <Phone size={16} className="text-text-secondary" strokeWidth={2} />
             <span className="font-persian">شماره تلفن</span>
           </label>
           <input
@@ -75,7 +75,7 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }
 
         <div dir="rtl">
           <label className={labelClass}>
-            <MapPin size={16} className="text-[#687173]" strokeWidth={2} />
+            <MapPin size={16} className="text-text-secondary" strokeWidth={2} />
             <span className="font-persian">آدرس</span>
           </label>
           <input
@@ -90,7 +90,7 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }
 
         <div dir="rtl">
           <label className={labelClass}>
-            <Hash size={16} className="text-[#687173]" strokeWidth={2} />
+            <Hash size={16} className="text-text-secondary" strokeWidth={2} />
             <span className="font-persian">کد پستی</span>
           </label>
           <input
@@ -109,7 +109,7 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-5 font-persian font-medium text-[#003087] transition hover:bg-[#F5F7FA] disabled:opacity-60"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-brand-navy bg-white px-5 font-persian font-medium text-brand-navy transition hover:bg-brand-warm-white disabled:opacity-60"
           >
             <X size={16} strokeWidth={2} />
             لغو
@@ -117,7 +117,7 @@ const RegistrationForm = ({ formData, setFormData, onCancel, onSubmit, loading }
           <button
             type="submit"
             disabled={loading}
-            className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-lg bg-[#003087] px-5 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B] disabled:bg-[#CBD2D6] disabled:text-[#687173]"
+            className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-lg bg-brand-navy px-5 font-persian font-semibold text-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition hover:bg-action-hover disabled:bg-brand-mist disabled:text-text-secondary"
           >
             {loading ? (
               <span className="flex items-center gap-2">

@@ -17,41 +17,41 @@ export default function Gallery() {
   }, []);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-[1120px] px-6 py-10 sm:py-16">
         <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
             Products
           </p>
-          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+          <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
             تشک های سالیکو
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
+          <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
           {/* <p className="mt-4 max-w-xl font-sans text-base text-[#000c3e]/60">
             مجموعه محصولات ما را کاوش کنید
           </p> */}
         </header>
 
         {loading && (
-          <p className="font-persian text-center text-[#687173]">
+          <p className="font-persian text-center text-text-secondary">
             در حال بارگذاری...
           </p>
         )}
 
         {error && (
-          <p className="font-persian text-center text-[#D20000]">{error}</p>
+          <p className="font-persian text-center text-status-error">{error}</p>
         )}
 
         {!loading && !error && mattresses.length === 0 && (
-          <p className="font-persian text-center text-[#687173]">
+          <p className="font-persian text-center text-text-secondary">
             محصولی یافت نشد.
           </p>
         )}
 
         {!loading && mattresses.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
             {mattresses.map((mattress) => (
               <MattressCard key={mattress.slug} mattress={mattress} />
             ))}

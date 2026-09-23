@@ -15,7 +15,7 @@ import { PRODUCT_CATEGORIES } from "../config/productCategories";
 // md step matters: 2→4 columns straight from phone to desktop left tablet
 // users with two very wide cards.
 const GRID =
-  "grid grid-cols-2 gap-3 sm:gap-8 md:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3";
 
 export default function ProductsIndex() {
   const [products, setProducts] = useState([]);
@@ -31,19 +31,19 @@ export default function ProductsIndex() {
   }, []);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-[1120px] px-6 py-10 sm:py-16">
         <header className="mb-10" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
             Products
           </p>
-          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+          <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
             محصولات سالیکو
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
-          <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
+          <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
+          <p className="mt-4 max-w-xl font-persian text-base text-text-secondary">
             از تشک و باکس تخت خواب تا بالش، روتختی و تاپر — همه آنچه برای خوابی
             آرام نیاز دارید.
           </p>
@@ -58,16 +58,16 @@ export default function ProductsIndex() {
             <Link
               key={key}
               to={`/products/${key}`}
-              className="group flex flex-col overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#009CDE] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+              className="group flex flex-col overflow-hidden rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition-all duration-200  hover:border-brand-navy hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
             >
-              <div className="flex h-24 items-center justify-center bg-[#003087] transition-colors duration-300 group-hover:bg-[#00246B]">
+              <div className="flex h-24 items-center justify-center bg-brand-navy transition-colors duration-200 group-hover:bg-action-hover">
                 <Icon size={30} strokeWidth={1.5} className="text-white" />
               </div>
               <div className="flex flex-col p-3.5">
-                <p className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-[#687173]">
+                <p className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-text-secondary">
                   {en}
                 </p>
-                <h2 className="mt-1 font-persian text-sm font-bold text-[#1A1A2E]">
+                <h2 className="mt-1 font-persian text-sm font-bold text-text-primary">
                   {label}
                 </h2>
               </div>
@@ -78,10 +78,10 @@ export default function ProductsIndex() {
         {/* All products */}
         <header className="mb-8 flex items-end justify-between" dir="rtl">
           <div>
-            <h2 className="font-persian text-2xl font-bold text-[#003087]">
+            <h2 className="font-persian text-2xl font-bold text-brand-navy">
               همه محصولات
             </h2>
-            <hr className="mt-3 w-16 border-t-2 border-[#CBD2D6]" />
+            <hr className="mt-3 w-16 border-t-2 border-brand-mist" />
           </div>
         </header>
 
@@ -92,14 +92,14 @@ export default function ProductsIndex() {
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse overflow-hidden rounded-xl border border-[#CBD2D6] bg-white"
+                className="animate-pulse overflow-hidden rounded-xl border border-brand-mist bg-white"
               >
-                <div className="aspect-[4/3] w-full bg-[#CBD2D6]" />
+                <div className="aspect-[4/3] w-full bg-brand-mist" />
                 <div className="space-y-2 p-3 sm:p-6">
-                  <div className="h-4 w-4/5 rounded bg-[#CBD2D6]" />
-                  <div className="h-3 w-full rounded bg-[#E5E9EB]" />
-                  <div className="h-3 w-2/3 rounded bg-[#E5E9EB]" />
-                  <div className="mt-3 h-5 w-1/2 rounded bg-[#CBD2D6]" />
+                  <div className="h-4 w-4/5 rounded bg-brand-mist" />
+                  <div className="h-3 w-full rounded bg-brand-mist" />
+                  <div className="h-3 w-2/3 rounded bg-brand-mist" />
+                  <div className="mt-3 h-5 w-1/2 rounded bg-brand-mist" />
                 </div>
               </div>
             ))}
@@ -107,15 +107,15 @@ export default function ProductsIndex() {
         )}
 
         {error && (
-          <p className="font-persian text-center text-[#D20000]">{error}</p>
+          <p className="font-persian text-center text-status-error">{error}</p>
         )}
 
         {!loading && !error && products.length === 0 && (
           <div className="text-center" dir="rtl">
-            <p className="font-persian text-[#687173]">محصولی یافت نشد.</p>
+            <p className="font-persian text-text-secondary">محصولی یافت نشد.</p>
             <Link
               to="/products/mattress"
-              className="mt-4 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] hover:text-[#009CDE]"
+              className="mt-4 inline-flex items-center gap-2 font-persian text-sm font-medium text-brand-navy hover:text-brand-navy"
             >
               مشاهده تشک‌ها
               <ArrowLeft size={16} />

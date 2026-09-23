@@ -331,3 +331,70 @@ export async function listAdminCouponRedemptions(id) {
     throw new Error(msg, { cause: err });
   }
 }
+
+// ── Gallery (گالری تصاویر) ────────────────────────────────────────────────────
+
+export async function listAdminGallery() {
+  try {
+    const res = await api.get("/api/admin/gallery/");
+    return res.data;
+  } catch (err) {
+    const msg = err.response?.data?.detail || "خطا در دریافت گالری";
+    throw new Error(msg, { cause: err });
+  }
+}
+
+// The image goes up as multipart; axios sets the boundary itself, so the
+// Content-Type must not be set by hand here.
+function galleryFormData(data) {
+  const form = new FormData();
+  if (data.image instanceof File) form.append("image", data.image);
+  // Only send the fields actually present, so a PATCH that just flips
+  // is_active does not blank the title.
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== "image" && value !== undefined && value !== null) {
+      form.append(key, value);
+    }
+  });
+  return form;
+}
+
+export async function createAdminGalleryImage(data) {
+  try {
+    const res = await api.post("/api/admin/gallery/", galleryFormData(data));
+    return res.data;
+  } catch (err) {
+    const data_ = err.response?.data;
+    const firstError =
+      data_ && typeof data_ === "object"
+        ? data_.detail || Object.values(data_).flat()[0]
+        : null;
+    throw new Error(firstError || "خطا در افزودن تصویر", { cause: err });
+  }
+}
+
+export async function updateAdminGalleryImage(id, data) {
+  try {
+    const res = await api.patch(
+      `/api/admin/gallery/${id}/`,
+      galleryFormData(data)
+    );
+    return res.data;
+  } catch (err) {
+    const data_ = err.response?.data;
+    const firstError =
+      data_ && typeof data_ === "object"
+        ? data_.detail || Object.values(data_).flat()[0]
+        : null;
+    throw new Error(firstError || "خطا در بروزرسانی تصویر", { cause: err });
+  }
+}
+
+export async function deleteAdminGalleryImage(id) {
+  try {
+    await api.delete(`/api/admin/gallery/${id}/`);
+  } catch (err) {
+    const msg = err.response?.data?.detail || "خطا در حذف تصویر";
+    throw new Error(msg, { cause: err });
+  }
+}

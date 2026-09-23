@@ -25,8 +25,11 @@ export const PRODUCT_CATEGORIES = [
     sizeMode: "standard",
     warrantyRegistrable: true,
     heading: "تشک‌های سالیکو",
+    // The category holds the three micro-bonell models plus a guest mattress, so
+    // this must not name a single filling. Design.md §10 forbids attributing
+    // memory foam to the Hermes/Imperial/Prestige line.
     blurb:
-      "مجموعه تشک‌های مموری فوم و طبی سالیکو با گارانتی متفاوت و کیفیت ممتاز",
+      "مجموعه تشک‌های سالیکو؛ از مدل‌های لوکس فنری تا تشک مهمان، با گارانتی معتبر",
   },
   {
     key: "bedbox",

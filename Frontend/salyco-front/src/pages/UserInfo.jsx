@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../hooks/UseAuth";
+import { formatPersianPrice, toPersianNumber } from "../utils/persian";
+import { formatJalali } from "../utils/jalali";
 import {
   User,
   Mail,
@@ -99,11 +101,6 @@ export default function UserInfo() {
     }
   }, [isAuthenticated]);
 
-  const getUserInitials = (username) => {
-    if (!username) return "?";
-    return username.charAt(0).toUpperCase();
-  };
-
   const handleSave = async () => {
     setSaving(true);
     setError("");
@@ -167,8 +164,8 @@ export default function UserInfo() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
-        <div className="animate-pulse text-[#003087] text-sm">
+      <div className="min-h-screen flex items-center justify-center bg-brand-warm-white">
+        <div className="animate-pulse text-brand-navy text-sm">
           در حال بارگذاری...
         </div>
       </div>
@@ -176,15 +173,15 @@ export default function UserInfo() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] pt-32 pb-16 px-4" dir="rtl">
+    <div className="min-h-screen bg-brand-warm-white pt-32 pb-16 px-4" dir="rtl">
       <div className="mx-auto max-w-2xl">
         {/* Header card */}
-        <div className="rounded-xl overflow-hidden shadow-[0_1px_4px_rgba(0,48,135,0.06)] mb-6">
-          <div className="bg-[#003087] px-6 py-8 flex items-center gap-4">
+        <div className="rounded-xl overflow-hidden shadow-[0_1px_4px_rgba(5,46,95,0.06)] mb-6">
+          <div className="bg-brand-navy px-6 py-8 flex items-center gap-4">
             <div className="w-20 h-20 rounded-full bg-white/15 border-2 border-white/30 flex items-center justify-center flex-shrink-0">
-              <span className="text-3xl font-bold text-white">
-                {getUserInitials(user?.username)}
-              </span>
+              {/* A person glyph, not initials: the username is a phone number,
+                  so initials would print its leading zero. */}
+              <User size={34} strokeWidth={1.75} className="text-white" aria-hidden="true" />
             </div>
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-white truncate">
@@ -205,16 +202,16 @@ export default function UserInfo() {
         </div>
 
         {/* Info card */}
-        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,48,135,0.06)] border border-[#CBD2D6] overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#CBD2D6]">
-            <h2 className="text-base font-bold text-[#1A1A2E]">اطلاعات حساب</h2>
+        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(5,46,95,0.06)] border border-brand-mist overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-brand-mist">
+            <h2 className="text-base font-bold text-text-primary">اطلاعات حساب</h2>
             {!editing ? (
               <button
                 onClick={() => {
                   setEditing(true);
                   setSuccess("");
                 }}
-                className="flex items-center gap-1.5 text-sm font-medium text-[#003087] hover:text-[#00246B] transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium text-brand-navy hover:text-action-hover transition-colors"
               >
                 <Edit3 size={15} />
                 ویرایش
@@ -222,7 +219,7 @@ export default function UserInfo() {
             ) : (
               <button
                 onClick={cancelEdit}
-                className="flex items-center gap-1.5 text-sm font-medium text-[#687173] hover:text-[#1A1A2E] transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
               >
                 <X size={15} />
                 انصراف
@@ -230,10 +227,10 @@ export default function UserInfo() {
             )}
           </div>
 
-          <div className="divide-y divide-[#CBD2D6]">
+          <div className="divide-y divide-brand-mist">
             {/* Username - read only */}
             <Field icon={User} label="نام کاربری">
-              <p className="text-sm font-medium text-[#1A1A2E]">
+              <p className="text-sm font-medium text-text-primary">
                 {user?.username}
               </p>
             </Field>
@@ -307,8 +304,8 @@ export default function UserInfo() {
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })
                   }
-                  className="w-full text-sm rounded-lg border border-[#CBD2D6] px-3 py-1.5
-                             focus:outline-none focus:border-2 focus:border-[#003087] resize-none"
+                  className="w-full text-sm rounded-lg border border-brand-mist px-3 py-1.5
+                             focus:outline-none focus:border-2 focus:border-brand-navy resize-none"
                 />
               ) : (
                 <ReadValue value={user?.address} />
@@ -333,21 +330,21 @@ export default function UserInfo() {
             {/* Join date */}
             {user?.date_joined && (
               <Field icon={Calendar} label="تاریخ عضویت">
-                <p className="text-sm font-medium text-[#1A1A2E]">
-                  {new Date(user.date_joined).toLocaleDateString("fa-IR")}
+                <p className="text-sm font-medium text-text-primary">
+                  {formatJalali(user.date_joined) || "—"}
                 </p>
               </Field>
             )}
           </div>
 
           {editing && (
-            <div className="px-6 py-4 bg-[#F5F7FA] flex items-center justify-between gap-3">
-              {error && <p className="text-xs text-[#D20000]">{error}</p>}
+            <div className="px-6 py-4 bg-brand-warm-white flex items-center justify-between gap-3">
+              {error && <p className="text-xs text-status-error">{error}</p>}
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="flex items-center gap-1.5 text-sm font-medium text-white
-                           bg-[#003087] hover:bg-[#00246B] disabled:opacity-60
+                           bg-brand-navy hover:bg-action-hover disabled:opacity-60
                            rounded-lg px-4 py-2 transition-colors mr-auto"
               >
                 <Save size={15} />
@@ -359,26 +356,26 @@ export default function UserInfo() {
 
         {/* Success / error banners for profile (view mode) */}
         {success && !editing && (
-          <p className="flex items-center justify-center gap-1.5 text-sm text-[#019C34] mt-3">
+          <p className="flex items-center justify-center gap-1.5 text-sm text-status-success mt-3">
             <CheckCircle2 size={15} />
             {success}
           </p>
         )}
         {error && !editing && (
-          <p className="text-sm text-[#D20000] mt-3 text-center">{error}</p>
+          <p className="text-sm text-status-error mt-3 text-center">{error}</p>
         )}
 
         {/* Password change card */}
-        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,48,135,0.06)] border border-[#CBD2D6] overflow-hidden mt-6">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#CBD2D6]">
-            <h2 className="flex items-center gap-2 text-base font-bold text-[#1A1A2E]">
-              <Lock size={16} className="text-[#687173]" />
+        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(5,46,95,0.06)] border border-brand-mist overflow-hidden mt-6">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-brand-mist">
+            <h2 className="flex items-center gap-2 text-base font-bold text-text-primary">
+              <Lock size={16} className="text-text-secondary" />
               تغییر رمز عبور
             </h2>
             <button
               type="button"
               onClick={() => setShowPw((s) => !s)}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#687173] hover:text-[#1A1A2E] transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
               {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
               {showPw ? "پنهان کردن" : "نمایش"}
@@ -430,9 +427,9 @@ export default function UserInfo() {
               onChange={(v) => setPwForm({ ...pwForm, confirm_password: v })}
             />
 
-            {pwError && <p className="text-xs text-[#D20000]">{pwError}</p>}
+            {pwError && <p className="text-xs text-status-error">{pwError}</p>}
             {pwSuccess && (
-              <p className="flex items-center gap-1.5 text-xs text-[#019C34]">
+              <p className="flex items-center gap-1.5 text-xs text-status-success">
                 <CheckCircle2 size={14} />
                 {pwSuccess}
               </p>
@@ -447,7 +444,7 @@ export default function UserInfo() {
                 !pwForm.confirm_password
               }
               className="flex items-center gap-1.5 text-sm font-medium text-white
-                         bg-[#003087] hover:bg-[#00246B] disabled:opacity-50
+                         bg-brand-navy hover:bg-action-hover disabled:opacity-50
                          disabled:cursor-not-allowed rounded-lg px-4 py-2 transition-colors"
             >
               <Lock size={15} />
@@ -457,43 +454,43 @@ export default function UserInfo() {
         </div>
 
         {/* Orders Section */}
-        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(0,48,135,0.06)] border border-[#CBD2D6] overflow-hidden mt-6">
-          <div className="flex items-center gap-2 px-6 py-4 border-b border-[#CBD2D6]">
-            <ShoppingBag size={18} className="text-[#003087]" />
-            <h2 className="text-base font-bold text-[#1A1A2E]">سفارش‌های من</h2>
+        <div className="bg-white rounded-xl shadow-[0_1px_4px_rgba(5,46,95,0.06)] border border-brand-mist overflow-hidden mt-6">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-brand-mist">
+            <ShoppingBag size={18} className="text-brand-navy" />
+            <h2 className="text-base font-bold text-text-primary">سفارش‌های من</h2>
           </div>
 
           <div className="p-6">
             {ordersLoading ? (
-              <p className="text-center text-sm text-[#687173]">در حال بارگذاری...</p>
+              <p className="text-center text-sm text-text-secondary">در حال بارگذاری...</p>
             ) : orders.length === 0 ? (
-              <p className="text-center text-sm text-[#687173]">هنوز سفارشی ثبت نشده است.</p>
+              <p className="text-center text-sm text-text-secondary">هنوز سفارشی ثبت نشده است.</p>
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => {
                   const isPhone = order.method === "PHONE";
                   const isExpanded = expandedOrder === order.id;
                   const STATUS_META = {
-                    PENDING: { label: "در انتظار", cls: "bg-[#FFF8E1] text-[#F5BA2E]" },
-                    CONFIRMED: { label: "تأیید شده", cls: "bg-[#E6F0FB] text-[#003087]" },
-                    SHIPPED: { label: "ارسال شده", cls: "bg-[#E6F4EA] text-[#019C34]" },
-                    CANCELLED: { label: "لغو شده", cls: "bg-[#FDE7E7] text-[#D20000]" },
+                    PENDING: { label: "در انتظار", cls: "bg-status-warning-bg text-status-warning" },
+                    CONFIRMED: { label: "تأیید شده", cls: "bg-status-info-bg text-brand-navy" },
+                    SHIPPED: { label: "ارسال شده", cls: "bg-status-success-bg text-status-success" },
+                    CANCELLED: { label: "لغو شده", cls: "bg-status-error-bg text-status-error" },
                   };
 
                   return (
                     <div
                       key={order.id}
-                      className="rounded-lg border border-[#CBD2D6] bg-[#F5F7FA] p-4"
+                      className="rounded-lg border border-brand-mist bg-brand-warm-white p-4"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-[#003087]">#{order.id}</span>
+                            <span className="font-bold text-brand-navy">#{order.id}</span>
                             <span
                               className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                                 isPhone
-                                  ? "bg-[#E6F4EA] text-[#019C34]"
-                                  : "bg-[#E6F0FB] text-[#003087]"
+                                  ? "bg-status-success-bg text-status-success"
+                                  : "bg-status-info-bg text-brand-navy"
                               }`}
                             >
                               {isPhone ? <Phone size={10} /> : <Truck size={10} />}
@@ -507,21 +504,21 @@ export default function UserInfo() {
                               {STATUS_META[order.status]?.label || order.status}
                             </span>
                           </div>
-                          <p className="mt-1 text-xs text-[#687173]">
-                            {new Date(order.created_at).toLocaleDateString("fa-IR")}
+                          <p className="mt-1 text-xs text-text-secondary">
+                            {formatJalali(order.created_at) || "—"}
                           </p>
                         </div>
                         <div className="text-left">
-                          <p className="font-bold text-[#003087]">
-                            {Number(order.total_amount).toLocaleString()}
-                            <span className="mr-1 text-xs font-normal text-[#687173]">تومان</span>
+                          <p className="font-bold text-brand-navy">
+                            {formatPersianPrice(order.total_amount)}
+                            <span className="mr-1 text-xs font-normal text-text-secondary">تومان</span>
                           </p>
                         </div>
                       </div>
 
                       {/* Phone order specific fields */}
                       {isPhone && (order.customer_phone || order.call_time_preference) && (
-                        <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#687173]">
+                        <div className="mt-3 flex flex-wrap gap-3 text-xs text-text-secondary">
                           {order.customer_phone && (
                             <span className="inline-flex items-center gap-1">
                               <Phone size={12} />
@@ -541,27 +538,30 @@ export default function UserInfo() {
                       <button
                         type="button"
                         onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#003087] hover:text-[#009CDE]"
+                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-navy hover:text-brand-navy"
                       >
                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        {order.items?.length || 0} قلم کالا
+                        {toPersianNumber(order.items?.length || 0)} قلم کالا
                       </button>
 
                       {/* Items list */}
                       {isExpanded && order.items?.length > 0 && (
-                        <div className="mt-2 divide-y divide-[#CBD2D6] rounded-lg border border-[#CBD2D6] bg-white">
+                        <div className="mt-2 divide-y divide-brand-mist rounded-lg border border-brand-mist bg-white">
                           {order.items.map((item) => (
                             <div
                               key={item.id}
                               className="flex items-center justify-between px-3 py-2 text-xs"
                             >
-                              <span className="text-[#1A1A2E]">
+                              <span className="text-text-primary">
                                 {item.mattress_name}
                                 {item.size_label ? ` (${item.size_label})` : ""}
-                                <span className="text-[#687173]"> × {item.quantity}</span>
+                                <span className="text-text-secondary">
+                                  {" "}
+                                  × {toPersianNumber(item.quantity)}
+                                </span>
                               </span>
-                              <span className="text-[#687173]">
-                                {Number(item.line_total).toLocaleString()} تومان
+                              <span className="text-text-secondary">
+                                {formatPersianPrice(item.line_total)} تومان
                               </span>
                             </div>
                           ))}
@@ -584,9 +584,9 @@ export default function UserInfo() {
 function Field({ icon: Icon, label, children }) {
   return (
     <div className="flex items-center gap-3 px-6 py-4">
-      <Icon size={18} className="text-[#687173] flex-shrink-0" />
+      <Icon size={18} className="text-text-secondary flex-shrink-0" />
       <div className="flex-1">
-        <p className="text-xs text-[#687173] mb-0.5">{label}</p>
+        <p className="text-xs text-text-secondary mb-0.5">{label}</p>
         {children}
       </div>
     </div>
@@ -595,7 +595,7 @@ function Field({ icon: Icon, label, children }) {
 
 function ReadValue({ value }) {
   return (
-    <p className="text-sm font-medium text-[#1A1A2E]">{value || "—"}</p>
+    <p className="text-sm font-medium text-text-primary">{value || "—"}</p>
   );
 }
 
@@ -608,8 +608,8 @@ function TextInput({ value, onChange, type = "text", dir, name, autoComplete }) 
       dir={dir}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full text-sm rounded-lg border border-[#CBD2D6] px-3 py-1.5
-                 focus:outline-none focus:border-2 focus:border-[#003087]"
+      className="w-full text-sm rounded-lg border border-brand-mist px-3 py-1.5
+                 focus:outline-none focus:border-2 focus:border-brand-navy"
     />
   );
 }
@@ -617,7 +617,7 @@ function TextInput({ value, onChange, type = "text", dir, name, autoComplete }) 
 function PasswordInput({ label, value, onChange, show, name, autoComplete }) {
   return (
     <div>
-      <label className="block text-xs text-[#687173] mb-1">{label}</label>
+      <label className="block text-xs text-text-secondary mb-1">{label}</label>
       <input
         type={show ? "text" : "password"}
         name={name}
@@ -625,8 +625,8 @@ function PasswordInput({ label, value, onChange, show, name, autoComplete }) {
         dir="ltr"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full text-sm rounded-lg border border-[#CBD2D6] px-3 py-2
-                   focus:outline-none focus:border-2 focus:border-[#003087] text-right"
+        className="w-full text-sm rounded-lg border border-brand-mist px-3 py-2
+                   focus:outline-none focus:border-2 focus:border-brand-navy text-right"
       />
     </div>
   );

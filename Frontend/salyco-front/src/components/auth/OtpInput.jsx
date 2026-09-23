@@ -59,7 +59,7 @@ export function OtpInput({ value, onChange, onComplete, loading }) {
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           aria-label={`رقم ${i + 1} کد تأیید`}
-          className="h-14 w-12 rounded-lg border border-[#CBD2D6] text-center text-[24px] font-bold text-[#1A1A2E] focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20 outline-none transition-all"
+          className="h-14 w-12 rounded-lg border border-brand-mist text-center text-[24px] font-bold text-text-primary focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20 outline-none transition-all"
         />
       ))}
     </div>
@@ -97,9 +97,9 @@ export function OtpCountdown({ expiresAt, onResend, onResendReady }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <p className="text-[13px] text-[#687173]">
+      <p className="text-[13px] text-text-secondary">
         کد تأیید تا{" "}
-        <span className="font-medium text-[#1A1A2E]">
+        <span className="font-medium text-text-primary">
           {minutes}:{seconds.toString().padStart(2, "0")}
         </span>{" "}
         معتبر است
@@ -108,7 +108,7 @@ export function OtpCountdown({ expiresAt, onResend, onResendReady }) {
         <button
           type="button"
           onClick={onResend}
-          className="flex items-center gap-1 text-[13px] font-medium text-[#003087] hover:underline"
+          className="flex items-center gap-1 text-[13px] font-medium text-brand-navy hover:underline"
         >
           <RefreshIcon />
           ارسال مجدد کد

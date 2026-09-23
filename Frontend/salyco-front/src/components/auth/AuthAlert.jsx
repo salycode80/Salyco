@@ -2,8 +2,8 @@ export function AuthAlert({ type, message }) {
   if (!message) return null;
 
   const styles = {
-    success: "bg-[#E6F4EA] border-[#CBD2D6] text-[#019C34]",
-    error: "bg-[#FDE7E7] border-[#CBD2D6] text-[#D20000]",
+    success: "bg-status-success-bg border-brand-mist text-status-success",
+    error: "bg-status-error-bg border-brand-mist text-status-error",
   };
 
   const icons = {

@@ -33,19 +33,20 @@ import {
   Check,
   AlertTriangle,
 } from "lucide-react";
+import { formatJalali, formatJalaliDateTime } from "../../utils/jalali";
 
 const faNum = (n) => Number(n ?? 0).toLocaleString("fa-IR");
 
 // ── stat card ────────────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, accent = "text-[#003087]" }) {
+function StatCard({ icon: Icon, label, value, accent = "text-brand-navy" }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#CBD2D6] bg-white p-5 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#F5F7FA] ${accent}`}>
+    <div className="flex items-center gap-4 rounded-xl border border-brand-mist bg-white p-5 shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
+      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-warm-white ${accent}`}>
         <Icon size={24} strokeWidth={1.75} />
       </div>
       <div dir="rtl">
-        <p className="font-persian text-sm text-[#687173]">{label}</p>
-        <p className="mt-0.5 font-persian text-2xl font-bold text-[#1A1A2E]">{faNum(value)}</p>
+        <p className="font-persian text-sm text-text-secondary">{label}</p>
+        <p className="mt-0.5 font-persian text-2xl font-bold text-text-primary">{faNum(value)}</p>
       </div>
     </div>
   );
@@ -56,8 +57,8 @@ function Badge({ ok, yes, no }) {
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
         ok
-          ? "bg-[#E6F4EA] text-[#019C34]"
-          : "bg-[#F5F7FA] text-[#687173]"
+          ? "bg-status-success-bg text-status-success"
+          : "bg-brand-warm-white text-text-secondary"
       }`}
     >
       {ok ? <CheckCircle2 size={13} /> : <Circle size={13} />}
@@ -73,14 +74,14 @@ function Badge({ ok, yes, no }) {
 const WARRANTY_STATES = {
   PENDING: {
     label: "در انتظار تأیید",
-    fill: "bg-[#E7F3FB]",
-    text: "text-[#009CDE]",
+    fill: "bg-status-info-bg",
+    text: "text-brand-navy",
     Icon: Clock,
   },
   REJECTED: {
     label: "رد شده",
-    fill: "bg-[#FDE7E7]",
-    text: "text-[#D20000]",
+    fill: "bg-status-error-bg",
+    text: "text-status-error",
     Icon: XCircle,
   },
 };
@@ -168,14 +169,14 @@ function ProductField({ data, mattresses, onSaved, autoOpen = false }) {
 
   if (!editing) {
     return (
-      <div className="rounded-xl border border-[#CBD2D6] bg-white p-3">
-        <p className="font-persian text-xs text-[#687173]">محصول</p>
-        <p className="mt-0.5 font-persian text-sm font-medium text-[#1A1A2E]">
+      <div className="rounded-xl border border-brand-mist bg-white p-3">
+        <p className="font-persian text-xs text-text-secondary">محصول</p>
+        <p className="mt-0.5 font-persian text-sm font-medium text-text-primary">
           {data.mattress?.name}
         </p>
         <button
           onClick={open}
-          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#003087] bg-white px-2.5 py-1 font-persian text-xs font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
+          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-brand-navy bg-white px-2.5 py-1 font-persian text-xs font-medium text-brand-navy transition hover:bg-brand-warm-white"
         >
           <Pencil size={13} /> ویرایش مدل
         </button>
@@ -184,8 +185,8 @@ function ProductField({ data, mattresses, onSaved, autoOpen = false }) {
   }
 
   return (
-    <div className="rounded-xl border-2 border-[#003087] bg-white p-3 sm:col-span-2">
-      <p className="mb-1.5 font-persian text-xs text-[#687173]">
+    <div className="rounded-xl border-2 border-brand-navy bg-white p-3 sm:col-span-2">
+      <p className="mb-1.5 font-persian text-xs text-text-secondary">
         تغییر مدل محصول
       </p>
       <select
@@ -195,7 +196,7 @@ function ProductField({ data, mattresses, onSaved, autoOpen = false }) {
           setConfirming(false);
         }}
         disabled={saving}
-        className="h-11 w-full rounded-lg border border-[#CBD2D6] bg-white px-3 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20 disabled:bg-[#F5F7FA]"
+        className="h-11 w-full rounded-lg border border-brand-mist bg-white px-3 font-persian text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20 disabled:bg-brand-warm-white"
       >
         {Object.entries(grouped).map(([label, items]) => (
           <optgroup key={label} label={label}>
@@ -208,14 +209,14 @@ function ProductField({ data, mattresses, onSaved, autoOpen = false }) {
         ))}
       </select>
 
-      <p className="mt-2 font-persian text-xs leading-6 text-[#687173]">
+      <p className="mt-2 font-persian text-xs leading-6 text-text-secondary">
         شماره سریال و QR کد تغییر نمی‌کند؛ فقط مدل محصولی که با اسکن نمایش داده
         می‌شود جابه‌جا می‌شود.
       </p>
 
       {confirming && (
-        <div className="mt-2 rounded-lg border border-[#D20000] bg-[#FDE7E7] p-3">
-          <p className="flex items-start gap-2 font-persian text-xs leading-6 text-[#D20000]">
+        <div className="mt-2 rounded-lg border border-status-error bg-status-error-bg p-3">
+          <p className="flex items-start gap-2 font-persian text-xs leading-6 text-status-error">
             <AlertTriangle size={14} className="mt-1 shrink-0" />
             <span>
               این محصول به مشتری فروخته شده است. تغییر مدل، محصول ثبت‌شده و مدت
@@ -226,14 +227,14 @@ function ProductField({ data, mattresses, onSaved, autoOpen = false }) {
       )}
 
       {error && (
-        <p className="mt-2 font-persian text-xs text-[#D20000]">{error}</p>
+        <p className="mt-2 font-persian text-xs text-status-error">{error}</p>
       )}
 
       <div className="mt-3 flex gap-2">
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-[#003087] px-4 font-persian text-sm font-semibold text-white transition hover:bg-[#00246B] disabled:bg-[#CBD2D6] disabled:text-[#687173]"
+          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-brand-navy px-4 font-persian text-sm font-semibold text-white transition hover:bg-action-hover disabled:bg-brand-mist disabled:text-text-secondary"
         >
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -245,7 +246,7 @@ function ProductField({ data, mattresses, onSaved, autoOpen = false }) {
         <button
           onClick={close}
           disabled={saving}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm font-medium text-[#687173] transition hover:bg-[#F5F7FA]"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-brand-mist bg-white px-4 font-persian text-sm font-medium text-text-secondary transition hover:bg-brand-warm-white"
         >
           انصراف
         </button>
@@ -281,50 +282,50 @@ function InstanceModal({ serial, mattresses, startEditing, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1A1A2E]/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/40 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-[#CBD2D6] bg-white p-6 shadow-[0_4px_16px_rgba(0,48,135,0.1)] sm:p-8"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-brand-mist bg-white p-6 shadow-[0_4px_16px_rgba(5,46,95,0.1)] sm:p-8"
         dir="rtl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <p className="font-sans text-xs uppercase tracking-[0.25em] text-[#687173]">
+            <p className="font-sans text-xs uppercase tracking-[0.25em] text-text-secondary">
               Product Instance
             </p>
-            <h3 className="mt-1 font-mono text-lg font-bold text-[#1A1A2E]" dir="ltr">
+            <h3 className="mt-1 font-mono text-lg font-bold text-text-primary" dir="ltr">
               {serial}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-[#687173] transition hover:bg-[#F5F7FA]"
+            className="rounded-full p-2 text-text-secondary transition hover:bg-brand-warm-white"
           >
             <X size={20} />
           </button>
         </div>
 
         {error && (
-          <p className="font-persian text-sm text-[#D20000]">{error}</p>
+          <p className="font-persian text-sm text-status-error">{error}</p>
         )}
 
         {!data && !error && (
           <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-[#003087]" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-navy" />
           </div>
         )}
 
         {data && (
           <div className="space-y-6">
             {/* QR + status */}
-            <div className="flex flex-col items-center gap-4 rounded-xl bg-[#F5F7FA] p-5 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-center gap-4 rounded-xl bg-brand-warm-white p-5 sm:flex-row sm:items-center">
               {data.qr_code && (
                 <img
                   src={data.qr_code}
                   alt={`QR ${data.serial_number}`}
-                  className="h-36 w-36 rounded-xl border border-[#CBD2D6] bg-white p-2"
+                  className="h-36 w-36 rounded-xl border border-brand-mist bg-white p-2"
                 />
               )}
               <div className="flex-1 space-y-2 text-center sm:text-right">
@@ -334,14 +335,14 @@ function InstanceModal({ serial, mattresses, startEditing, onClose, onSaved }) {
                 </div>
                 {data.warranty_status === "REJECTED" &&
                   data.warranty_rejection_reason && (
-                    <p className="rounded-lg border border-[#D20000] bg-[#FDE7E7] px-3 py-2 font-persian text-xs leading-6 text-[#D20000]">
+                    <p className="rounded-lg border border-status-error bg-status-error-bg px-3 py-2 font-persian text-xs leading-6 text-status-error">
                       دلیل رد: {data.warranty_rejection_reason}
                     </p>
                   )}
                 {data.qr_code && (
                   <button
                     onClick={handleDownloadQR}
-                    className="mt-2 inline-flex items-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-4 py-2 font-persian text-sm font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
+                    className="mt-2 inline-flex items-center gap-2 rounded-lg border-2 border-brand-navy bg-white px-4 py-2 font-persian text-sm font-medium text-brand-navy transition hover:bg-brand-warm-white"
                   >
                     <Download size={15} /> دانلود QR
                   </button>
@@ -364,11 +365,11 @@ function InstanceModal({ serial, mattresses, startEditing, onClose, onSaved }) {
               />
               <Field label="برند" value={data.mattress?.brand || "—"} />
               <Field label="مدت گارانتی" value={`${faNum(data.warranty_months)} ماه`} />
-              <Field label="تاریخ تولید" value={data.manufacture_date || "—"} />
-              <Field label="تاریخ فعال‌سازی" value={data.activation_date || "—"} />
+              <Field label="تاریخ تولید" value={formatJalali(data.manufacture_date) || "—"} />
+              <Field label="تاریخ فعال‌سازی" value={formatJalali(data.activation_date) || "—"} />
               <Field
                 label="تاریخ انقضای گارانتی"
-                value={data.warranty_expiration_date || "—"}
+                value={formatJalali(data.warranty_expiration_date) || "—"}
               />
               {data.warranty_remaining_days != null && (
                 <Field
@@ -380,18 +381,18 @@ function InstanceModal({ serial, mattresses, startEditing, onClose, onSaved }) {
 
             {/* customer */}
             <div>
-              <h4 className="mb-3 font-persian text-sm font-semibold text-[#687173]">
+              <h4 className="mb-3 font-persian text-sm font-semibold text-text-secondary">
                 اطلاعات مشتری
               </h4>
               {data.customer ? (
-                <div className="space-y-2 rounded-xl border border-[#CBD2D6] bg-white p-4">
+                <div className="space-y-2 rounded-xl border border-brand-mist bg-white p-4">
                   <InfoRow icon={Users} value={`${data.customer.first_name} ${data.customer.last_name}`} />
                   <InfoRow icon={Phone} value={data.customer.phone_number || "—"} ltr />
                   <InfoRow icon={MapPin} value={data.customer.address || "—"} />
                   <InfoRow icon={Mail} value={data.customer.postal_code || "—"} ltr />
                 </div>
               ) : (
-                <p className="rounded-xl bg-[#F5F7FA] p-4 font-persian text-sm text-[#687173]">
+                <p className="rounded-xl bg-brand-warm-white p-4 font-persian text-sm text-text-secondary">
                   این محصول هنوز به مشتری فروخته نشده است.
                 </p>
               )}
@@ -405,9 +406,9 @@ function InstanceModal({ serial, mattresses, startEditing, onClose, onSaved }) {
 
 function Field({ label, value }) {
   return (
-    <div className="rounded-xl border border-[#CBD2D6] bg-white p-3">
-      <p className="font-persian text-xs text-[#687173]">{label}</p>
-      <p className="mt-0.5 font-persian text-sm font-medium text-[#1A1A2E]">{value}</p>
+    <div className="rounded-xl border border-brand-mist bg-white p-3">
+      <p className="font-persian text-xs text-text-secondary">{label}</p>
+      <p className="mt-0.5 font-persian text-sm font-medium text-text-primary">{value}</p>
     </div>
   );
 }
@@ -415,9 +416,9 @@ function Field({ label, value }) {
 function InfoRow({ icon: Icon, value, ltr }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon size={15} className="shrink-0 text-[#003087]" />
+      <Icon size={15} className="shrink-0 text-brand-navy" />
       <span
-        className={`font-persian text-sm text-[#1A1A2E] ${ltr ? "font-mono" : ""}`}
+        className={`font-persian text-sm text-text-primary ${ltr ? "font-mono" : ""}`}
         dir={ltr ? "ltr" : "rtl"}
       >
         {value}
@@ -504,26 +505,26 @@ export default function DashboardPanel() {
     <>
       {/* header */}
       <header className="mb-8" dir="rtl">
-        <p className="flex items-center gap-2 font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+        <p className="flex items-center gap-2 font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
           <LayoutDashboard size={16} /> CRM Dashboard
         </p>
-        <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+        <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
           داشبورد مدیریت
         </h1>
-        <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
+        <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
       </header>
 
       {/* stats */}
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Boxes} label="کل محصولات تولیدی" value={stats?.total_instances} accent="text-[#003087]" />
-        <StatCard icon={Package} label="فروخته شده" value={stats?.sold_instances} accent="text-[#019C34]" />
-        <StatCard icon={ShieldCheck} label="گارانتی فعال" value={stats?.active_warranties} accent="text-[#003087]" />
-        <StatCard icon={Clock} label="در انتظار تأیید" value={stats?.pending_warranties} accent="text-[#009CDE]" />
-        <StatCard icon={Users} label="مشتریان" value={stats?.total_customers} accent="text-[#009CDE]" />
-        <StatCard icon={Boxes} label="موجود در انبار" value={stats?.in_stock_instances} accent="text-[#687173]" />
-        <StatCard icon={ShieldCheck} label="در دوره گارانتی" value={stats?.under_warranty} accent="text-[#019C34]" />
-        <StatCard icon={ShieldOff} label="گارانتی منقضی" value={stats?.expired_warranties} accent="text-[#D20000]" />
-        <StatCard icon={LayoutDashboard} label="مدل محصولات" value={stats?.by_mattress?.length} accent="text-[#003087]" />
+        <StatCard icon={Boxes} label="کل محصولات تولیدی" value={stats?.total_instances} accent="text-brand-navy" />
+        <StatCard icon={Package} label="فروخته شده" value={stats?.sold_instances} accent="text-status-success" />
+        <StatCard icon={ShieldCheck} label="گارانتی فعال" value={stats?.active_warranties} accent="text-brand-navy" />
+        <StatCard icon={Clock} label="در انتظار تأیید" value={stats?.pending_warranties} accent="text-brand-navy" />
+        <StatCard icon={Users} label="مشتریان" value={stats?.total_customers} accent="text-brand-navy" />
+        <StatCard icon={Boxes} label="موجود در انبار" value={stats?.in_stock_instances} accent="text-text-secondary" />
+        <StatCard icon={ShieldCheck} label="در دوره گارانتی" value={stats?.under_warranty} accent="text-status-success" />
+        <StatCard icon={ShieldOff} label="گارانتی منقضی" value={stats?.expired_warranties} accent="text-status-error" />
+        <StatCard icon={LayoutDashboard} label="مدل محصولات" value={stats?.by_mattress?.length} accent="text-brand-navy" />
       </div>
 
       {/* tabs */}
@@ -536,17 +537,17 @@ export default function DashboardPanel() {
         </TabButton>
         <button
           onClick={handleExport}
-          className="mr-auto inline-flex items-center gap-2 rounded-lg bg-[#003087] px-5 py-2.5 font-persian text-sm font-semibold text-white transition hover:bg-[#00246B]"
+          className="mr-auto inline-flex items-center gap-2 rounded-lg bg-brand-navy px-5 py-2.5 font-persian text-sm font-semibold text-white transition hover:bg-action-hover"
         >
           <Download size={16} /> خروجی CSV
         </button>
       </div>
 
       {/* filters */}
-      <div className="mb-6 rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)]" dir="rtl">
+      <div className="mb-6 rounded-xl border border-brand-mist bg-white p-4 shadow-[0_1px_4px_rgba(5,46,95,0.06)]" dir="rtl">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[220px] flex-1">
-            <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#687173]" />
+            <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -555,7 +556,7 @@ export default function DashboardPanel() {
                   ? "جستجوی سریال، نام یا تلفن مشتری..."
                   : "جستجوی نام، تلفن یا کد پستی..."
               }
-              className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white pr-11 pl-4 text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+              className="h-12 w-full rounded-lg border border-brand-mist bg-white pr-11 pl-4 text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
             />
           </div>
 
@@ -597,7 +598,7 @@ export default function DashboardPanel() {
           {hasFilters && (
             <button
               onClick={resetFilters}
-              className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#003087] bg-white px-4 py-2.5 font-persian text-sm text-[#003087] transition hover:bg-[#F5F7FA]"
+              className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-navy bg-white px-4 py-2.5 font-persian text-sm text-brand-navy transition hover:bg-brand-warm-white"
             >
               <RotateCcw size={14} /> پاک کردن
             </button>
@@ -606,15 +607,15 @@ export default function DashboardPanel() {
       </div>
 
       {/* table */}
-      <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+      <div className="overflow-hidden rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-[#003087]" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-navy" />
           </div>
         ) : rows.length === 0 ? (
           <div className="py-20 text-center">
-            <Filter size={40} className="mx-auto mb-3 text-[#CBD2D6]" />
-            <p className="font-persian text-sm text-[#687173]">موردی یافت نشد.</p>
+            <Filter size={40} className="mx-auto mb-3 text-brand-mist" />
+            <p className="font-persian text-sm text-text-secondary">موردی یافت نشد.</p>
           </div>
         ) : tab === "instances" ? (
           <InstanceTable
@@ -626,7 +627,7 @@ export default function DashboardPanel() {
         )}
       </div>
 
-      <p className="mt-4 text-center font-persian text-xs text-[#687173]" dir="rtl">
+      <p className="mt-4 text-center font-persian text-xs text-text-secondary" dir="rtl">
         {faNum(rows.length)} مورد نمایش داده شد
       </p>
 
@@ -652,8 +653,8 @@ function TabButton({ active, onClick, icon: Icon, children }) {
       onClick={onClick}
       className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-persian text-sm font-semibold transition ${
         active
-          ? "bg-[#003087] text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
-          : "border border-[#CBD2D6] bg-white text-[#687173] hover:bg-[#F5F7FA]"
+          ? "bg-brand-navy text-white shadow-[0_1px_4px_rgba(5,46,95,0.06)]"
+          : "border border-brand-mist bg-white text-text-secondary hover:bg-brand-warm-white"
       }`}
     >
       <Icon size={16} /> {children}
@@ -666,7 +667,7 @@ function Select({ value, onChange, children }) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-12 rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+      className="h-12 rounded-lg border border-brand-mist bg-white px-4 font-persian text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
     >
       {children}
     </select>
@@ -675,30 +676,21 @@ function Select({ value, onChange, children }) {
 
 function Th({ children, className = "" }) {
   return (
-    <th className={`whitespace-nowrap px-4 py-3 text-right font-persian text-xs font-semibold text-[#687173] ${className}`}>
+    <th className={`whitespace-nowrap px-4 py-3 text-right font-persian text-xs font-semibold text-text-secondary ${className}`}>
       {children}
     </th>
   );
 }
 
-// Creation instant down to the second — that precision is the point of sorting
-// by it, so show the time and not just the day. Gregorian + Latin digits to
-// match the raw manufacture_date column next to it.
-function fmtDateTime(iso) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(
-    d.getHours()
-  )}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
+// Creation instant, Jalali, down to the second — the precision is the point of
+// sorting by it, so show the time and not just the day.
+const fmtDateTime = (iso) => (iso ? formatJalaliDateTime(iso) || "—" : "—");
 
 function InstanceTable({ rows, onSelect }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full" dir="rtl">
-        <thead className="border-b border-[#CBD2D6] bg-[#F5F7FA]">
+        <thead className="border-b border-brand-mist bg-brand-warm-white">
           <tr>
             <Th>شماره سریال</Th>
             <Th>محصول</Th>
@@ -710,17 +702,17 @@ function InstanceTable({ rows, onSelect }) {
             <Th className="text-center">جزئیات</Th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#CBD2D6]">
+        <tbody className="divide-y divide-brand-mist">
           {rows.map((r) => (
-            <tr key={r.serial_number} className="transition hover:bg-[#F5F7FA]">
+            <tr key={r.serial_number} className="transition hover:bg-brand-warm-white">
               <td className="px-4 py-3">
-                <span className="font-mono text-sm font-medium text-[#1A1A2E]" dir="ltr">
+                <span className="font-mono text-sm font-medium text-text-primary" dir="ltr">
                   {r.serial_number}
                 </span>
               </td>
-              <td className="px-4 py-3 font-persian text-sm text-[#1A1A2E]">{r.mattress_name}</td>
-              <td className="px-4 py-3 font-persian text-sm text-[#1A1A2E]">
-                {r.customer_name || <span className="text-[#687173]">—</span>}
+              <td className="px-4 py-3 font-persian text-sm text-text-primary">{r.mattress_name}</td>
+              <td className="px-4 py-3 font-persian text-sm text-text-primary">
+                {r.customer_name || <span className="text-text-secondary">—</span>}
               </td>
               <td className="px-4 py-3">
                 <Badge ok={r.is_sold} yes="فروخته شده" no="در انبار" />
@@ -728,17 +720,17 @@ function InstanceTable({ rows, onSelect }) {
               <td className="px-4 py-3">
                 <WarrantyBadge row={r} />
               </td>
-              <td className="px-4 py-3 font-persian text-sm text-[#687173]">
-                {r.manufacture_date || "—"}
+              <td className="px-4 py-3 font-persian text-sm text-text-secondary">
+                {formatJalali(r.manufacture_date) || "—"}
               </td>
-              <td className="whitespace-nowrap px-4 py-3 text-xs text-[#687173] [font-feature-settings:'tnum']" dir="ltr">
+              <td className="whitespace-nowrap px-4 py-3 font-persian text-xs text-text-secondary">
                 {fmtDateTime(r.created_at)}
               </td>
               <td className="px-4 py-3 text-center">
                 <div className="inline-flex items-center gap-2">
                   <button
                     onClick={() => onSelect(r.serial_number, false)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#003087] bg-white px-3 py-1.5 font-persian text-xs font-medium text-[#003087] transition hover:bg-[#F5F7FA]"
+                    className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-navy bg-white px-3 py-1.5 font-persian text-xs font-medium text-brand-navy transition hover:bg-brand-warm-white"
                   >
                     <QrCode size={14} /> مشاهده
                   </button>
@@ -748,7 +740,7 @@ function InstanceTable({ rows, onSelect }) {
                       opening the detail view. */}
                   <button
                     onClick={() => onSelect(r.serial_number, true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#CBD2D6] bg-white px-3 py-1.5 font-persian text-xs font-medium text-[#687173] transition hover:border-[#003087] hover:bg-[#F5F7FA] hover:text-[#003087]"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-brand-mist bg-white px-3 py-1.5 font-persian text-xs font-medium text-text-secondary transition hover:border-brand-navy hover:bg-brand-warm-white hover:text-brand-navy"
                   >
                     <Pencil size={14} /> ویرایش
                   </button>
@@ -766,7 +758,7 @@ function CustomerTable({ rows }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full" dir="rtl">
-        <thead className="border-b border-[#CBD2D6] bg-[#F5F7FA]">
+        <thead className="border-b border-brand-mist bg-brand-warm-white">
           <tr>
             <Th>نام و نام خانوادگی</Th>
             <Th>تلفن</Th>
@@ -776,29 +768,29 @@ function CustomerTable({ rows }) {
             <Th className="text-center">گارانتی فعال</Th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#CBD2D6]">
+        <tbody className="divide-y divide-brand-mist">
           {rows.map((c) => (
-            <tr key={c.id} className="transition hover:bg-[#F5F7FA]">
-              <td className="px-4 py-3 font-persian text-sm font-medium text-[#1A1A2E]">
+            <tr key={c.id} className="transition hover:bg-brand-warm-white">
+              <td className="px-4 py-3 font-persian text-sm font-medium text-text-primary">
                 {c.full_name || "—"}
               </td>
               <td className="px-4 py-3">
-                <span className="font-mono text-sm text-[#1A1A2E]" dir="ltr">
+                <span className="font-mono text-sm text-text-primary" dir="ltr">
                   {c.phone_number || "—"}
                 </span>
               </td>
               <td className="px-4 py-3">
-                <span className="font-mono text-sm text-[#687173]" dir="ltr">
+                <span className="font-mono text-sm text-text-secondary" dir="ltr">
                   {c.postal_code || "—"}
                 </span>
               </td>
-              <td className="max-w-[240px] truncate px-4 py-3 font-persian text-sm text-[#687173]">
+              <td className="max-w-[240px] truncate px-4 py-3 font-persian text-sm text-text-secondary">
                 {c.address || "—"}
               </td>
-              <td className="px-4 py-3 text-center font-persian text-sm font-semibold text-[#1A1A2E]">
+              <td className="px-4 py-3 text-center font-persian text-sm font-semibold text-text-primary">
                 {faNum(c.total_products)}
               </td>
-              <td className="px-4 py-3 text-center font-persian text-sm font-semibold text-[#019C34]">
+              <td className="px-4 py-3 text-center font-persian text-sm font-semibold text-status-success">
                 {faNum(c.active_warranties)}
               </td>
             </tr>

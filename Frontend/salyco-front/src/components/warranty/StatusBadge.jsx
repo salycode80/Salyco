@@ -7,32 +7,32 @@ import { CheckCircle2, Clock, XCircle, Circle, ShieldOff } from "lucide-react";
 const STATES = {
   APPROVED: {
     label: "فعال",
-    fill: "bg-[#E6F4EA]",
-    text: "text-[#019C34]",
+    fill: "bg-status-success-bg",
+    text: "text-status-success",
     Icon: CheckCircle2,
   },
   PENDING: {
     label: "در انتظار تأیید",
-    fill: "bg-[#E7F3FB]",
-    text: "text-[#009CDE]",
+    fill: "bg-status-info-bg",
+    text: "text-brand-navy",
     Icon: Clock,
   },
   REJECTED: {
     label: "رد شده",
-    fill: "bg-[#FDE7E7]",
-    text: "text-[#D20000]",
+    fill: "bg-status-error-bg",
+    text: "text-status-error",
     Icon: XCircle,
   },
   UNREGISTERED: {
     label: "غیرفعال",
-    fill: "bg-[#FFF8E1]",
-    text: "text-[#F5BA2E]",
+    fill: "bg-status-warning-bg",
+    text: "text-status-warning",
     Icon: Circle,
   },
   EXPIRED: {
     label: "منقضی",
-    fill: "bg-[#F5F7FA]",
-    text: "text-[#687173]",
+    fill: "bg-brand-warm-white",
+    text: "text-text-secondary",
     Icon: ShieldOff,
   },
 };

@@ -104,14 +104,14 @@ export default function AllowedLocationsPanel() {
     <>
       {/* header */}
       <header className="mb-8" dir="rtl">
-        <p className="flex items-center gap-2 font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+        <p className="flex items-center gap-2 font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
           <MapPin size={16} /> Shipping Areas
         </p>
-        <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+        <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
           مناطق مجاز ارسال
         </h1>
-        <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
-        <p className="mt-4 font-persian text-sm text-[#687173]">
+        <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
+        <p className="mt-4 font-persian text-sm text-text-secondary">
           مناطقی که خرید آنلاین در آن‌ها امکان‌پذیر است را تعیین کنید. اگر شهر خالی
           بماند، کل استان مجاز خواهد بود.
         </p>
@@ -120,18 +120,18 @@ export default function AllowedLocationsPanel() {
       {/* add form */}
       <form
         onSubmit={handleAdd}
-        className="mb-6 rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
+        className="mb-6 rounded-xl border border-brand-mist bg-white p-4 shadow-[0_1px_4px_rgba(5,46,95,0.06)]"
         dir="rtl"
       >
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[200px] flex-1">
-            <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+            <label className="mb-1.5 block font-persian text-sm font-medium text-text-primary">
               استان
             </label>
             <select
               value={province}
               onChange={handleProvinceChange}
-              className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+              className="h-12 w-full rounded-lg border border-brand-mist bg-white px-4 font-persian text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
             >
               <option value="">انتخاب استان</option>
               {IRAN_PROVINCES.map((p) => (
@@ -142,14 +142,14 @@ export default function AllowedLocationsPanel() {
             </select>
           </div>
           <div className="min-w-[200px] flex-1">
-            <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+            <label className="mb-1.5 block font-persian text-sm font-medium text-text-primary">
               شهر (اختیاری)
             </label>
             {province && availableCities.length > 0 ? (
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20"
+                className="h-12 w-full rounded-lg border border-brand-mist bg-white px-4 font-persian text-sm text-text-primary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20"
               >
                 <option value="">کل استان (همه شهرها)</option>
                 {availableCities.map((c) => (
@@ -164,14 +164,14 @@ export default function AllowedLocationsPanel() {
                 onChange={(e) => setCity(e.target.value)}
                 placeholder={province ? "نام شهر را وارد کنید" : "ابتدا استان را انتخاب کنید"}
                 disabled={!province}
-                className="h-12 w-full rounded-lg border border-[#CBD2D6] bg-white px-4 font-persian text-sm text-[#1A1A2E] placeholder-[#687173] outline-none transition focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-12 w-full rounded-lg border border-brand-mist bg-white px-4 font-persian text-sm text-text-primary placeholder-text-secondary outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20 disabled:cursor-not-allowed disabled:opacity-60"
               />
             )}
           </div>
           <button
             type="submit"
             disabled={adding}
-            className="inline-flex h-12 items-center gap-1.5 rounded-lg bg-[#003087] px-6 font-persian text-sm font-bold text-white transition hover:bg-[#00246B] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center gap-1.5 rounded-lg bg-brand-navy px-6 font-persian text-sm font-bold text-white transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {adding ? (
               <Loader2 size={16} className="animate-spin" />
@@ -182,7 +182,7 @@ export default function AllowedLocationsPanel() {
           </button>
         </div>
         {error && (
-          <p className="mt-3 rounded-lg bg-[#FDE7E7] px-4 py-2.5 font-persian text-sm text-[#D20000]">
+          <p className="mt-3 rounded-lg bg-status-error-bg px-4 py-2.5 font-persian text-sm text-status-error">
             {error}
           </p>
         )}
@@ -191,12 +191,12 @@ export default function AllowedLocationsPanel() {
       {/* list */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-[#003087]" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand-navy" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-xl border border-[#CBD2D6] bg-white py-20 text-center shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-          <Filter size={40} className="mx-auto mb-3 text-[#CBD2D6]" />
-          <p className="font-persian text-sm text-[#687173]">
+        <div className="rounded-xl border border-brand-mist bg-white py-20 text-center shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
+          <Filter size={40} className="mx-auto mb-3 text-brand-mist" />
+          <p className="font-persian text-sm text-text-secondary">
             هنوز منطقه‌ای تعریف نشده است.
           </p>
         </div>
@@ -205,20 +205,20 @@ export default function AllowedLocationsPanel() {
           {rows.map((r) => (
             <div
               key={r.id}
-              className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)] ${
-                r.is_active ? "border-[#CBD2D6]" : "border-[#CBD2D6] opacity-60"
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4 shadow-[0_1px_4px_rgba(5,46,95,0.06)] ${
+                r.is_active ? "border-brand-mist" : "border-brand-mist opacity-60"
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F7FA] text-[#003087]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-warm-white text-brand-navy">
                   <MapPin size={16} />
                 </span>
                 <div>
-                  <p className="font-persian text-base font-semibold text-[#1A1A2E]">
+                  <p className="font-persian text-base font-semibold text-text-primary">
                     {r.province}
                     {r.city ? ` — ${r.city}` : ""}
                   </p>
-                  <p className="font-persian text-xs text-[#687173]">
+                  <p className="font-persian text-xs text-text-secondary">
                     {r.city ? "شهر مشخص" : "کل استان"}
                     {" · "}
                     {r.is_active ? "فعال" : "غیرفعال"}
@@ -230,7 +230,7 @@ export default function AllowedLocationsPanel() {
                 <button
                   onClick={() => handleToggle(r)}
                   disabled={busyId === r.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#003087] bg-white px-4 py-2 font-persian text-sm font-semibold text-[#003087] transition hover:bg-[#F5F7FA] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-navy bg-white px-4 py-2 font-persian text-sm font-semibold text-brand-navy transition hover:bg-brand-warm-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {busyId === r.id ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -244,7 +244,7 @@ export default function AllowedLocationsPanel() {
                 <button
                   onClick={() => handleDelete(r.id)}
                   disabled={busyId === r.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#D20000] bg-white px-4 py-2 font-persian text-sm font-semibold text-[#D20000] transition hover:bg-[#FDE7E7] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-lg border-2 border-status-error bg-white px-4 py-2 font-persian text-sm font-semibold text-status-error transition hover:bg-status-error-bg disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Trash2 size={14} /> حذف
                 </button>

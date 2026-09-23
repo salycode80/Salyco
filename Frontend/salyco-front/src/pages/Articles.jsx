@@ -2,17 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import PageBackground from "../components/PageBackground";
+import { formatJalaliLong } from "../utils/jalali";
 
 // ─── Utility ────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("fa-IR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return formatJalaliLong(dateStr);
 }
 
 function truncate(text, max = 100) {
@@ -37,17 +33,17 @@ function HeroCard({ article }) {
         <img
           src={article.image}
           alt={article.title}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#003087] to-[#00246B]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-navy to-action-hover" />
       )}
 
       {/* dark overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
       {/* logo badge */}
-      <span className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#003087]/80 text-white">
+      <span className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand-navy/80 text-white">
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
           <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
         </svg>
@@ -62,7 +58,7 @@ function HeroCard({ article }) {
           {article.excerpt || article.summary}
         </p>
         <div className="mt-3 flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#009CDE] px-3 py-1 text-xs font-medium text-white">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-navy px-3 py-1 text-xs font-medium text-white">
             مطالعه بیشتر
           </span>
           <span className="text-xs text-white/50">
@@ -82,7 +78,7 @@ function SmallHeroCard({ article }) {
   return (
     <Link
       to={`/articles/${article.slug}`}
-      className="group relative flex flex-row overflow-hidden rounded-xl bg-[#003087] transition hover:brightness-110"
+      className="group relative flex flex-row overflow-hidden rounded-xl bg-brand-navy transition hover:brightness-110"
     >
       {/* thumbnail */}
       <div className="relative h-full w-32 shrink-0 overflow-hidden">
@@ -90,13 +86,13 @@ function SmallHeroCard({ article }) {
           <img
             src={article.image}
             alt={article.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-"
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-[#00246B] to-[#003087]" />
+          <div className="h-full w-full bg-gradient-to-br from-action-hover to-brand-navy" />
         )}
         <div className="absolute inset-0 bg-black/30" />
-        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#003087]/80 text-white">
+        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-brand-navy/80 text-white">
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
             <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
           </svg>
@@ -109,7 +105,7 @@ function SmallHeroCard({ article }) {
           {article.title}
         </p>
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-xs font-medium text-[#009CDE]">
+          <span className="text-xs font-medium text-brand-navy">
             مطالعه بیشتر
           </span>
           <span className="text-xs text-white/40">
@@ -128,22 +124,22 @@ function ArticleCard({ article }) {
   return (
     <Link
       to={`/articles/${article.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6] transition hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)] hover:-translate-y-0.5"
+      className="group flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] ring-1 ring-brand-mist transition hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)] "
     >
       {/* thumbnail */}
-      <div className="relative h-48 overflow-hidden bg-[#F5F7FA]">
+      <div className="relative h-48 overflow-hidden bg-brand-warm-white">
         {article.image ? (
           <img
             src={article.image}
             alt={article.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#F5F7FA]">
+          <div className="flex h-full w-full items-center justify-center bg-brand-warm-white">
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#687173"
+              stroke="var(--color-text-secondary)"
               strokeWidth="1.5"
               className="h-12 w-12 opacity-50"
             >
@@ -157,14 +153,14 @@ function ArticleCard({ article }) {
         )}
 
         {/* logo badge */}
-        <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-[#003087]/80 text-white">
+        <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-brand-navy/80 text-white">
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
             <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
           </svg>
         </span>
 
         {article.category && (
-          <span className="absolute left-3 top-3 rounded-full bg-[#009CDE] px-2.5 py-0.5 text-xs text-white">
+          <span className="absolute left-3 top-3 rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white">
             {article.category}
           </span>
         )}
@@ -172,17 +168,17 @@ function ArticleCard({ article }) {
 
       {/* body */}
       <div className="flex flex-1 flex-col p-4" dir="rtl">
-        <h3 className="font-persian text-sm font-bold leading-snug text-[#1A1A2E] line-clamp-2 group-hover:text-[#009CDE] transition-colors">
+        <h3 className="font-persian text-sm font-bold leading-snug text-text-primary line-clamp-2 group-hover:text-brand-navy transition-colors">
           {article.title}
         </h3>
-        <p className="mt-2 font-persian text-xs leading-relaxed text-[#687173] line-clamp-3">
+        <p className="mt-2 font-persian text-xs leading-relaxed text-text-secondary line-clamp-3">
           {article.excerpt || article.summary}
         </p>
-        <div className="mt-auto pt-4 flex items-center justify-between border-t border-[#CBD2D6]">
-          <span className="text-xs font-medium text-[#009CDE]">
+        <div className="mt-auto pt-4 flex items-center justify-between border-t border-brand-mist">
+          <span className="text-xs font-medium text-brand-navy">
             مطالعه بیشتر
           </span>
-          <span className="text-xs text-[#687173]">
+          <span className="text-xs text-text-secondary">
             {formatDate(article.published_at || article.created_at)}
           </span>
         </div>
@@ -195,11 +191,11 @@ function ArticleCard({ article }) {
  * FeaturedSidebarItem – compact row used in the "مقالات برگزیده" sidebar
  */
 function FeaturedSidebarItem({ article, index }) {
-  const colors = ["bg-[#009CDE]", "bg-[#003087]", "bg-[#00246B]"];
+  const colors = ["bg-brand-navy", "bg-brand-navy", "bg-action-hover"];
   return (
     <Link
       to={`/articles/${article.slug}`}
-      className="group flex items-start gap-3 rounded-xl p-3 transition hover:bg-[#F5F7FA]"
+      className="group flex items-start gap-3 rounded-xl p-3 transition hover:bg-brand-warm-white"
       dir="rtl"
     >
       <span
@@ -208,14 +204,14 @@ function FeaturedSidebarItem({ article, index }) {
         {String(index + 1).padStart(2, "0")}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="font-persian text-sm font-bold leading-snug text-[#1A1A2E] line-clamp-2 group-hover:text-[#009CDE] transition-colors">
+        <p className="font-persian text-sm font-bold leading-snug text-text-primary line-clamp-2 group-hover:text-brand-navy transition-colors">
           {article.title}
         </p>
         <div className="mt-1.5 flex items-center justify-between">
-          <span className="text-xs font-medium text-[#009CDE]">
+          <span className="text-xs font-medium text-brand-navy">
             مطالعه بیشتر
           </span>
-          <span className="text-xs text-[#687173]">
+          <span className="text-xs text-text-secondary">
             {formatDate(article.published_at || article.created_at)}
           </span>
         </div>
@@ -228,7 +224,7 @@ function FeaturedSidebarItem({ article, index }) {
 
 function Skeleton({ className }) {
   return (
-    <div className={`animate-pulse rounded-lg bg-[#CBD2D6] ${className}`} />
+    <div className={`animate-pulse rounded-lg bg-brand-mist ${className}`} />
   );
 }
 
@@ -267,7 +263,7 @@ export default function ArticlesPage() {
 
   return (
     <section
-      className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)] "
+      className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)] "
       dir="rtl"
     >
       <PageBackground />
@@ -281,16 +277,16 @@ export default function ArticlesPage() {
         }}
       /> */}
 
-      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1200px] px-4 py-10 sm:px-6 lg:px-8">
         {/* ── Page header ── */}
         <header className="mb-12" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
             Blog & Articles
           </p>
-          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+          <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
             وبلاگ و مقالات
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
+          <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
           {/* <p className="mt-4 max-w-xl font-sans text-base text-[#000c3e]/60">
             مجموعه محصولات ما را کاوش کنید
           </p> */}
@@ -305,8 +301,8 @@ export default function ArticlesPage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`rounded-full px-4 py-1.5 font-persian text-sm font-medium transition ${
                   activeCategory === cat
-                    ? "bg-[#003087] text-white shadow"
-                    : "bg-white text-[#687173] ring-1 ring-[#CBD2D6] hover:bg-[#F5F7FA] hover:text-[#003087]"
+                    ? "bg-brand-navy text-white shadow"
+                    : "bg-white text-text-secondary ring-1 ring-brand-mist hover:bg-brand-warm-white hover:text-brand-navy"
                 }`}
               >
                 {cat}
@@ -317,7 +313,7 @@ export default function ArticlesPage() {
 
         {/* ── Error ── */}
         {error && (
-          <div className="mb-8 rounded-xl bg-[#FDE7E7] p-4 text-center font-persian text-[#D20000]">
+          <div className="mb-8 rounded-xl bg-status-error-bg p-4 text-center font-persian text-status-error">
             {error}
           </div>
         )}
@@ -338,7 +334,7 @@ export default function ArticlesPage() {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="overflow-hidden rounded-xl bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6]"
+                  className="overflow-hidden rounded-xl bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] ring-1 ring-brand-mist"
                 >
                   <Skeleton className="h-48 rounded-none" />
                   <div className="p-4 space-y-2">
@@ -363,7 +359,7 @@ export default function ArticlesPage() {
                     <SmallHeroCard key={a.slug} article={a} />
                   ))}
                   {heroSmall.length === 0 && (
-                    <div className="rounded-xl bg-[#F5F7FA] h-full min-h-[160px]" />
+                    <div className="rounded-xl bg-brand-warm-white h-full min-h-[160px]" />
                   )}
                 </div>
                 {/* right: big card */}
@@ -373,15 +369,15 @@ export default function ArticlesPage() {
 
             {/* ── Divider ── */}
             <div className="mb-8 flex items-center gap-4">
-              <h2 className="font-persian text-xl font-bold text-[#003087] whitespace-nowrap">
+              <h2 className="font-persian text-xl font-bold text-brand-navy whitespace-nowrap">
                 آخرین مقالات
               </h2>
-              <div className="h-px flex-1 bg-[#CBD2D6]" />
+              <div className="h-px flex-1 bg-brand-mist" />
             </div>
 
             {/* ── Articles grid + sidebar ── */}
             {articles.length === 0 ? (
-              <p className="font-persian text-center text-[#687173]">
+              <p className="font-persian text-center text-text-secondary">
                 مقاله‌ای یافت نشد.
               </p>
             ) : (
@@ -389,7 +385,7 @@ export default function ArticlesPage() {
                 {/* main grid */}
                 <div>
                   {filteredLatest.length === 0 ? (
-                    <p className="font-persian text-[#687173]">
+                    <p className="font-persian text-text-secondary">
                       مقاله‌ای در این دسته‌بندی یافت نشد.
                     </p>
                   ) : (
@@ -405,7 +401,7 @@ export default function ArticlesPage() {
                     <div className="mt-8 flex justify-center">
                       <a
                         to="/articles/archive"
-                        className="rounded-lg border-2 border-[#003087] px-6 py-2 font-persian text-sm font-medium text-[#003087] transition hover:bg-[#003087] hover:text-white"
+                        className="rounded-lg border-2 border-brand-navy px-6 py-2 font-persian text-sm font-medium text-brand-navy transition hover:bg-brand-navy hover:text-white"
                       >
                         مشاهده همه مقالات
                       </a>
@@ -416,10 +412,10 @@ export default function ArticlesPage() {
                 {/* sidebar */}
                 <aside>
                   <div
-                    className="sticky rounded-xl bg-white p-5 shadow-[0_1px_4px_rgba(0,48,135,0.06)] ring-1 ring-[#CBD2D6]"
+                    className="sticky rounded-xl bg-white p-5 shadow-[0_1px_4px_rgba(5,46,95,0.06)] ring-1 ring-brand-mist"
                     style={{ top: "calc(var(--navbar-height) + 1rem)" }}
                   >
-                    <h3 className="font-persian mb-4 text-base font-bold text-[#003087]">
+                    <h3 className="font-persian mb-4 text-base font-bold text-brand-navy">
                       مقالات برگزیده
                     </h3>
                     <div className="flex flex-col gap-1">

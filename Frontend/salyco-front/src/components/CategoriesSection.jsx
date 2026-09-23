@@ -9,15 +9,15 @@ import { PRODUCT_CATEGORIES } from "../config/productCategories";
 export default function CategoriesSection() {
   return (
     <section className="relative overflow-hidden bg-white py-16">
-      <div className="relative mx-auto max-w-7xl px-6">
+      <div className="relative mx-auto max-w-[1200px] px-6">
         <header className="mb-10" dir="rtl">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
             Categories
           </p>
-          <h2 className="mt-2 font-persian text-2xl font-bold text-[#1A1A2E] md:text-3xl">
+          <h2 className="mt-2 font-persian text-2xl font-bold text-text-primary md:text-3xl">
             دسته‌بندی‌های اصلی
           </h2>
-          <hr className="mt-4 w-20 border-t-2 border-[#CBD2D6]" />
+          <hr className="mt-4 w-20 border-t-2 border-brand-mist" />
         </header>
 
         <div
@@ -28,9 +28,9 @@ export default function CategoriesSection() {
             <Link
               key={key}
               to={`/products/${key}`}
-              className="group relative flex flex-col overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#009CDE] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition-all duration-200  hover:border-brand-navy hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
             >
-              <div className="relative flex h-24 items-center justify-center bg-[#003087] transition-colors duration-300 group-hover:bg-[#00246B]">
+              <div className="relative flex h-24 items-center justify-center bg-brand-navy transition-colors duration-200 group-hover:bg-action-hover">
                 <Icon
                   size={30}
                   strokeWidth={1.5}
@@ -39,10 +39,10 @@ export default function CategoriesSection() {
               </div>
 
               <div className="flex flex-col p-3.5">
-                <p className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-[#687173]">
+                <p className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-text-secondary">
                   {en}
                 </p>
-                <h3 className="mt-1 font-persian text-sm font-bold text-[#1A1A2E] transition-colors duration-300 group-hover:text-[#003087]">
+                <h3 className="mt-1 font-persian text-sm font-bold text-text-primary transition-colors duration-200 group-hover:text-brand-navy">
                   {label}
                 </h3>
               </div>

@@ -37,6 +37,7 @@ import OrderPublicPage from "./pages/OrderPublicPage";
 import OrdersPanel from "./pages/admin/OrdersPanel";
 import AllowedLocationsPanel from "./pages/admin/AllowedLocationsPanel";
 import CouponsPanel from "./pages/admin/CouponsPanel";
+import GalleryPanel from "./pages/admin/GalleryPanel";
 
 // Flows that should not offer five ways to leave mid-task: signing in, paying,
 // the staff console, and the SMS-opened order page.
@@ -140,6 +141,7 @@ function App() {
               <Route path="orders" element={<OrdersPanel />} />
               <Route path="locations" element={<AllowedLocationsPanel />} />
               <Route path="coupons" element={<CouponsPanel />} />
+              <Route path="gallery" element={<GalleryPanel />} />
             </Route>
           </Routes>
           <AboutFooter />

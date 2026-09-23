@@ -6,10 +6,8 @@ import {
   ClipboardList,
   Loader2,
   AlertCircle,
-  Phone,
   MapPin,
   User,
-  Info,
   CreditCard,
 } from "lucide-react";
 import api from "../../api";
@@ -36,14 +34,6 @@ const inputError =
 
 // Sales line + calling hours. Adjust to the real contact details as needed.
 const SALES_PHONE = BRAND.mobile;
-
-// Placeholder copy — replace with the final wording from the business.
-const NOTICES = [
-  "پرداخت سفارش به‌صورت آنلاین و از طریق درگاه زیبال انجام می‌شود. سفارش شما پس از پرداخت موفق به‌طور خودکار ثبت و تأیید می‌شود.",
-  "شماره تماس خود را با دقت وارد کنید. در صورت نادرست بودن شماره، امکان هماهنگی و ارسال سفارش وجود نخواهد داشت.",
-  "ارسال تشک‌ها فقط به مناطقی انجام می‌شود که در فهرست استان‌ها و شهرهای قابل انتخاب نمایش داده شده‌اند. اگر شهر شما در فهرست نیست، لطفاً تلفنی با ما تماس بگیرید.",
-  "نام تحویل‌گیرنده، کد پستی و نشانی کامل را دقیق وارد کنید؛ این اطلاعات مبنای ارسال سفارش شماست.",
-];
 
 const EMPTY_FORM = {
   recipient_name: "",
@@ -78,7 +68,7 @@ function buildAreaMap(rows) {
 // the field reached screen readers unnamed. On a payment form that matters:
 // "شماره تماس" and "کد پستی" must not be announced as just "edit text".
 // The error stays outside the label so it isn't read as part of the name.
-function Field({ label, error, optional, children }) {
+function Field({ label, error, hint, optional, children }) {
   return (
     <div>
       <label className="block">
@@ -92,6 +82,14 @@ function Field({ label, error, optional, children }) {
         </span>
         {children}
       </label>
+      {/* The four things a customer must know before paying used to sit in a
+          loud navy-headed box above the form. They are the same sentences,
+          each next to the field it is actually about. */}
+      {hint && !error && (
+        <p className="mt-1 font-persian text-xs leading-6 text-text-secondary">
+          {hint}
+        </p>
+      )}
       {error && (
         <p className="mt-1 font-persian text-xs text-status-error">{error}</p>
       )}
@@ -296,59 +294,28 @@ export default function CheckoutOrder() {
         </h1>
         <p className="mb-6 font-persian text-sm text-text-secondary">
           لطفاً اطلاعات زیر را کامل کنید. پس از تکمیل اطلاعات، به درگاه پرداخت
-          آنلاین منتقل می‌شوید.
+          آنلاین منتقل می‌شوید. سؤالی دارید؟ با {SALES_PHONE} تماس بگیرید.
         </p>
 
-        {/* Intro notice — must be read before ordering, so it is styled loud. */}
-        <div className="mb-8 overflow-hidden rounded-xl border-2 border-brand-navy bg-white shadow-[0_4px_16px_rgba(5,46,95,0.12)]">
-          <div className="flex items-center gap-2 bg-brand-navy px-5 py-3 sm:px-6">
-            <Info size={20} className="shrink-0 text-white" />
-            <h2 className="font-persian text-base font-bold text-white sm:text-lg">
-              پیش از ثبت سفارش این موارد را بخوانید
-            </h2>
-          </div>
-
-          <ul className="flex flex-col gap-4 bg-status-info-bg px-5 py-5 sm:px-6 sm:py-6">
-            {NOTICES.map((notice, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-navy font-persian text-xs font-bold text-white">
-                  {toPersianNumber(i + 1)}
-                </span>
-                <p className="font-persian text-[15px] font-medium leading-8 text-text-primary">
-                  {notice}
-                </p>
-              </li>
-            ))}
-          </ul>
-
-          <div className="flex flex-col items-center justify-center gap-2 border-t-2 border-brand-navy/30 bg-white px-5 py-4 text-center sm:flex-row sm:gap-3 sm:px-6">
-            <span className="font-persian text-sm font-medium text-text-primary">
-              سؤالی دارید؟ پیش از ثبت سفارش با ما تماس بگیرید:
-            </span>
-            <a
-              href={`tel:${SALES_PHONE}`}
-              dir="ltr"
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-navy px-4 py-2 font-persian text-base font-bold text-white transition hover:bg-action-hover"
-            >
-              <Phone size={16} />
-              {SALES_PHONE}
-            </a>
-          </div>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-3">
+        {/* One card: the form and its invoice summary, split by a seam rather
+            than separated into two boxes with a gutter between them. */}
+        <div className={`${CARD} grid overflow-hidden lg:grid-cols-3`}>
           {/* Order form */}
           <form
             onSubmit={handleSubmit}
             noValidate
-            className={`${CARD} flex flex-col gap-6 p-6 lg:col-span-2`}
+            className="flex flex-col gap-6 p-6 lg:col-span-2"
           >
             {/* Contact details */}
             <div className="flex flex-col gap-5">
               <SectionTitle icon={User}>اطلاعات تماس</SectionTitle>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="نام تحویل‌گیرنده" error={errors.recipient_name}>
+                <Field
+                  label="نام تحویل‌گیرنده"
+                  error={errors.recipient_name}
+                  hint="این نام روی بارنامهٔ ارسال ثبت می‌شود."
+                >
                   <input
                     name="recipient_name"
                     value={form.recipient_name}
@@ -360,7 +327,11 @@ export default function CheckoutOrder() {
                   />
                 </Field>
 
-                <Field label="شماره تماس" error={errors.phone_number}>
+                <Field
+                  label="شماره تماس"
+                  error={errors.phone_number}
+                  hint="در صورت نادرست بودن شماره، امکان هماهنگی و ارسال سفارش وجود ندارد."
+                >
                   <input
                     name="phone_number"
                     value={form.phone_number}
@@ -391,7 +362,11 @@ export default function CheckoutOrder() {
               )}
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="استان" error={errors.province}>
+                <Field
+                  label="استان"
+                  error={errors.province}
+                  hint="ارسال فقط به شهرهای این فهرست انجام می‌شود."
+                >
                   <select
                     name="province"
                     value={form.province}
@@ -456,7 +431,11 @@ export default function CheckoutOrder() {
                 />
               </Field>
 
-              <Field label="نشانی کامل" error={errors.address}>
+              <Field
+                label="نشانی کامل"
+                error={errors.address}
+                hint="کد پستی و نشانی کامل، مبنای ارسال سفارش شماست."
+              >
                 <textarea
                   name="address"
                   value={form.address}
@@ -505,12 +484,12 @@ export default function CheckoutOrder() {
             </div>
           </form>
 
-          {/* Invoice summary */}
-          <div className="lg:col-span-1">
-            <div className={`${CARD} sticky top-24 p-6`}>
-              <h2 className="mb-4 font-persian text-lg font-semibold text-brand-navy">
-                خلاصه سفارش
-              </h2>
+          {/* Invoice summary — the same card's left column, tinted so the seam
+              reads as a division of one panel rather than a second panel. */}
+          <aside className="border-t border-brand-mist bg-brand-warm-white p-6 lg:col-span-1 lg:border-s lg:border-t-0">
+            <h2 className="mb-4 font-persian text-lg font-semibold text-brand-navy">
+              خلاصه سفارش
+            </h2>
               <div className="flex flex-col gap-3 border-b border-brand-mist pb-4">
                 {items.map((item) => (
                   <div
@@ -563,8 +542,7 @@ export default function CheckoutOrder() {
                   </span>
                 </span>
               </div>
-            </div>
-          </div>
+            </aside>
         </div>
       </div>
     </section>

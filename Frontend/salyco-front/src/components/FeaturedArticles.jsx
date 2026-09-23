@@ -29,26 +29,26 @@ export default function FeaturedArticles() {
   const rest = articles.slice(1, 4);
 
   return (
-    <section className="relative overflow-hidden bg-[#F5F7FA]" dir="rtl">
+    <section className="relative overflow-hidden bg-brand-warm-white" dir="rtl">
       {/* faint navy tie-in so the brand color still whispers through */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at bottom right, rgba(0,48,135,0.05) 0%, transparent 60%)",
+            "radial-gradient(ellipse at bottom right, rgba(5,46,95,0.05) 0%, transparent 60%)",
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+      <div className="relative mx-auto max-w-[1200px] px-4 py-16 sm:px-6 sm:py-20">
         <header className="mb-12">
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#003087]">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-brand-navy">
             Journal
           </p>
-          <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+          <h2 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
             از وبلاگ سالیکو
           </h2>
-          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
-          <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
+          <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
+          <p className="mt-4 max-w-xl font-persian text-base text-text-secondary">
             نکته‌ها و راهنماهایی برای خوابی بهتر و انتخابی هوشمندانه.
           </p>
         </header>
@@ -59,11 +59,11 @@ export default function FeaturedArticles() {
               {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-24 animate-pulse rounded-xl bg-[#CBD2D6]"
+                  className="h-24 animate-pulse rounded-xl bg-brand-mist"
                 />
               ))}
             </div>
-            <div className="min-h-[360px] animate-pulse rounded-xl bg-[#CBD2D6]" />
+            <div className="min-h-[360px] animate-pulse rounded-xl bg-brand-mist" />
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.4fr]">
@@ -73,16 +73,16 @@ export default function FeaturedArticles() {
                 <li key={article.slug}>
                   <Link
                     to={`/articles/${article.slug}`}
-                    className="group flex items-start gap-4 rounded-xl bg-white p-4 border border-[#CBD2D6] shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+                    className="group flex items-start gap-4 rounded-xl bg-white p-4 border border-brand-mist shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#003087] font-persian text-sm font-bold text-white">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-navy font-persian text-sm font-bold text-white">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-persian text-sm font-bold leading-snug text-[#003087] line-clamp-2 transition-colors group-hover:text-[#009CDE]">
+                      <h3 className="font-persian text-sm font-bold leading-snug text-brand-navy line-clamp-2 transition-colors group-hover:text-brand-navy">
                         {article.title}
                       </h3>
-                      <span className="mt-1.5 flex items-center gap-1.5 font-persian text-xs text-[#687173]">
+                      <span className="mt-1.5 flex items-center gap-1.5 font-persian text-xs text-text-secondary">
                         <CalendarDays size={12} />
                         {formatArticleDate(
                           article.published_at || article.created_at,
@@ -95,7 +95,7 @@ export default function FeaturedArticles() {
 
               <Link
                 to="/articles"
-                className="mt-1 inline-flex items-center gap-2 self-start rounded-lg border-2 border-[#003087] bg-white px-5 py-2.5 font-persian text-sm font-semibold text-[#003087] transition-colors hover:bg-[#003087]/5"
+                className="mt-1 inline-flex items-center gap-2 self-start rounded-lg border-2 border-brand-navy bg-white px-5 py-2.5 font-persian text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-navy/5"
               >
                 همه مقالات
                 <ArrowLeft size={16} />
@@ -106,22 +106,22 @@ export default function FeaturedArticles() {
             {featured && (
               <Link
                 to={`/articles/${featured.slug}`}
-                className="group relative flex min-h-[360px] flex-col justify-end overflow-hidden rounded-xl shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+                className="group relative flex min-h-[360px] flex-col justify-end overflow-hidden rounded-xl shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
               >
                 {featured.image ? (
                   <img
                     src={getArticleImageUrl(featured.image)}
                     alt={featured.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#003087] to-[#00246B]" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-navy to-action-hover" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
                 <div className="relative z-10 p-6 sm:p-8">
                   {featured.category && (
-                    <span className="mb-3 inline-block rounded-full bg-[#003087] px-3 py-1 font-persian text-xs font-medium text-white">
+                    <span className="mb-3 inline-block rounded-full bg-brand-navy px-3 py-1 font-persian text-xs font-medium text-white">
                       {featured.category}
                     </span>
                   )}

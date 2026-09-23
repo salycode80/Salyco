@@ -30,7 +30,7 @@ const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 // Control chrome shares one glass treatment; navy-tinted so it reads as Salyco
 // rather than a generic black overlay.
 const CONTROL =
-  "flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009CDE] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1A2E] disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none";
+  "flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2 focus-visible:ring-offset-text-primary disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none";
 
 export default function ImageLightbox({
   images,
@@ -298,7 +298,7 @@ export default function ImageLightbox({
       aria-label={`نمایش تصویر ${title}`}
       dir="rtl"
       onKeyDown={handleKeyDownTrap}
-      className={`fixed inset-0 z-[100] flex flex-col bg-[#1A1A2E]/95 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${
+      className={`fixed inset-0 z-[100] flex flex-col bg-text-primary/95 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${
         entered ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -434,7 +434,7 @@ export default function ImageLightbox({
                 }}
                 aria-label={`تصویر ${toPersianNumber(i + 1)}`}
                 aria-current={i === index}
-                className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009CDE] motion-reduce:transition-none ${
+                className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy motion-reduce:transition-none ${
                   i === index
                     ? "border-white"
                     : "border-white/25 opacity-55 hover:opacity-100"

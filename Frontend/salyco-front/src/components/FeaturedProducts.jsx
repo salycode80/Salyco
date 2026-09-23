@@ -24,63 +24,27 @@ export default function FeaturedProducts() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Auto-advance the carousel one card at a time, looping back to the start at
-  // the end. Scrolls to each child's actual position (via offsetLeft) so it is
-  // direction-agnostic — RTL vs LTR scrollLeft sign differences don't matter.
-  // Pauses while the user hovers/touches so it never fights manual scrolling.
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track || mattresses.length === 0) return;
-
-    let paused = false;
-    let index = 0;
-    const pause = () => (paused = true);
-    const resume = () => (paused = false);
-    track.addEventListener("pointerenter", pause);
-    track.addEventListener("pointerleave", resume);
-    track.addEventListener("touchstart", pause, { passive: true });
-    track.addEventListener("touchend", resume, { passive: true });
-
-    const id = setInterval(() => {
-      if (paused) return;
-      const cards = track.children;
-      if (cards.length === 0) return;
-      index = (index + 1) % cards.length;
-      // Assign scrollLeft DIRECTLY (not scrollTo / scrollIntoView). A direct
-      // property assignment scrolls only this element and can never move the
-      // window — that page-jump-to-section bug came from the smooth scrollTo
-      // pulling the whole page. The `scroll-smooth` class keeps it animated.
-      track.scrollLeft = cards[index].offsetLeft;
-    }, 3500);
-
-    return () => {
-      clearInterval(id);
-      track.removeEventListener("pointerenter", pause);
-      track.removeEventListener("pointerleave", resume);
-      track.removeEventListener("touchstart", pause);
-      track.removeEventListener("touchend", resume);
-    };
-  }, [mattresses]);
+  // Product browsing stays still until the customer scrolls the track.
 
   // Hide the whole section if there is nothing to show.
   if (!loading && (error || mattresses.length === 0)) return null;
 
   return (
     <section className="relative overflow-hidden bg-white">
-      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+      <div className="relative mx-auto max-w-[1200px] px-4 py-16 sm:px-6 sm:py-20">
         <header
           className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end"
           dir="rtl"
         >
           <div>
-            <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#003087]">
+            <p className="font-sans text-sm uppercase tracking-[0.3em] text-brand-navy">
               Products
             </p>
-            <h2 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+            <h2 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
               منتخب محصولات سالیکو
             </h2>
-            <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
-            <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
+            <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
+            <p className="mt-4 max-w-xl font-persian text-base text-text-secondary">
               گلچینی از محبوب‌ترین محصولات ما؛ برای دیدن همه محصولات وارد گالری
               شوید.
             </p>
@@ -88,7 +52,7 @@ export default function FeaturedProducts() {
 
           <Link
             to="/products"
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg border-2 border-[#003087] bg-white px-5 py-2.5 font-persian text-sm font-semibold text-[#003087] transition-colors hover:bg-[#003087]/5"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border-2 border-brand-navy bg-white px-5 py-2.5 font-persian text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-navy/5"
           >
             مشاهده همه
             <ArrowLeft size={16} />
@@ -100,7 +64,7 @@ export default function FeaturedProducts() {
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="h-[240px] w-[calc((100%-1.5rem)/2)] shrink-0 animate-pulse rounded-xl bg-[#CBD2D6] sm:h-[420px] sm:w-[calc((100%-4.5rem)/4)]"
+                className="h-[240px] w-full md:w-[calc((100%-1.5rem)/2)] shrink-0 animate-pulse rounded-xl bg-brand-mist sm:h-[420px] lg:w-[calc((100%-3rem)/3)]"
               />
             ))}
           </div>
@@ -112,7 +76,7 @@ export default function FeaturedProducts() {
             {mattresses.map((mattress) => (
               <div
                 key={mattress.slug}
-                className="w-[calc((100%-1.5rem)/2)] shrink-0 snap-start sm:w-[calc((100%-4.5rem)/4)]"
+                className="w-full md:w-[calc((100%-1.5rem)/2)] shrink-0 snap-start lg:w-[calc((100%-3rem)/3)]"
               >
                 <ProductCard product={mattress} />
               </div>

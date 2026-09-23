@@ -79,7 +79,7 @@ export default function SessionTimeoutModal() {
   return createPortal(
     <div
       dir="rtl"
-      className={`fixed inset-0 z-[110] flex items-center justify-center bg-[#1A1A2E]/60 px-4 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${
+      className={`fixed inset-0 z-[110] flex items-center justify-center bg-text-primary/60 px-4 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${
         entered ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -88,25 +88,25 @@ export default function SessionTimeoutModal() {
         aria-modal="true"
         aria-labelledby="session-timeout-title"
         aria-describedby="session-timeout-body"
-        className={`w-full max-w-[420px] overflow-hidden rounded-2xl border border-[#CBD2D6] bg-white shadow-[0_12px_32px_rgba(0,48,135,0.14)] transition-transform duration-200 ease-out motion-reduce:transition-none ${
+        className={`w-full max-w-[420px] overflow-hidden rounded-2xl border border-brand-mist bg-white shadow-[0_12px_32px_rgba(5,46,95,0.14)] transition-transform duration-200 ease-out motion-reduce:transition-none ${
           entered ? "translate-y-0" : "translate-y-2"
         }`}
       >
         <div className="flex flex-col items-center gap-3 px-6 pt-7">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F5BA2E]/15 text-[#B8860B]">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-status-warning/15 text-status-warning">
             <Clock size={24} strokeWidth={2} />
           </span>
 
           <h2
             id="session-timeout-title"
-            className="font-persian text-base font-bold text-[#1A1A2E]"
+            className="font-persian text-base font-bold text-text-primary"
           >
             نشست شما در حال پایان است
           </h2>
 
           <p
             id="session-timeout-body"
-            className="text-center font-persian text-[13px] leading-[1.9] text-[#687173]"
+            className="text-center font-persian text-[13px] leading-[1.9] text-text-secondary"
           >
             به دلیل نداشتن فعالیت، به‌زودی از حساب خود خارج می‌شوید. برای ادامه،
             دکمهٔ زیر را بزنید.
@@ -116,17 +116,17 @@ export default function SessionTimeoutModal() {
           <p
             dir="ltr"
             aria-live="polite"
-            className="font-persian text-3xl font-bold tabular-nums text-[#003087] [font-feature-settings:'tnum']"
+            className="font-persian text-3xl font-bold tabular-nums text-brand-navy [font-feature-settings:'tnum']"
           >
             {formatCountdown(secondsLeft)}
           </p>
 
           <div
-            className="h-1 w-full overflow-hidden rounded-full bg-[#F5F7FA]"
+            className="h-1 w-full overflow-hidden rounded-full bg-brand-warm-white"
             role="presentation"
           >
             <div
-              className="h-full rounded-full bg-[#F5BA2E] transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
+              className="h-full rounded-full bg-status-warning transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
               style={{ width: `${remainingRatio}%` }}
             />
           </div>
@@ -137,7 +137,7 @@ export default function SessionTimeoutModal() {
             ref={continueRef}
             type="button"
             onClick={continueSession}
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#003087] font-persian text-sm font-semibold text-white transition-colors hover:bg-[#00246B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009CDE] focus-visible:ring-offset-2 motion-reduce:transition-none"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-brand-navy font-persian text-sm font-semibold text-white transition-colors hover:bg-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2 motion-reduce:transition-none"
           >
             <RotateCcw size={16} />
             ادامه نشست
@@ -146,7 +146,7 @@ export default function SessionTimeoutModal() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex h-11 items-center justify-center gap-2 rounded-lg border border-[#CBD2D6] px-4 font-persian text-sm font-medium text-[#D20000] transition-colors hover:bg-[#FDE7E7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009CDE] focus-visible:ring-offset-2 motion-reduce:transition-none"
+            className="flex h-12 items-center justify-center gap-2 rounded-lg border border-brand-mist px-4 font-persian text-sm font-medium text-status-error transition-colors hover:bg-status-error-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2 motion-reduce:transition-none"
           >
             <LogOut size={16} />
             خروج

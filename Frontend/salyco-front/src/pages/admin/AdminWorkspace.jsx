@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   MapPin,
   TicketPercent,
+  Images,
 } from "lucide-react";
 import PageBackground from "../../components/PageBackground";
 
@@ -54,6 +55,12 @@ const controls = [
     label: "کدهای تخفیف",
     hint: "تعریف و مدیریت کدهای تخفیف",
     icon: TicketPercent,
+  },
+  {
+    to: "/admin/gallery",
+    label: "گالری تصاویر",
+    hint: "تصاویر صفحهٔ درباره ما",
+    icon: Images,
   },
   {
     to: "/admin/reviews",

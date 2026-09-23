@@ -22,7 +22,7 @@ import {
 // md step matters: 2→4 columns straight from phone to desktop left tablet
 // users with two very wide cards.
 const GRID =
-  "grid grid-cols-2 gap-3 sm:gap-8 md:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3";
 
 export default function ProductList() {
   const { category } = useParams();
@@ -50,16 +50,16 @@ export default function ProductList() {
 
   if (!valid) {
     return (
-      <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+      <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
         <PageBackground />
         <div
           className="relative mx-auto max-w-[1120px] px-6 py-16 text-center"
           dir="rtl"
         >
-          <h1 className="font-persian text-2xl font-bold text-[#003087]">
+          <h1 className="font-persian text-2xl font-bold text-brand-navy">
             این دسته‌بندی وجود ندارد
           </h1>
-          <p className="mt-3 font-persian text-sm text-[#687173]">
+          <p className="mt-3 font-persian text-sm text-text-secondary">
             آدرس وارد شده معتبر نیست. از میان دسته‌بندی‌های زیر انتخاب کنید:
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -67,7 +67,7 @@ export default function ProductList() {
               <Link
                 key={c.key}
                 to={`/products/${c.key}`}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#CBD2D6] bg-white px-4 py-2 font-persian text-sm font-medium text-[#003087] shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:-translate-y-0.5 hover:border-[#009CDE] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+                className="inline-flex items-center gap-2 rounded-lg border border-brand-mist bg-white px-4 py-2 font-persian text-sm font-medium text-brand-navy shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition  hover:border-brand-navy hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
               >
                 <c.icon size={15} strokeWidth={2} />
                 {c.label}
@@ -80,26 +80,26 @@ export default function ProductList() {
   }
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-[1120px] px-6 py-10 sm:py-16">
         <header className="mb-12" dir="rtl">
           <Link
             to="/products"
-            className="mb-6 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] transition-colors hover:text-[#009CDE]"
+            className="mb-6 inline-flex items-center gap-2 font-persian text-sm font-medium text-brand-navy transition-colors hover:text-brand-navy"
           >
             <ArrowRight size={16} />
             همه محصولات
           </Link>
-          <p className="font-sans text-sm uppercase tracking-[0.3em] text-[#687173]">
+          <p className="font-sans text-sm uppercase tracking-[0.3em] text-text-secondary">
             {meta.en}
           </p>
-          <h1 className="mt-2 font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+          <h1 className="mt-2 font-persian text-3xl font-bold text-brand-navy md:text-4xl">
             {meta.heading}
           </h1>
-          <hr className="mt-4 w-24 border-t-2 border-[#003087]" />
-          <p className="mt-4 max-w-xl font-persian text-base text-[#687173]">
+          <hr className="mt-4 w-24 border-t-2 border-brand-navy" />
+          <p className="mt-4 max-w-xl font-persian text-base text-text-secondary">
             {meta.blurb}
           </p>
         </header>
@@ -111,14 +111,14 @@ export default function ProductList() {
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse overflow-hidden rounded-xl border border-[#CBD2D6] bg-white"
+                className="animate-pulse overflow-hidden rounded-xl border border-brand-mist bg-white"
               >
-                <div className="aspect-[4/3] w-full bg-[#CBD2D6]" />
+                <div className="aspect-[4/3] w-full bg-brand-mist" />
                 <div className="space-y-2 p-3 sm:p-6">
-                  <div className="h-4 w-4/5 rounded bg-[#CBD2D6]" />
-                  <div className="h-3 w-full rounded bg-[#E5E9EB]" />
-                  <div className="h-3 w-2/3 rounded bg-[#E5E9EB]" />
-                  <div className="mt-3 h-5 w-1/2 rounded bg-[#CBD2D6]" />
+                  <div className="h-4 w-4/5 rounded bg-brand-mist" />
+                  <div className="h-3 w-full rounded bg-brand-mist" />
+                  <div className="h-3 w-2/3 rounded bg-brand-mist" />
+                  <div className="mt-3 h-5 w-1/2 rounded bg-brand-mist" />
                 </div>
               </div>
             ))}
@@ -126,11 +126,11 @@ export default function ProductList() {
         )}
 
         {error && (
-          <p className="font-persian text-center text-[#D20000]">{error}</p>
+          <p className="font-persian text-center text-status-error">{error}</p>
         )}
 
         {!loading && !error && products.length === 0 && (
-          <p className="font-persian text-center text-[#687173]">
+          <p className="font-persian text-center text-text-secondary">
             محصولی یافت نشد.
           </p>
         )}

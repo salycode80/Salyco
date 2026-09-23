@@ -27,9 +27,9 @@ export default function AuthPage() {
 
   return (
     <div className="grid min-h-screen grid-cols-1 pt-[var(--navbar-height)] font-[Vazirmatn,sans-serif]">
-      <div className="flex items-center justify-center bg-[#F5F7FA] px-4 py-8 sm:px-5 sm:py-12">
+      <div className="flex items-center justify-center bg-brand-warm-white px-4 py-8 sm:px-5 sm:py-12">
         <div className="w-full max-w-[420px]">
-          <div className="rounded-xl border border-[#CBD2D6] bg-white px-8 py-8 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+          <div className="rounded-xl border border-brand-mist bg-white px-8 py-8 shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
             {reasonMessage && (
               <div className="mb-5">
                 <AuthAlert type="error" message={reasonMessage} />
@@ -43,7 +43,7 @@ export default function AuthPage() {
           </div>
 
           <p
-            className="mt-5 text-center text-[12px] text-[#687173]"
+            className="mt-5 text-center text-[12px] text-text-secondary"
             dir="rtl"
           >
             © {new Date().getFullYear()} سالیکو — تمامی حقوق محفوظ است

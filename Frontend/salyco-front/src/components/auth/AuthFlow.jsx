@@ -78,7 +78,7 @@ function SubmitButton({ loading, loadingLabel, children }) {
     <button
       type="submit"
       disabled={loading}
-      className="h-12 w-full rounded-lg bg-[#003087] text-[15px] font-medium text-white transition-colors hover:bg-[#00246B] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20 disabled:opacity-60 disabled:cursor-not-allowed"
+      className="h-12 w-full rounded-lg bg-brand-navy text-[15px] font-medium text-white transition-colors hover:bg-action-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-navy/20 disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {loading ? (
         <span className="flex items-center justify-center gap-2">
@@ -291,14 +291,14 @@ export function AuthFlow({ onSuccess }) {
   if (done) {
     return (
       <div className="flex flex-col items-center gap-4 py-4 text-center" dir="rtl">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#10B981] text-white">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success text-white">
           <CheckIcon />
         </div>
         <div>
-          <h3 className="text-[18px] font-bold text-[#1A1A2E]">
+          <h3 className="text-[18px] font-bold text-text-primary">
             {done === "register" ? "ثبت‌نام موفق!" : "ورود موفق!"}
           </h3>
-          <p className="mt-1 text-[13px] text-[#687173]">در حال انتقال...</p>
+          <p className="mt-1 text-[13px] text-text-secondary">در حال انتقال...</p>
         </div>
       </div>
     );
@@ -307,12 +307,12 @@ export function AuthFlow({ onSuccess }) {
   if (step === "otp") {
     return (
       <div className="flex flex-col items-center gap-4 py-4 text-center" dir="rtl">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#003087] text-white">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-navy text-white">
           <OtpIcon />
         </div>
         <div>
-          <h3 className="text-[18px] font-bold text-[#1A1A2E]">کد تأیید</h3>
-          <p className="mt-1 text-[13px] text-[#687173]">
+          <h3 className="text-[18px] font-bold text-text-primary">کد تأیید</h3>
+          <p className="mt-1 text-[13px] text-text-secondary">
             کد ۴ رقمی به شماره <span dir="ltr">{phone}</span> ارسال شد
           </p>
         </div>
@@ -335,13 +335,13 @@ export function AuthFlow({ onSuccess }) {
         {status.error && <AuthAlert type="error" message={status.error} />}
 
         {status.loading && (
-          <p className="text-[13px] text-[#687173]">در حال بررسی کد...</p>
+          <p className="text-[13px] text-text-secondary">در حال بررسی کد...</p>
         )}
 
         <button
           type="button"
           onClick={goToPhoneStep}
-          className="mt-4 flex items-center gap-1 text-[13px] text-[#687173] hover:text-[#1A1A2E]"
+          className="mt-4 flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary"
         >
           <ArrowRightIcon />
           ویرایش شماره
@@ -359,8 +359,8 @@ export function AuthFlow({ onSuccess }) {
         dir="rtl"
       >
         <div className="text-center">
-          <h3 className="text-[18px] font-bold text-[#1A1A2E]">تکمیل ثبت‌نام</h3>
-          <p className="mt-1 text-[13px] text-[#687173]">
+          <h3 className="text-[18px] font-bold text-text-primary">تکمیل ثبت‌نام</h3>
+          <p className="mt-1 text-[13px] text-text-secondary">
             شماره <span dir="ltr">{phone}</span> تأیید شد. برای ساخت حساب، اطلاعات
             زیر را وارد کنید.
           </p>
@@ -456,14 +456,14 @@ export function AuthFlow({ onSuccess }) {
           ورود به حساب
         </SubmitButton>
 
-        <div className="text-center text-[13px] text-[#687173]">
+        <div className="text-center text-[13px] text-text-secondary">
           <button
             type="button"
             onClick={() => {
               setStep("phone");
               setStatus(IDLE);
             }}
-            className="text-[#003087] hover:underline"
+            className="text-brand-navy hover:underline"
           >
             ورود با کد تأیید
           </button>
@@ -480,10 +480,10 @@ export function AuthFlow({ onSuccess }) {
       dir="rtl"
     >
       <div className="text-center">
-        <h3 className="text-[18px] font-bold text-[#1A1A2E]">
+        <h3 className="text-[18px] font-bold text-text-primary">
           ورود به حساب کاربری
         </h3>
-        <p className="mt-1 text-[13px] text-[#687173]">
+        <p className="mt-1 text-[13px] text-text-secondary">
           شماره موبایل خود را وارد کنید. اگر حساب نداشته باشید، ساخته می‌شود.
         </p>
       </div>
@@ -506,14 +506,14 @@ export function AuthFlow({ onSuccess }) {
         دریافت کد تأیید
       </SubmitButton>
 
-      <div className="text-center text-[13px] text-[#687173]">
+      <div className="text-center text-[13px] text-text-secondary">
         <button
           type="button"
           onClick={() => {
             setStep("password");
             setStatus(IDLE);
           }}
-          className="text-[#003087] hover:underline"
+          className="text-brand-navy hover:underline"
         >
           ورود با رمز عبور
         </button>

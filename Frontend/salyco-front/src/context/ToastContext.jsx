@@ -29,18 +29,18 @@ function Toast({ id, type, message, onClose }) {
 
   return (
     <div
-      className="flex items-center gap-3 rounded-lg border border-[#CBD2D6] bg-white px-4 py-3 shadow-[0_4px_16px_rgba(0,48,135,0.1)] toast-enter"
+      className="flex items-center gap-3 rounded-lg border border-brand-mist bg-white px-4 py-3 shadow-[0_4px_16px_rgba(5,46,95,0.1)] toast-enter"
       dir="rtl"
     >
-      <div className={`flex-shrink-0 ${isSuccess ? "text-[#019C34]" : "text-[#D20000]"}`}>
+      <div className={`flex-shrink-0 ${isSuccess ? "text-status-success" : "text-status-error"}`}>
         {isSuccess ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
       </div>
-      <p className="flex-1 font-persian text-sm font-medium text-[#1A1A2E]">
+      <p className="flex-1 font-persian text-sm font-medium text-text-primary">
         {message}
       </p>
       <button
         onClick={() => onClose(id)}
-        className="flex-shrink-0 rounded p-1 text-[#687173] hover:bg-[#F5F7FA] transition-colors"
+        className="flex-shrink-0 rounded p-1 text-text-secondary hover:bg-brand-warm-white transition-colors"
         aria-label="بستن"
       >
         <X size={16} />

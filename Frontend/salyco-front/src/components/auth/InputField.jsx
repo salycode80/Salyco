@@ -21,7 +21,7 @@ export function InputField({
       {label && (
         <label
           htmlFor={id}
-          className="text-sm font-medium text-[#1A1A2E]"
+          className="text-sm font-medium text-text-primary"
         >
           {label}
         </label>
@@ -29,7 +29,7 @@ export function InputField({
       <div className="relative">
         {/* right icon */}
         {icon && (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#687173]">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
             {icon}
           </span>
         )}
@@ -43,13 +43,13 @@ export function InputField({
           dir={dir}
           autoComplete={autoComplete}
           className={[
-            "w-full h-12 rounded-lg border bg-white text-[14px] text-[#1A1A2E]",
-            "placeholder:text-[#687173] outline-none transition-all duration-200",
+            "w-full h-12 rounded-lg border bg-white text-[14px] text-text-primary",
+            "placeholder:text-text-secondary outline-none transition-all duration-200",
             icon ? "pr-9" : "pr-4",
             isPassword ? "pl-9" : "pl-4",
             error
-              ? "border-[#D20000] focus:ring-2 focus:ring-[#D20000]/20"
-              : "border-[#CBD2D6] focus:border-[#003087] focus:ring-2 focus:ring-[#009CDE]/20",
+              ? "border-status-error focus:ring-2 focus:ring-status-error/20"
+              : "border-brand-mist focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20",
           ].join(" ")}
         />
 
@@ -58,7 +58,7 @@ export function InputField({
           <button
             type="button"
             onClick={() => setShowPassword((p) => !p)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#687173] hover:text-[#1A1A2E] transition-colors"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
             aria-label={showPassword ? "پنهان کردن رمز" : "نمایش رمز"}
           >
             {showPassword ? (
@@ -78,7 +78,7 @@ export function InputField({
       </div>
 
       {error && (
-        <p className="text-xs text-[#D20000]">{error}</p>
+        <p className="text-xs text-status-error">{error}</p>
       )}
     </div>
   );

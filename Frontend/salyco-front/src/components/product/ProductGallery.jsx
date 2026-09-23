@@ -43,14 +43,14 @@ export default function ProductGallery({ images, name }) {
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+      <div className="overflow-hidden rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
         <button
           type="button"
           onClick={() => setOpen(true)}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setLens(null)}
           aria-label={`بزرگ‌نمایی تصویر ${name}`}
-          className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden bg-[#F5F7FA] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#009CDE]"
+          className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-brand-warm-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-navy"
         >
           <img
             src={resolve(active)}
@@ -59,7 +59,7 @@ export default function ProductGallery({ images, name }) {
             onError={() =>
               active && setBroken((b) => ({ ...b, [active.src]: true }))
             }
-            className="h-full w-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none"
+            className="h-full w-full object-contain transition-transform duration-300 ease-out motion-reduce:transition-none"
             style={
               lens
                 ? {
@@ -71,17 +71,17 @@ export default function ProductGallery({ images, name }) {
           />
 
           {/* Affordance: the image never looked clickable before. */}
-          <span className="pointer-events-none absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-[#1A1A2E]/55 text-white opacity-90 backdrop-blur-md transition duration-200 group-hover:bg-[#003087] group-hover:opacity-100 motion-reduce:transition-none">
+          <span className="pointer-events-none absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-text-primary/55 text-white opacity-90 backdrop-blur-md transition duration-200 group-hover:bg-brand-navy group-hover:opacity-100 motion-reduce:transition-none">
             <Expand size={16} />
           </span>
 
-          <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-[#1A1A2E]/65 px-3 py-1.5 font-persian text-[11px] font-medium text-white backdrop-blur-md transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100 motion-reduce:transition-none">
+          <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-text-primary/65 px-3 py-1.5 font-persian text-[11px] font-medium text-white backdrop-blur-md transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100 motion-reduce:transition-none">
             <ZoomIn size={13} className="shrink-0" />
             برای بزرگ‌نمایی کلیک کنید
           </span>
 
           {multiple && (
-            <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-[#1A1A2E]/65 px-2.5 py-1 font-persian text-[11px] font-medium text-white backdrop-blur-md [font-feature-settings:'tnum']">
+            <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-text-primary/65 px-2.5 py-1 font-persian text-[11px] font-medium text-white backdrop-blur-md [font-feature-settings:'tnum']">
               {toPersianNumber(safeIndex + 1)} از {toPersianNumber(images.length)}
             </span>
           )}
@@ -98,10 +98,10 @@ export default function ProductGallery({ images, name }) {
               onDoubleClick={() => setOpen(true)}
               aria-label={`نمایش تصویر ${toPersianNumber(i + 1)}`}
               aria-current={i === safeIndex}
-              className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009CDE] focus-visible:ring-offset-2 motion-reduce:transition-none ${
+              className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2 motion-reduce:transition-none ${
                 i === safeIndex
-                  ? "border-[#003087]"
-                  : "border-[#CBD2D6] opacity-70 hover:opacity-100"
+                  ? "border-brand-navy"
+                  : "border-brand-mist opacity-70 hover:opacity-100"
               }`}
             >
               <img
@@ -109,7 +109,7 @@ export default function ProductGallery({ images, name }) {
                 alt={img.alt || name}
                 draggable={false}
                 onError={() => setBroken((b) => ({ ...b, [img.src]: true }))}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             </button>
           ))}

@@ -57,13 +57,13 @@ export default function BannerCarousel() {
       onFocusCapture={() => setIsPaused(true)}
       onBlurCapture={() => setIsPaused(false)}
     >
-      {/* px-[10vw] inside a max-w-7xl container ate ~20% of the viewport on
+      {/* px-[10vw] inside a max-w-[1200px] container ate ~20% of the viewport on
           every screen, so the banner shrank as the window grew. Match the
           page's standard gutters instead. */}
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6">
         {/* Announcement-style banner container */}
         <div
-          className="relative overflow-hidden rounded-2xl border-4 border-[#003087]/20 bg-gradient-to-r from-[#003087] via-[#00246B] to-[#003087] shadow-2xl"
+          className="relative overflow-hidden rounded-2xl border-4 border-brand-navy/20 bg-gradient-to-r from-brand-navy via-action-hover to-brand-navy shadow-2xl"
           style={{ minHeight: "300px" }}
         >
           {/* Background pattern */}
@@ -113,8 +113,8 @@ export default function BannerCarousel() {
                     className="h-full w-full object-cover pr-8"
                   />
                   {/* Decorative elements */}
-                  <div className="absolute -right-4 -bottom-8 z-20 h-32 w-32 rounded-full bg-[#003087]/30 blur-2xl" />
-                  <div className="absolute -left-8 -top-8 z-20 h-40 w-40 rounded-full bg-[#00246B]/30 blur-2xl" />
+                  <div className="absolute -right-4 -bottom-8 z-20 h-32 w-32 rounded-full bg-brand-navy/30 blur-2xl" />
+                  <div className="absolute -left-8 -top-8 z-20 h-40 w-40 rounded-full bg-action-hover/30 blur-2xl" />
                 </div>
 
                 {/* Right side - Text Content */}
@@ -133,7 +133,7 @@ export default function BannerCarousel() {
                   </h2>
                   <Link
                     to={banner.link}
-                    className="relative z-30 inline-flex items-center gap-2 rounded-lg bg-white px-8 py-3 font-persian text-base font-semibold text-[#003087] transition-all hover:bg-[#f5f7ff] hover:shadow-lg"
+                    className="relative z-30 inline-flex items-center gap-2 rounded-lg bg-white px-8 py-3 font-persian text-base font-semibold text-brand-navy transition-all hover:bg-brand-warm-white hover:shadow-lg"
                   >
                     ادامه مطلب
                     <ChevronLeft size={18} />
@@ -161,14 +161,14 @@ export default function BannerCarousel() {
                   right-pointing chevron advanced the carousel backwards. */}
               <button
                 onClick={goToPrevious}
-                className="absolute right-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#003087] shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:right-8"
+                className="absolute right-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-brand-navy shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:right-8"
                 aria-label="اسلاید قبلی"
               >
                 <ChevronRight size={24} strokeWidth={2.5} />
               </button>
               <button
                 onClick={goToNext}
-                className="absolute left-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#003087] shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:left-8"
+                className="absolute left-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-brand-navy shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 hover:shadow-2xl md:left-8"
                 aria-label="اسلاید بعدی"
               >
                 <ChevronLeft size={24} strokeWidth={2.5} />
@@ -190,7 +190,7 @@ export default function BannerCarousel() {
                   aria-current={index === currentIndex}
                 >
                   <span
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                    className={`h-1.5 rounded-full transition-all duration-200 ${
                       index === currentIndex
                         ? "w-8 bg-white"
                         : "w-1.5 bg-white/40 group-hover:bg-white/60"

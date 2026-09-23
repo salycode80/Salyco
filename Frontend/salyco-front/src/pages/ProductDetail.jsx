@@ -21,7 +21,11 @@ import {
 } from "lucide-react";
 import { getMattressDetail, submitReview } from "../api/warranty";
 import { getProductImageUrl } from "../utils/productImage";
-import { toPersianNumber, formatPersianPrice } from "../utils/persian";
+import {
+  toPersianNumber,
+  formatPersianPrice,
+  toPersianDigitsInText,
+} from "../utils/persian";
 import { CATEGORY_BY_KEY, isValidCategory } from "../config/productCategories";
 import { ACCESS_TOKEN } from "../constants";
 import { useCart } from "../context/CartContext";
@@ -30,7 +34,7 @@ import ProductGallery from "../components/product/ProductGallery";
 
 // Salyco design tokens
 const CARD =
-  "rounded-xl border border-[#CBD2D6] bg-white p-6 shadow-[0_1px_4px_rgba(0,48,135,0.06)]";
+  "rounded-xl border border-brand-mist bg-white p-6 shadow-[0_1px_4px_rgba(5,46,95,0.06)]";
 
 // The six canonical bed sizes, used by categories with sizeMode "standard"
 // (mattress, bedbox, topper). Names/dimensions are static; the price for each
@@ -53,8 +57,8 @@ function StarRating({ rating, size = 16 }) {
           size={size}
           className={
             i <= Math.round(rating)
-              ? "fill-[#F5BA2E] text-[#F5BA2E]"
-              : "text-[#CBD2D6]"
+              ? "fill-brand-navy text-brand-navy"
+              : "text-brand-mist"
           }
         />
       ))}
@@ -71,10 +75,10 @@ function FirmnessScale({ value }) {
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <span className="font-persian text-sm font-medium text-[#1A1A2E]">
+        <span className="font-persian text-sm font-medium text-text-primary">
           سطح سفتی
         </span>
-        <span className="font-persian text-xs text-[#687173] [font-feature-settings:'tnum']">
+        <span className="font-persian text-xs text-text-secondary [font-feature-settings:'tnum']">
           {toPersianNumber(value)} از ۱۰
         </span>
       </div>
@@ -83,12 +87,12 @@ function FirmnessScale({ value }) {
           <div
             key={i}
             className={`h-2 flex-1 rounded-full transition-colors ${
-              i < value ? "bg-[#003087]" : "bg-[#E5E9EB]"
+              i < value ? "bg-brand-navy" : "bg-brand-mist"
             }`}
           />
         ))}
       </div>
-      <div className="flex justify-between font-persian text-[11px] text-[#687173]">
+      <div className="flex justify-between font-persian text-[11px] text-text-secondary">
         <span>نرم</span>
         <span>سخت</span>
       </div>
@@ -99,20 +103,22 @@ function FirmnessScale({ value }) {
 function FAQItem({ faq }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[#CBD2D6] last:border-b-0">
+    <div className="border-b border-brand-mist last:border-b-0">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className="flex w-full items-center justify-between py-4 text-right"
       >
-        <span className="font-medium text-[#1A1A2E]">{faq.question}</span>
+        <span className="font-medium text-text-primary">{faq.question}</span>
         {open ? (
-          <ChevronUp size={18} className="shrink-0 text-[#687173]" />
+          <ChevronUp size={18} className="shrink-0 text-text-secondary" />
         ) : (
-          <ChevronDown size={18} className="shrink-0 text-[#687173]" />
+          <ChevronDown size={18} className="shrink-0 text-text-secondary" />
         )}
       </button>
       {open && (
-        <p className="pb-4 text-sm leading-7 text-[#687173]">{faq.answer}</p>
+        <p className="pb-4 text-sm leading-7 text-text-secondary">{faq.answer}</p>
       )}
     </div>
   );
@@ -137,8 +143,8 @@ function StarPicker({ value, onChange }) {
             size={28}
             className={
               i <= (hover || value)
-                ? "fill-[#F5BA2E] text-[#F5BA2E]"
-                : "text-[#CBD2D6]"
+                ? "fill-brand-navy text-brand-navy"
+                : "text-brand-mist"
             }
           />
         </button>
@@ -162,7 +168,7 @@ function ReviewForm({ slug, onSubmitted }) {
   const [error, setError] = useState("");
 
   const inputBase =
-    "w-full rounded-lg border border-[#CBD2D6] bg-white px-4 py-3 font-persian text-sm text-[#1A1A2E] placeholder-[#687173] transition focus:border-[#009CDE] focus:outline-none focus:ring-2 focus:ring-[#009CDE]/20";
+    "w-full rounded-lg border border-brand-mist bg-white px-4 py-3 font-persian text-sm text-text-primary placeholder-text-secondary transition focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/20";
 
   const handleChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -189,15 +195,15 @@ function ReviewForm({ slug, onSubmitted }) {
   if (!isAuthenticated) {
     return (
       <div className={CARD}>
-        <h2 className="mb-2 font-persian text-xl font-semibold text-[#003087]">
+        <h2 className="mb-2 font-persian text-xl font-semibold text-brand-navy">
           ثبت نظر
         </h2>
-        <p className="mb-4 font-persian text-sm text-[#687173]">
+        <p className="mb-4 font-persian text-sm text-text-secondary">
           برای ثبت نظر ابتدا وارد حساب کاربری خود شوید.
         </p>
         <Link
           to="/auth"
-          className="inline-flex items-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-navy px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-action-hover"
         >
           <LogIn size={16} />
           ورود / ثبت‌نام
@@ -209,18 +215,18 @@ function ReviewForm({ slug, onSubmitted }) {
   if (status === "success") {
     return (
       <div className={CARD}>
-        <div className="flex flex-col items-center justify-center rounded-xl bg-[#E6F4EA] p-8 text-center ring-1 ring-[#019C34]/30">
-          <CheckCircle2 className="h-14 w-14 text-[#019C34]" />
-          <h3 className="mt-4 font-persian text-lg font-bold text-[#1A1A2E]">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-status-success-bg p-8 text-center ring-1 ring-status-success/30">
+          <CheckCircle2 className="h-14 w-14 text-status-success" />
+          <h3 className="mt-4 font-persian text-lg font-bold text-text-primary">
             نظر شما ثبت شد
           </h3>
-          <p className="mt-2 font-persian text-sm text-[#687173]">
+          <p className="mt-2 font-persian text-sm text-text-secondary">
             نظر شما پس از تأیید توسط کارشناسان ما نمایش داده خواهد شد.
             سپاسگزاریم.
           </p>
           <button
             onClick={() => setStatus("idle")}
-            className="mt-6 rounded-lg border-2 border-[#003087] px-6 py-2 font-persian text-sm font-medium text-[#003087] transition hover:bg-[#003087] hover:text-white"
+            className="mt-6 rounded-lg border-2 border-brand-navy px-6 py-2 font-persian text-sm font-medium text-brand-navy transition hover:bg-brand-navy hover:text-white"
           >
             ثبت نظر جدید
           </button>
@@ -231,18 +237,18 @@ function ReviewForm({ slug, onSubmitted }) {
 
   return (
     <div className={CARD}>
-      <h2 className="mb-1 flex items-center gap-2 font-persian text-xl font-semibold text-[#003087]">
+      <h2 className="mb-1 flex items-center gap-2 font-persian text-xl font-semibold text-brand-navy">
         <MessageSquarePlus size={20} />
         ثبت نظر
       </h2>
-      <p className="mb-6 font-persian text-sm text-[#687173]">
+      <p className="mb-6 font-persian text-sm text-text-secondary">
         تجربه خود از این محصول را با دیگران به اشتراک بگذارید.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* rating */}
         <div>
-          <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+          <label className="mb-1.5 block font-persian text-sm font-medium text-text-primary">
             امتیاز شما
           </label>
           <StarPicker
@@ -253,7 +259,7 @@ function ReviewForm({ slug, onSubmitted }) {
 
         {/* title */}
         <div>
-          <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+          <label className="mb-1.5 block font-persian text-sm font-medium text-text-primary">
             عنوان نظر
           </label>
           <input
@@ -269,7 +275,7 @@ function ReviewForm({ slug, onSubmitted }) {
 
         {/* body */}
         <div>
-          <label className="mb-1.5 block font-persian text-sm font-medium text-[#1A1A2E]">
+          <label className="mb-1.5 block font-persian text-sm font-medium text-text-primary">
             متن نظر
           </label>
           <textarea
@@ -286,7 +292,7 @@ function ReviewForm({ slug, onSubmitted }) {
         {/* pros + cons */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block font-persian text-sm font-medium text-[#019C34]">
+            <label className="mb-1.5 block font-persian text-sm font-medium text-status-success">
               نقاط مثبت (اختیاری)
             </label>
             <input
@@ -298,7 +304,7 @@ function ReviewForm({ slug, onSubmitted }) {
             />
           </div>
           <div>
-            <label className="mb-1.5 block font-persian text-sm font-medium text-[#D20000]">
+            <label className="mb-1.5 block font-persian text-sm font-medium text-status-error">
               نقاط منفی (اختیاری)
             </label>
             <input
@@ -312,7 +318,7 @@ function ReviewForm({ slug, onSubmitted }) {
         </div>
 
         {error && (
-          <p className="rounded-lg bg-[#FDE7E7] px-4 py-2.5 font-persian text-sm text-[#D20000]">
+          <p className="rounded-lg bg-status-error-bg px-4 py-2.5 font-persian text-sm text-status-error">
             {error}
           </p>
         )}
@@ -320,7 +326,7 @@ function ReviewForm({ slug, onSubmitted }) {
         <button
           type="submit"
           disabled={status === "sending"}
-          className="mt-2 inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition hover:bg-[#00246B] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-brand-navy px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {status === "sending" ? (
             <>
@@ -398,15 +404,15 @@ export default function ProductDetail() {
 
   if (!validCategory) {
     return (
-      <section className="min-h-screen bg-[#F5F7FA] pt-[var(--navbar-height)]">
+      <section className="min-h-screen bg-brand-warm-white pt-[var(--navbar-height)]">
         <div
-          className="mx-auto max-w-7xl px-4 py-10 text-center sm:px-6 sm:py-16"
+          className="mx-auto max-w-[1200px] px-4 py-10 text-center sm:px-6 sm:py-16"
           dir="rtl"
         >
-          <p className="font-persian text-[#D20000]">محصول یافت نشد.</p>
+          <p className="font-persian text-status-error">محصول یافت نشد.</p>
           <Link
             to="/products"
-            className="mt-4 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] hover:text-[#009CDE]"
+            className="mt-4 inline-flex items-center gap-2 font-persian text-sm font-medium text-brand-navy hover:text-brand-navy"
           >
             <ArrowRight size={16} />
             مشاهده همه محصولات
@@ -418,9 +424,9 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <section className="min-h-screen bg-[#F5F7FA] pt-[var(--navbar-height)]">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
-          <p className="font-persian text-center text-[#687173]">
+      <section className="min-h-screen bg-brand-warm-white pt-[var(--navbar-height)]">
+        <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-16">
+          <p className="font-persian text-center text-text-secondary">
             در حال بارگذاری...
           </p>
         </div>
@@ -430,9 +436,9 @@ export default function ProductDetail() {
 
   if (error || !product) {
     return (
-      <section className="min-h-screen bg-[#F5F7FA] pt-[var(--navbar-height)]">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
-          <p className="font-persian text-center text-[#D20000]">
+      <section className="min-h-screen bg-brand-warm-white pt-[var(--navbar-height)]">
+        <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-16">
+          <p className="font-persian text-center text-status-error">
             {error || "محصول یافت نشد."}
           </p>
         </div>
@@ -512,13 +518,13 @@ export default function ProductDetail() {
   const reviewCount = Number(product.review_count ?? 0);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-[1120px] px-6 py-8 sm:py-10">
         <Link
           to={`/products/${category}`}
-          className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] transition-colors hover:text-[#009CDE]"
+          className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-brand-navy transition-colors hover:text-brand-navy"
           dir="rtl"
         >
           <ArrowRight size={16} />
@@ -542,7 +548,7 @@ export default function ProductDetail() {
                     default, with the count clarifying where the score is from. */}
                 <div className="order-2 flex items-center gap-2">
                   <StarRating rating={displayRating} />
-                  <span className="whitespace-nowrap font-persian text-xs text-[#687173]">
+                  <span className="whitespace-nowrap font-persian text-xs text-text-secondary">
                     {reviewCount > 0
                       ? `${toPersianNumber(reviewCount)} نظر`
                       : "بدون نظر"}
@@ -551,43 +557,43 @@ export default function ProductDetail() {
                 <div className="min-w-0">
                   {/* Category kicker: with five product lines sharing one layout,
                       the name alone no longer says what you are looking at. */}
-                  <p className="mb-1 font-persian text-xs font-medium text-[#687173]">
+                  <p className="mb-1 font-persian text-xs font-medium text-text-secondary">
                     {product.category_label ?? meta.label}
                   </p>
-                  <h1 className="font-persian text-3xl font-bold text-[#003087] md:text-4xl">
+                  <h1 className="font-persian text-3xl font-bold text-brand-navy md:text-4xl">
                     {product.name}
                   </h1>
                 </div>
               </div>
               <div
-                className="group flex w-fit items-center gap-2 rounded-xl border border-[#003087]/15 bg-[#F5F7FA] px-4 py-2 transition-all duration-300 ease-out hover:-translate-y-0.5"
+                className="group flex w-fit items-center gap-2 rounded-xl border border-brand-navy/15 bg-brand-warm-white px-4 py-2 transition-all duration-200 ease-out "
                 style={{
-                  boxShadow: "0 1px 4px rgba(0,48,135,0.06)", // Elevation Level 1
+                  boxShadow: "0 1px 4px rgba(5,46,95,0.06)", // Elevation Level 1
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.boxShadow =
-                    "0 4px 16px rgba(0,48,135,0.1)"; // Elevation Level 2 on hover
+                    "0 4px 16px rgba(5,46,95,0.1)"; // Elevation Level 2 on hover
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.boxShadow =
-                    "0 1px 4px rgba(0,48,135,0.06)";
+                    "0 1px 4px rgba(5,46,95,0.06)";
                 }}
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded-xl bg-[#003087]/10 transition-colors duration-300 group-hover:bg-[#003087]/15">
+                <div className="flex h-6 w-6 items-center justify-center rounded-xl bg-brand-navy/10 transition-colors duration-200 group-hover:bg-brand-navy/15">
                   <ShieldCheck
                     size={16}
-                    className="text-[#003087]"
+                    className="text-brand-navy"
                     strokeWidth={2.5}
                   />
                 </div>
-                <span className="text-[14px] font-persian font-semibold text-[#003087]">
+                <span className="text-[14px] font-persian font-semibold text-brand-navy">
                   {warrantyText}
                 </span>
               </div>
             </div>
             {product.subtitle && (
-              <p className="text-base font-persian text-[#687173]">
-                {product.subtitle}
+              <p className="text-base font-persian text-text-secondary">
+                {toPersianDigitsInText(product.subtitle)}
               </p>
             )}
 
@@ -597,19 +603,19 @@ export default function ProductDetail() {
               product.trial_nights > 0) && (
               <div className="flex flex-wrap gap-2">
                 {product.material && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F7FA] px-3 py-1.5 font-persian text-sm text-[#1A1A2E]">
-                    <Layers size={14} className="text-[#003087]" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-warm-white px-3 py-1.5 font-persian text-sm text-text-primary">
+                    <Layers size={14} className="text-brand-navy" />
                     {product.material}
                   </span>
                 )}
                 {product.is_washable && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] px-3 py-1.5 font-persian text-sm text-[#019C34]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success-bg px-3 py-1.5 font-persian text-sm text-status-success">
                     <Droplets size={14} />
                     قابل شستشو
                   </span>
                 )}
                 {product.trial_nights > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF8E1] px-3 py-1.5 font-persian text-sm text-[#B8860B]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-status-warning-bg px-3 py-1.5 font-persian text-sm text-status-warning">
                     <Moon size={14} />
                     {toPersianNumber(product.trial_nights)} شب تست رایگان
                   </span>
@@ -620,7 +626,7 @@ export default function ProductDetail() {
             {/* Firmness — the scale sleep brands use to make a subjective
                 property comparable. Null for duvets and bedboxes. */}
             {product.firmness != null && (
-              <div className="rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
+              <div className="rounded-xl border border-brand-mist bg-white p-4 shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
                 <FirmnessScale value={Number(product.firmness)} />
               </div>
             )}
@@ -628,9 +634,9 @@ export default function ProductDetail() {
             {/* Availability */}
             {!product.is_available && (
               <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 rounded-full bg-[#FDE7E7] px-3 py-1.5">
-                  <Package size={16} className="text-[#D20000]" />
-                  <span className="text-sm font-persian font-medium text-[#D20000]">
+                <div className="flex items-center gap-2 rounded-full bg-status-error-bg px-3 py-1.5">
+                  <Package size={16} className="text-status-error" />
+                  <span className="text-sm font-persian font-medium text-status-error">
                     ناموجود
                   </span>
                 </div>
@@ -644,7 +650,7 @@ export default function ProductDetail() {
                 none     → omitted entirely (pillow ships in one size) */}
             {meta.sizeMode === "standard" && hasSizes && (
               <div className="space-y-3">
-                <span className="block text-sm font-persian font-medium text-[#1A1A2E]">
+                <span className="block text-sm font-persian font-medium text-text-primary">
                   سایز های موجود :
                 </span>
 
@@ -657,21 +663,22 @@ export default function ProductDetail() {
                         key={`${sz.width}x${sz.length}`}
                         type="button"
                         disabled={!sz.available}
+                        aria-pressed={isSelected}
                         onClick={() =>
                           sz.modelSize && setSelectedSize(sz.modelSize)
                         }
-                        className={`group relative flex flex-col items-center rounded-xl border bg-white p-3 text-center transition-all duration-300 ease-out ${
+                        className={`group relative flex flex-col items-center rounded-xl border bg-white p-3 text-center transition-all duration-200 ease-out ${
                           isSelected
-                            ? "border-[#003087] shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
-                            : "border-[#CBD2D6] shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
+                            ? "border-brand-navy shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
+                            : "border-brand-mist shadow-[0_1px_4px_rgba(5,46,95,0.06)]"
                         } ${
                           sz.available
-                            ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#009CDE] hover:shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
+                            ? "cursor-pointer  hover:border-brand-navy hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
                             : "cursor-not-allowed opacity-50"
                         }`}
                       >
                         {sz.note && (
-                          <span className="absolute -top-2 right-2 font-persian rounded-full bg-[#FFF8E1] px-2 py-0.5 text-[10px] font-medium text-[#F5BA2E]">
+                          <span className="absolute -top-2 right-2 font-persian rounded-full bg-status-warning-bg px-2 py-0.5 text-[10px] font-medium text-status-warning">
                             {sz.note}
                           </span>
                         )}
@@ -683,28 +690,28 @@ export default function ProductDetail() {
                           }}
                           className="mb-2 h-14 w-14 object-contain"
                         />
-                        <span className="text-[11px] font-persian font-medium leading-tight text-[#1A1A2E]">
+                        <span className="text-[11px] font-persian font-medium leading-tight text-text-primary">
                           {sz.name}
                         </span>
-                        <span className="mt-0.5 font-persian text-[10px] text-[#687173] [font-feature-settings:'tnum']">
+                        <span className="mt-0.5 font-persian text-[10px] text-text-secondary [font-feature-settings:'tnum']">
                           {toPersianNumber(sz.width)} ×{" "}
                           {toPersianNumber(sz.length)} سانتی‌متر
                         </span>
                         {sz.price == null ? (
-                          <span className="mt-1 font-persian text-[10px] text-[#687173]">
+                          <span className="mt-1 font-persian text-[10px] text-text-secondary">
                             ناموجود
                           </span>
                         ) : sz.discountPrice != null ? (
                           <>
-                            <span className="mt-1 font-persian text-[10px] text-gray-400 line-through decoration-red-500 [font-feature-settings:'tnum']">
+                            <span className="mt-1 font-persian text-[10px] text-text-secondary line-through decoration-status-error [font-feature-settings:'tnum']">
                               {formatPersianPrice(sz.price)}
                             </span>
-                            <span className="font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
+                            <span className="font-persian text-[11px] font-semibold text-brand-navy [font-feature-settings:'tnum']">
                               {formatPersianPrice(sz.discountPrice)} تومان
                             </span>
                           </>
                         ) : (
-                          <span className="mt-1 font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
+                          <span className="mt-1 font-persian text-[11px] font-semibold text-brand-navy [font-feature-settings:'tnum']">
                             {formatPersianPrice(sz.price)} تومان
                           </span>
                         )}
@@ -717,7 +724,7 @@ export default function ProductDetail() {
 
             {meta.sizeMode === "listed" && hasSizes && (
               <div className="space-y-3">
-                <span className="block text-sm font-persian font-medium text-[#1A1A2E]">
+                <span className="block text-sm font-persian font-medium text-text-primary">
                   سایز های موجود :
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -729,37 +736,38 @@ export default function ProductDetail() {
                         key={sz.id}
                         type="button"
                         disabled={!sz.in_stock}
+                        aria-pressed={isSelected}
                         onClick={() => setSelectedSize(sz)}
-                        className={`flex flex-col items-start rounded-xl border bg-white px-4 py-2.5 text-right transition-all duration-300 ease-out ${
+                        className={`flex flex-col items-start rounded-xl border bg-white px-4 py-2.5 text-right transition-all duration-200 ease-out ${
                           isSelected
-                            ? "border-[#003087] shadow-[0_4px_16px_rgba(0,48,135,0.1)]"
-                            : "border-[#CBD2D6] shadow-[0_1px_4px_rgba(0,48,135,0.06)]"
+                            ? "border-brand-navy shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
+                            : "border-brand-mist shadow-[0_1px_4px_rgba(5,46,95,0.06)]"
                         } ${
                           sz.in_stock
-                            ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#009CDE]"
+                            ? "cursor-pointer  hover:border-brand-navy"
                             : "cursor-not-allowed opacity-50"
                         }`}
                       >
-                        <span className="font-persian text-sm font-medium text-[#1A1A2E]">
+                        <span className="font-persian text-sm font-medium text-text-primary">
                           {sz.label}
                         </span>
-                        <span className="font-persian text-[11px] text-[#687173] [font-feature-settings:'tnum']">
+                        <span className="font-persian text-[11px] text-text-secondary [font-feature-settings:'tnum']">
                           {toPersianNumber(sz.width)} ×{" "}
                           {toPersianNumber(sz.length)} سانتی‌متر
                         </span>
                         {!sz.in_stock ? (
-                          <span className="mt-0.5 font-persian text-[11px] text-[#D20000]">
+                          <span className="mt-0.5 font-persian text-[11px] text-status-error">
                             ناموجود
                           </span>
                         ) : szDiscount != null ? (
-                          <span className="mt-0.5 font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
-                            <span className="ml-1 text-gray-400 line-through decoration-red-500">
+                          <span className="mt-0.5 font-persian text-[11px] font-semibold text-brand-navy [font-feature-settings:'tnum']">
+                            <span className="ml-1 text-text-secondary line-through decoration-status-error">
                               {formatPersianPrice(sz.price)}
                             </span>
                             {formatPersianPrice(szDiscount)} تومان
                           </span>
                         ) : (
-                          <span className="mt-0.5 font-persian text-[11px] font-semibold text-[#003087] [font-feature-settings:'tnum']">
+                          <span className="mt-0.5 font-persian text-[11px] font-semibold text-brand-navy [font-feature-settings:'tnum']">
                             {formatPersianPrice(sz.price)} تومان
                           </span>
                         )}
@@ -771,14 +779,14 @@ export default function ProductDetail() {
             )}
 
             {/* Price + add to cart */}
-            <div className="flex flex-col gap-3 rounded-xl border border-[#CBD2D6] bg-white p-4 shadow-[0_1px_4px_rgba(0,48,135,0.06)] sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-xl border border-brand-mist bg-white p-4 shadow-[0_1px_4px_rgba(5,46,95,0.06)] sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-[#687173]">
+                  <span className="text-xs font-medium text-text-secondary">
                     قیمت
                   </span>
                   {isOnSale && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#FDE7E7] px-2 py-0.5 font-persian text-[10px] font-bold text-[#D20000]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-status-error-bg px-2 py-0.5 font-persian text-[10px] font-bold text-status-error">
                       <Tag size={11} className="shrink-0" />
                       {toPersianNumber(product.off_percentage)}٪ تخفیف
                     </span>
@@ -786,28 +794,28 @@ export default function ProductDetail() {
                 </div>
                 {isOnSale && discountPrice ? (
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-persian text-lg font-medium text-gray-400 line-through decoration-red-500 [font-feature-settings:'tnum']">
+                    <span className="font-persian text-lg font-medium text-text-secondary line-through decoration-status-error [font-feature-settings:'tnum']">
                       {formatPersianPrice(displayPrice)}
-                      <span className="mr-1 text-sm font-normal text-gray-400">
+                      <span className="mr-1 text-sm font-normal text-text-secondary">
                         تومان
                       </span>
                     </span>
-                    <span className="font-persian text-2xl font-bold text-[#003087] [font-feature-settings:'tnum']">
+                    <span className="font-persian text-2xl font-bold text-brand-navy [font-feature-settings:'tnum']">
                       {formatPersianPrice(discountPrice)}
-                      <span className="mr-1 text-sm font-normal text-[#003087]">
+                      <span className="mr-1 text-sm font-normal text-brand-navy">
                         تومان
                       </span>
                     </span>
                   </div>
                 ) : (
-                  <span className="font-persian text-2xl font-bold text-[#003087] [font-feature-settings:'tnum']">
+                  <span className="font-persian text-2xl font-bold text-brand-navy [font-feature-settings:'tnum']">
                     {formatPersianPrice(displayPrice)}
-                    <span className="mr-1 text-sm font-normal text-[#687173]">
+                    <span className="mr-1 text-sm font-normal text-text-secondary">
                       تومان
                     </span>
                   </span>
                 )}
-                <span className="mt-1 block font-persian text-[11px] leading-5 text-[#687173]">
+                <span className="mt-1 block font-persian text-[11px] leading-5 text-text-secondary">
                   محاسبه بر اساس {priceBasis}
                   {isOnSale &&
                     ` با ${toPersianNumber(product.off_percentage)}٪ تخفیف`}
@@ -817,8 +825,8 @@ export default function ProductDetail() {
                 type="button"
                 onClick={handleAddToCart}
                 disabled={!canBuy}
-                className={`inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(0,48,135,0.06)] transition ${
-                  added ? "bg-[#019C34]" : "bg-[#003087] hover:bg-[#00246B]"
+                className={`inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-persian text-sm font-bold text-white shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition ${
+                  added ? "bg-status-success" : "bg-brand-navy hover:bg-action-hover"
                 } disabled:cursor-not-allowed disabled:opacity-50`}
               >
                 {added ? (
@@ -836,7 +844,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Description */}
-            <p className="leading-8 text-[#687173]">{product.description}</p>
+            <p className="leading-8 text-text-secondary">{product.description}</p>
 
             {/* Features */}
             {product.features?.length > 0 && (
@@ -844,10 +852,10 @@ export default function ProductDetail() {
                 {product.features.map((f) => (
                   <div
                     key={f.id}
-                    className="flex items-center gap-2 rounded-full bg-[#F5F7FA] px-3 py-1.5"
+                    className="flex items-center gap-2 rounded-full bg-brand-warm-white px-3 py-1.5"
                   >
-                    <Check size={14} className="text-[#019C34]" />
-                    <span className="text-sm font-persian text-[#1A1A2E]">
+                    <Check size={14} className="text-status-success" />
+                    <span className="text-sm font-persian text-text-primary">
                       {f.title}
                     </span>
                   </div>
@@ -862,10 +870,10 @@ export default function ProductDetail() {
           {/* Long description */}
           {product.long_description && (
             <div className={CARD}>
-              <h2 className="mb-4 font-persian text-xl font-semibold text-[#003087]">
+              <h2 className="mb-4 font-persian text-xl font-semibold text-brand-navy">
                 توضیحات تکمیلی
               </h2>
-              <div className="whitespace-pre-wrap leading-8 text-[#687173]">
+              <div className="whitespace-pre-wrap leading-8 text-text-secondary">
                 {product.long_description}
               </div>
             </div>
@@ -874,16 +882,16 @@ export default function ProductDetail() {
           {/* Specifications */}
           {product.specifications?.length > 0 && (
             <div className={CARD}>
-              <h2 className="mb-4 font-persian text-xl font-semibold text-[#003087]">
+              <h2 className="mb-4 font-persian text-xl font-semibold text-brand-navy">
                 مشخصات فنی
               </h2>
-              <div className="divide-y divide-[#CBD2D6]">
+              <div className="divide-y divide-brand-mist">
                 {product.specifications.map((spec) => (
                   <div key={spec.id} className="flex justify-between py-3">
-                    <span className="text-sm font-medium text-[#1A1A2E]">
+                    <span className="text-sm font-medium text-text-primary">
                       {spec.key}
                     </span>
-                    <span className="text-sm text-[#687173]">{spec.value}</span>
+                    <span className="text-sm text-text-secondary">{spec.value}</span>
                   </div>
                 ))}
               </div>
@@ -895,7 +903,7 @@ export default function ProductDetail() {
             <div className="grid gap-6 md:grid-cols-2">
               {pros.length > 0 && (
                 <div className={CARD}>
-                  <h2 className="mb-4 font-persian text-lg font-semibold text-[#019C34]">
+                  <h2 className="mb-4 font-persian text-lg font-semibold text-status-success">
                     مزایا
                   </h2>
                   <ul className="space-y-3">
@@ -903,9 +911,9 @@ export default function ProductDetail() {
                       <li key={p.id} className="flex items-start gap-3">
                         <Check
                           size={16}
-                          className="mt-1 shrink-0 text-[#019C34]"
+                          className="mt-1 shrink-0 text-status-success"
                         />
-                        <span className="text-sm leading-6 text-[#687173]">
+                        <span className="text-sm leading-6 text-text-secondary">
                           {p.text}
                         </span>
                       </li>
@@ -915,14 +923,14 @@ export default function ProductDetail() {
               )}
               {cons.length > 0 && (
                 <div className={CARD}>
-                  <h2 className="mb-4 font-persian text-lg font-semibold text-[#D20000]">
+                  <h2 className="mb-4 font-persian text-lg font-semibold text-status-error">
                     معایب
                   </h2>
                   <ul className="space-y-3">
                     {cons.map((c) => (
                       <li key={c.id} className="flex items-start gap-3">
-                        <X size={16} className="mt-1 shrink-0 text-[#D20000]" />
-                        <span className="text-sm leading-6 text-[#687173]">
+                        <X size={16} className="mt-1 shrink-0 text-status-error" />
+                        <span className="text-sm leading-6 text-text-secondary">
                           {c.text}
                         </span>
                       </li>
@@ -936,7 +944,7 @@ export default function ProductDetail() {
           {/* FAQs */}
           {product.faqs?.length > 0 && (
             <div className={CARD}>
-              <h2 className="mb-2 font-persian text-xl font-semibold text-[#003087]">
+              <h2 className="mb-2 font-persian text-xl font-semibold text-brand-navy">
                 سوالات متداول
               </h2>
               <div>
@@ -951,7 +959,7 @@ export default function ProductDetail() {
           {product.reviews?.length > 0 && (
             <div className={CARD}>
               <div className="mb-6 flex items-center justify-between">
-                <h2 className="font-persian text-xl font-semibold text-[#003087]">
+                <h2 className="font-persian text-xl font-semibold text-brand-navy">
                   نظرات کاربران
                 </h2>
                 <div className="flex items-center gap-2">
@@ -959,41 +967,41 @@ export default function ProductDetail() {
                       approved reviews exist, so displayRating is the real
                       average here, not the unreviewed default. */}
                   <StarRating rating={displayRating} size={18} />
-                  <span className="text-sm text-[#687173]">
+                  <span className="text-sm text-text-secondary">
                     {toPersianNumber(displayRating.toFixed(1))} از ۵
                   </span>
                 </div>
               </div>
-              <div className="divide-y divide-[#CBD2D6]">
+              <div className="divide-y divide-brand-mist">
                 {product.reviews.map((review) => (
                   <div key={review.id} className="py-5 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F7FA] text-sm font-bold text-[#003087]">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-warm-white text-sm font-bold text-brand-navy">
                         {review.customer_name?.charAt(0) || "ک"}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#1A1A2E]">
+                        <p className="text-sm font-medium text-text-primary">
                           {review.customer_name}
                         </p>
                         <StarRating rating={review.rating} size={12} />
                       </div>
                     </div>
-                    <h4 className="mt-3 font-medium text-[#1A1A2E]">
+                    <h4 className="mt-3 font-medium text-text-primary">
                       {review.title}
                     </h4>
-                    <p className="mt-2 text-sm leading-7 text-[#687173]">
+                    <p className="mt-2 text-sm leading-7 text-text-secondary">
                       {review.body}
                     </p>
                     {(review.pros || review.cons) && (
                       <div className="mt-3 flex flex-wrap gap-4 text-xs">
                         {review.pros && (
-                          <span className="text-[#019C34]">
+                          <span className="text-status-success">
                             <Check size={12} className="ml-1 inline" />
                             {review.pros}
                           </span>
                         )}
                         {review.cons && (
-                          <span className="text-[#D20000]">
+                          <span className="text-status-error">
                             <X size={12} className="ml-1 inline" />
                             {review.cons}
                           </span>

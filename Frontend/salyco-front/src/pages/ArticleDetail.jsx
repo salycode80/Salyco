@@ -27,13 +27,13 @@ export default function ArticleDetail() {
   }, [slug]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
       <PageBackground />
 
       <div className="relative mx-auto max-w-4xl px-6 py-10 sm:py-16">
         <Link
           to="/articles"
-          className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-[#003087] transition-colors hover:text-[#009CDE]"
+          className="mb-8 inline-flex items-center gap-2 font-persian text-sm font-medium text-brand-navy transition-colors hover:text-brand-navy"
           dir="rtl"
         >
           <ArrowRight size={16} />
@@ -41,47 +41,47 @@ export default function ArticleDetail() {
         </Link>
 
         {loading && (
-          <p className="font-persian text-center text-[#687173]">
+          <p className="font-persian text-center text-text-secondary">
             در حال بارگذاری...
           </p>
         )}
 
         {error && (
-          <p className="font-persian text-center text-[#D20000]">{error}</p>
+          <p className="font-persian text-center text-status-error">{error}</p>
         )}
 
         {!loading && article && (
-          <article className="overflow-hidden rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]">
-            <div className="relative aspect-[21/9] overflow-hidden bg-[#003087]">
+          <article className="overflow-hidden rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)]">
+            <div className="relative aspect-[21/9] overflow-hidden bg-brand-navy">
               <img
                 src={imageSrc}
                 alt={article.title}
                 onError={() => setImageSrc("/matress.png")}
                 className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#003087]/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/60 via-transparent to-transparent" />
             </div>
 
             <div className="p-8 md:p-10" dir="rtl">
-              <div className="flex items-center gap-1.5 text-sm text-[#687173]">
-                <CalendarDays size={16} className="text-[#687173]" />
+              <div className="flex items-center gap-1.5 text-sm text-text-secondary">
+                <CalendarDays size={16} className="text-text-secondary" />
                 <time dateTime={article.created_at}>
                   {formatArticleDate(article.created_at)}
                 </time>
               </div>
 
-              <h1 className="mt-4 font-persian text-3xl font-bold leading-tight text-[#1A1A2E] md:text-4xl">
+              <h1 className="mt-4 font-persian text-3xl font-bold leading-tight text-text-primary md:text-4xl">
                 {article.title}
               </h1>
 
               {article.excerpt && (
-                <p className="mt-4 font-persian text-lg leading-relaxed text-[#687173]">
+                <p className="mt-4 font-persian text-lg leading-relaxed text-text-secondary">
                   {article.excerpt}
                 </p>
               )}
 
               <div className="prose prose-slate mt-8 max-w-none">
-                <div className="whitespace-pre-wrap font-persian text-base leading-8 text-[#1A1A2E]">
+                <div className="whitespace-pre-wrap font-persian text-base leading-8 text-text-primary">
                   {article.content}
                 </div>
               </div>

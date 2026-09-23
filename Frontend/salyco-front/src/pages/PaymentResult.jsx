@@ -1,3 +1,4 @@
+import { BRAND } from "../config/brand";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -12,46 +13,46 @@ import { toPersianNumber } from "../utils/persian";
 import PageBackground from "../components/PageBackground";
 
 const CARD =
-  "rounded-xl border border-[#CBD2D6] bg-white shadow-[0_1px_4px_rgba(0,48,135,0.06)]";
+  "rounded-xl border border-brand-mist bg-white shadow-[0_1px_4px_rgba(5,46,95,0.06)]";
 
-const SALES_PHONE = "09126847234";
+const SALES_PHONE = BRAND.mobile;
 
 // Keyed by the `status` the backend redirects with — settlement.py's outcome
 // constants. Kept as data so a new outcome is one entry, not a new branch.
 const OUTCOMES = {
   success: {
     icon: CheckCircle2,
-    tone: "text-[#019C34]",
+    tone: "text-status-success",
     title: "پرداخت شما با موفقیت انجام شد",
     body: "سفارش شما ثبت و تأیید شد. جزئیات سفارش از طریق پیامک برای شما ارسال می‌شود.",
   },
   cancelled: {
     icon: Info,
-    tone: "text-[#687173]",
+    tone: "text-text-secondary",
     title: "پرداخت لغو شد",
     body: "پرداخت توسط شما لغو شد. سبد خرید شما دست‌نخورده باقی مانده و می‌توانید دوباره تلاش کنید.",
   },
   failed: {
     icon: XCircle,
-    tone: "text-[#D20000]",
+    tone: "text-status-error",
     title: "پرداخت انجام نشد",
     body: "مبلغی از حساب شما کسر نشده است. می‌توانید دوباره تلاش کنید یا سفارش خود را تلفنی ثبت کنید.",
   },
   pending: {
     icon: Loader2,
-    tone: "text-[#009CDE]",
+    tone: "text-brand-navy",
     title: "پرداخت شما در حال بررسی است",
     body: "نتیجه پرداخت شما به‌زودی مشخص می‌شود. در صورت کسر مبلغ، سفارش شما به‌صورت خودکار تأیید خواهد شد.",
   },
   mismatch: {
     icon: XCircle,
-    tone: "text-[#D20000]",
+    tone: "text-status-error",
     title: "عدم تطابق مبلغ پرداخت",
     body: "مبلغ پرداخت‌شده با مبلغ سفارش مطابقت ندارد. لطفاً با پشتیبانی تماس بگیرید تا بررسی شود.",
   },
   notfound: {
     icon: XCircle,
-    tone: "text-[#D20000]",
+    tone: "text-status-error",
     title: "اطلاعات پرداخت یافت نشد",
     body: "این پرداخت در سیستم ما ثبت نشده است. اگر مبلغی از حساب شما کسر شده، با پشتیبانی تماس بگیرید.",
   },
@@ -90,7 +91,7 @@ export default function PaymentResult() {
   const shownMessage = confirmed?.failure_reason || message;
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#F5F7FA] pt-[var(--navbar-height)]">
+    <section className="relative min-h-screen overflow-hidden bg-brand-warm-white pt-[var(--navbar-height)]">
       <PageBackground />
       <div className="relative mx-auto max-w-[560px] px-6 py-16" dir="rtl">
         <div className={`${CARD} flex flex-col items-center p-10 text-center`}>
@@ -99,34 +100,34 @@ export default function PaymentResult() {
               outcomeKey === "pending" ? "animate-spin" : ""
             }`}
           />
-          <h1 className="mt-4 font-persian text-2xl font-bold text-[#1A1A2E]">
+          <h1 className="mt-4 font-persian text-2xl font-bold text-text-primary">
             {outcome.title}
           </h1>
-          <p className="mt-2 font-persian text-sm leading-7 text-[#687173]">
+          <p className="mt-2 font-persian text-sm leading-7 text-text-secondary">
             {outcome.body}
           </p>
 
           {shownMessage && outcomeKey !== "success" && (
-            <p className="mt-4 w-full rounded-lg bg-[#FDE7E7] px-4 py-3 font-persian text-sm text-[#D20000]">
+            <p className="mt-4 w-full rounded-lg bg-status-error-bg px-4 py-3 font-persian text-sm text-status-error">
               {shownMessage}
             </p>
           )}
 
           {(shownOrderId || shownRef) && (
-            <dl className="mt-6 w-full divide-y divide-[#CBD2D6] rounded-lg bg-[#F5F7FA] px-4 text-sm">
+            <dl className="mt-6 w-full divide-y divide-brand-mist rounded-lg bg-brand-warm-white px-4 text-sm">
               {shownOrderId && (
                 <div className="flex justify-between py-3">
-                  <dt className="font-persian text-[#687173]">شماره سفارش</dt>
-                  <dd className="font-persian font-bold text-[#1A1A2E]">
+                  <dt className="font-persian text-text-secondary">شماره سفارش</dt>
+                  <dd className="font-persian font-bold text-text-primary">
                     {toPersianNumber(shownOrderId)}
                   </dd>
                 </div>
               )}
               {shownRef && (
                 <div className="flex justify-between py-3">
-                  <dt className="font-persian text-[#687173]">شماره پیگیری</dt>
+                  <dt className="font-persian text-text-secondary">شماره پیگیری</dt>
                   <dd
-                    className="font-persian font-bold text-[#1A1A2E] [font-feature-settings:'tnum']"
+                    className="font-persian font-bold text-text-primary [font-feature-settings:'tnum']"
                     dir="ltr"
                   >
                     {shownRef}
@@ -141,13 +142,13 @@ export default function PaymentResult() {
               <>
                 <Link
                   to="/user-info"
-                  className="flex-1 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
+                  className="flex-1 rounded-lg bg-brand-navy px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-action-hover"
                 >
                   سفارش‌های من
                 </Link>
                 <Link
                   to="/products"
-                  className="flex-1 rounded-lg border-2 border-[#003087] px-6 py-3 font-persian text-sm font-bold text-[#003087] transition hover:bg-[#003087] hover:text-white"
+                  className="flex-1 rounded-lg border-2 border-brand-navy px-6 py-3 font-persian text-sm font-bold text-brand-navy transition hover:bg-brand-navy hover:text-white"
                 >
                   ادامه خرید
                 </Link>
@@ -156,7 +157,7 @@ export default function PaymentResult() {
               <>
                 <Link
                   to="/cart"
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#003087] px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-[#00246B]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-navy px-6 py-3 font-persian text-sm font-bold text-white transition hover:bg-action-hover"
                 >
                   <ArrowRight size={16} />
                   بازگشت به سبد خرید
@@ -164,7 +165,7 @@ export default function PaymentResult() {
                 <a
                   href={`tel:${SALES_PHONE}`}
                   dir="ltr"
-                  className="flex-1 rounded-lg border-2 border-[#003087] px-6 py-3 font-persian text-sm font-bold text-[#003087] transition hover:bg-[#003087] hover:text-white"
+                  className="flex-1 rounded-lg border-2 border-brand-navy px-6 py-3 font-persian text-sm font-bold text-brand-navy transition hover:bg-brand-navy hover:text-white"
                 >
                   {SALES_PHONE}
                 </a>

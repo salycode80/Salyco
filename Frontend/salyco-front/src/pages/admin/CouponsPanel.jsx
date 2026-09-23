@@ -19,6 +19,8 @@ import {
   listAdminCouponRedemptions,
 } from "../../api/admin";
 import { listMattresses } from "../../api/warranty";
+import JalaliDatePicker from "../../components/JalaliDatePicker";
+import { formatJalali, formatJalaliDateTime } from "../../utils/jalali";
 import { toPersianNumber, formatPersianPrice } from "../../utils/persian";
 
 const CARD =
@@ -403,33 +405,28 @@ export default function CouponsPanel() {
           </div>
         </div>
 
-        {/* Plain date inputs: there is no Jalali picker in this codebase, which
-            is the precedent CreateInstancePanel.jsx:123 already set. */}
+        {/* Jalali pickers. The form still holds Gregorian "YYYY-MM-DD" strings —
+            that is what payloadFrom() sends and what the API stores — so only
+            the face of these two controls changed. */}
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div>
             <label htmlFor="c-start" className={LABEL}>
               تاریخ شروع
             </label>
-            <input
+            <JalaliDatePicker
               id="c-start"
-              type="date"
-              dir="ltr"
               value={form.starts_at}
-              onChange={(e) => set("starts_at", e.target.value)}
-              className={INPUT}
+              onChange={(v) => set("starts_at", v)}
             />
           </div>
           <div>
             <label htmlFor="c-end" className={LABEL}>
               تاریخ پایان
             </label>
-            <input
+            <JalaliDatePicker
               id="c-end"
-              type="date"
-              dir="ltr"
               value={form.ends_at}
-              onChange={(e) => set("ends_at", e.target.value)}
-              className={INPUT}
+              onChange={(v) => set("ends_at", v)}
             />
           </div>
         </div>
@@ -613,8 +610,8 @@ export default function CouponsPanel() {
                     <p className="mt-1 font-persian text-xs text-text-secondary">
                       اعتبار:{" "}
                       {row.starts_at || row.expires_at
-                        ? `${toDateInput(row.starts_at) || "—"} تا ${
-                            toDateInput(row.expires_at) || "—"
+                        ? `${formatJalali(row.starts_at) || "—"} تا ${
+                            formatJalali(row.expires_at) || "—"
                           }`
                         : "بدون محدودیت زمانی"}
                     </p>
@@ -709,7 +706,7 @@ export default function CouponsPanel() {
                             {redemptions[row.id].map((r) => (
                               <tr key={r.id} className="border-t border-brand-mist">
                                 <td className="py-2 [font-feature-settings:'tnum']">
-                                  {toDateInput(r.created_at)}
+                                  {formatJalaliDateTime(r.created_at)}
                                 </td>
                                 <td className="py-2">{r.customer_name}</td>
                                 <td className="py-2 [font-feature-settings:'tnum']">

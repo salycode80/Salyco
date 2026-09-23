@@ -31,28 +31,28 @@ const ProductPreviewCard = ({ warrantyData }) => {
 
   return (
     <div
-      className="mb-6 flex flex-col gap-4 rounded-xl border border-[#CBD2D6] bg-white p-4 text-right sm:flex-row sm:items-center sm:p-5"
+      className="mb-6 flex flex-col gap-4 rounded-xl border border-brand-mist bg-white p-4 text-right sm:flex-row sm:items-center sm:p-5"
       dir="rtl"
     >
       <img
         src={src}
         onError={() => setImageFailed(true)}
         alt={warrantyData.mattress_name || "تصویر محصول"}
-        className="h-32 w-32 shrink-0 self-center rounded-xl border border-[#CBD2D6] bg-[#F5F7FA] object-cover sm:h-28 sm:w-28"
+        className="h-32 w-32 shrink-0 self-center rounded-xl border border-brand-mist bg-brand-warm-white object-contain sm:h-28 sm:w-28"
       />
 
       <div className="min-w-0 flex-1">
-        <p className="font-persian text-xs text-[#687173]">
+        <p className="font-persian text-xs text-text-secondary">
           محصول اسکن‌شده — مطابقت را بررسی کنید
         </p>
-        <h3 className="mt-1 font-persian text-lg font-semibold text-[#1A1A2E]">
+        <h3 className="mt-1 font-persian text-lg font-semibold text-text-primary">
           {warrantyData.mattress_name || "—"}
         </h3>
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-persian text-sm text-[#687173]">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-persian text-sm text-text-secondary">
           {warrantyData.mattress_brand && (
             <span className="inline-flex items-center gap-1.5">
-              <Tag size={14} className="text-[#009CDE]" strokeWidth={2} />
+              <Tag size={14} className="text-brand-navy" strokeWidth={2} />
               {warrantyData.mattress_brand}
             </span>
           )}
@@ -62,8 +62,8 @@ const ProductPreviewCard = ({ warrantyData }) => {
         </div>
 
         {dimensions && (
-          <p className="mt-2 inline-flex items-center gap-1.5 font-persian text-sm text-[#1A1A2E]">
-            <Ruler size={14} className="text-[#009CDE]" strokeWidth={2} />
+          <p className="mt-2 inline-flex items-center gap-1.5 font-persian text-sm text-text-primary">
+            <Ruler size={14} className="text-brand-navy" strokeWidth={2} />
             {dimensions}
           </p>
         )}
