@@ -5004,7 +5004,7 @@ nginx routes /articles/, /cms/, /sitemap.xml and /robots.txt to Django; the bare
 - Consumes: `ArticleIndexPage` (Task 4).
 - Produces: a `مقالات` admin menu item pointing at the index, and a branded admin.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_admin.py`:
 
@@ -5048,14 +5048,14 @@ class AdminAccessTests(TestCase):
         self.assertNotEqual(response.status_code, 200)
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_admin -v 2`
 
 Expected: `test_a_staff_user_reaches_the_dashboard` FAILS — the admin shows
 Wagtail's own name, not the Salyco one.
 
-- [ ] **Step 3: Write the hooks**
+- [x] **Step 3: Write the hooks**
 
 Create `Backend/articles/wagtail_hooks.py`:
 
@@ -5126,7 +5126,7 @@ Add `'docs'` to the filtered names only if the project truly uses no Wagtail
 Documents — check `/cms/documents/` after this task and adjust. Leave the filter
 list as `("forms", "documents")` for now.
 
-- [ ] **Step 4: Write the admin CSS**
+- [x] **Step 4: Write the admin CSS**
 
 Create `Backend/articles/static/articles/admin.css`:
 
@@ -5158,7 +5158,7 @@ input[type="email"] {
 }
 ```
 
-- [ ] **Step 5: Point the app config at the hooks**
+- [x] **Step 5: Point the app config at the hooks**
 
 In `Backend/articles/apps.py`, add a verbose name so the app reads correctly in
 the admin:
@@ -5169,7 +5169,7 @@ class ArticlesConfig(AppConfig):
     verbose_name = 'مقالات'
 ```
 
-- [ ] **Step 6: Run the tests**
+- [x] **Step 6: Run the tests**
 
 Run: `python manage.py test articles.tests_admin -v 2`
 
@@ -5179,7 +5179,7 @@ Then open `/cms/` in a browser as a staff user and confirm: the word سالیک�
 appears in the header, the menu has a «مقالات» entry, and the editor body types
 right-to-left while the slug field types left-to-right.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add Backend/articles/wagtail_hooks.py Backend/articles/static/articles/admin.css Backend/articles/apps.py Backend/articles/tests_admin.py
@@ -5192,6 +5192,66 @@ expensive.
 Direction is set on the editing surfaces rather than on <body>: a blanket
 direction: rtl flips the slug, URL and email inputs, which breaks them."
 ```
+
+**Observed:**
+
+1. **Step 2's expected failure does not happen, and the real one is more
+   interesting.** `WAGTAIL_SITE_NAME` was already `"مدیریت محتوای سالیکو"` from
+   Task 1, so `test_a_staff_user_reaches_the_dashboard` passed on the first run —
+   the admin was never showing Wagtail's own name. What failed instead was *both*
+   staff tests, with `302 != 200`.
+
+2. **`is_staff` is not enough to open `/cms/`, and it fails as a redirect rather
+   than a 403.** `wagtail.admin.auth.require_admin_access` requires
+   `wagtailadmin.access_admin` explicitly (superusers pass implicitly) and calls
+   `reject_request()`, which sends the visitor to the login URL. So a staff user
+   without it is bounced to a login page they are already logged in to, with a
+   flash message — which reads as a session bug and sends you looking in the
+   wrong place. Measured, one variable at a time:
+
+   | user | `/cms/` |
+   |---|---|
+   | `is_staff=True` | 302 → `/cms/login/?next=/cms/` |
+   | `is_staff=True, is_superuser=True` | 200 |
+   | `is_staff=True` + `wagtailadmin.access_admin` | 200 |
+   | `is_staff=True` + Wagtail's `Editors` group | 200 |
+
+   There is a second gate behind it: the page explorer needs at least one *page*
+   permission, or `IndexView` redirects to the dashboard — so admin access alone
+   still does not list pages. Wagtail's shipped `Editors` group (created by its
+   initial-data migration, so present in every fresh database) satisfies both.
+   The fixture adds the editor to that group rather than hand-granting
+   permissions, because that is how a real editor is set up — **and that is the
+   operational fact this task turns up: giving someone `is_staff` does not give
+   them the CMS. They need the `Editors` group, or `wagtailadmin.access_admin`
+   plus page permissions.** Worth carrying into Task 14's setup command.
+
+3. **The test class needs `@plain_staticfiles`, and omitting it looks like a
+   branding bug rather than a test bug.** `insert_global_admin_css` is this
+   project's first `{% static %}` consumer *in the admin*, so the admin's first
+   render resolves `articles/admin.css` through whitenoise's manifest storage —
+   which has no entry for it until `collectstatic` writes `staticfiles.json`, and
+   that happens at container start, never during a test run. The failure is
+   `ValueError: Missing staticfiles manifest entry for 'articles/admin.css'`, and
+   it takes down every admin test. `articles/testing_support.plain_staticfiles`
+   already existed for exactly this from Task 7; Task 13's test file simply did
+   not know about it.
+
+4. **The admin menu is a serialized React tree, not markup, so asserting on
+   Persian labels tests the serialiser.** The rendered `/cms/` carries
+   `{"label": "مقالات", "icon_name":
+   "doc-full-inverse", "url": "/cms/pages/3/edit/"}` — the label is
+   backslash-escaped, and `MenuItem.name` is the same string with the `\u`
+   stripped (`u0645u0642u0627u0644u0627u062a`). The tests therefore assert on the
+   index's edit URL and the icon, which is what actually distinguishes the entry.
+
+5. **The hide-filter is only partly observable.** `/cms/forms/` disappears from
+   the dashboard, so the test asserts on that. `/cms/documents/` does *not*
+   disappear — the document chooser still references it elsewhere in the admin —
+   so asserting its absence would fail. This is also why hiding the Documents
+   menu item does not contradict the `/documents/` nginx location added in
+   Task 12: the menu entry is hidden, the app stays installed, and its URLs still
+   have to resolve.
 
 ---
 

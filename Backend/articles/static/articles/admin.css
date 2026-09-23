@@ -1,0 +1,31 @@
+/* A small amount of branding for the CMS. Not a theme: the goal is that an
+   editor recognises the tool as Salyco's, not that it stops looking like
+   Wagtail — a heavily restyled admin is what makes an upgrade expensive.
+
+   Direction is set on the editing surfaces only. Setting it on <body> would
+   flip the slug, URL and email inputs, which genuinely breaks them. */
+
+/* Wagtail's own primary colour variables, set to the brand navy. The hex is
+   repeated from public/tokens.css rather than imported: the CMS is served by
+   Django, which does not serve that file, so there is no path to it that works
+   in both development and production. It is the one place in the project that
+   restates a brand colour — if the navy ever changes, this is the second file. */
+:root {
+  --w-color-primary: #052e5f;
+  --w-color-primary-200: #0a4a94;
+}
+
+.article-admin-editor [contenteditable="true"],
+.w-draftail-editor__document {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Slugs, URLs and addresses stay left-to-right even inside an RTL form. */
+input[type="url"],
+input[name$="slug"],
+input[name$="url"],
+input[type="email"] {
+  direction: ltr;
+  text-align: left;
+}
