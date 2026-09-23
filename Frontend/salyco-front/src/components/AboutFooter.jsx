@@ -1,6 +1,7 @@
 import { BRAND } from "../config/brand";
 import { Link } from "react-router-dom";
 import { Phone, Camera, MapPin, Globe } from "lucide-react";
+import { isServerRoute } from "../config/serverRoutes";
 
 // Enamad (نماد اعتماد الکترونیکی) seal credentials. Kept as constants so the
 // query strings are built in JS — a raw "&Code=" inside a JSX attribute string
@@ -10,7 +11,7 @@ const ENAMAD_CODE = "H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4";
 
 const footerLinks = [
   { label: "محصولات", href: "/products" },
-  { label: "راهنمای انتخاب تشک", href: "/articles" },
+  { label: "راهنمای انتخاب تشک", href: "/articles/" },
   { label: "خدمات پس از فروش", href: "/warranty/my" },
   { label: "تماس با ما", href: "/contact" },
   { label: "درباره ما", href: "/about" },
@@ -67,7 +68,7 @@ export default function AboutFooter() {
               <li><a href="/catalog.pdf" download className="font-persian text-sm text-white/75 hover:text-white">دانلود کاتالوگ</a></li>
               {footerLinks.map(({ label, href }) => (
                 <li key={label}>
-                  {href.startsWith("/") ? (
+                  {href.startsWith("/") && !isServerRoute(href) ? (
                     <Link
                       to={href}
                       className="font-persian text-sm text-white/75 transition-colors hover:text-white"

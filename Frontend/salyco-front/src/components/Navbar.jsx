@@ -27,7 +27,9 @@ import {
 // <ProductsMenu /> instead of a NavLink.
 const categories = [
   { type: "menu", key: "products" },
-  { label: "راهنمای انتخاب", icon: BookOpen, to: "/articles" },
+  // Served by Django, so the row renders an <a> for it rather than a NavLink.
+  // A NavLink would client-render a route App.jsx no longer declares.
+  { type: "external", label: "راهنمای انتخاب", icon: BookOpen, to: "/articles/" },
   { label: "خدمات پس از فروش", icon: ClipboardList, to: "/warranty/my" },
   { label: "نمایندگی", icon: MapPin, to: "/dealers" },
   { label: "تماس با ما", icon: Phone, to: "/contact" },
@@ -292,6 +294,27 @@ export default function Navbar() {
       >
         {categories.map(({ type, key, label, icon: Icon, to }) => {
           if (type === "menu") return <ProductsMenu key={key} />;
+
+          // Django-served pages get a plain anchor. It carries the NavLink's
+          // inactive styling rather than its isActive callback, because there is
+          // no client-side route to be active on — the visitor leaves the SPA.
+          if (type === "external") {
+            return (
+              <a
+                key={to}
+                href={to}
+                className="relative flex items-center gap-2 rounded-lg px-3 py-1.5 sm:px-4
+                 font-persian text-sm font-semibold whitespace-nowrap
+                 transition-all duration-200
+                 after:absolute after:inset-x-3 after:-bottom-px after:h-0.5
+                 after:rounded-full after:transition-colors sm:after:inset-x-4
+                 text-text-primary after:bg-transparent hover:bg-brand-warm-white hover:text-brand-navy hover:after:bg-brand-navy/30"
+              >
+                <Icon size={15} strokeWidth={2} />
+                <span>{label}</span>
+              </a>
+            );
+          }
 
           return (
             <NavLink

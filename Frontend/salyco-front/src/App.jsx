@@ -14,8 +14,6 @@ import ProductsIndex from "./pages/ProductsIndex";
 import ProductList from "./pages/ProductList";
 import ProductDetail from "./pages/ProductDetail";
 import ProductRegistration from "./pages/ProductRegistration";
-import Articles from "./pages/Articles";
-import ArticleDetail from "./pages/ArticleDetail";
 import Dealers from "./pages/Dealers";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
@@ -78,8 +76,10 @@ function App() {
               path="/productregistration"
               element={<ProductRegistration />}
             />
-            <Route path="/articles" element={<Articles />} />
-            <Route path="/articles/:slug" element={<ArticleDetail />} />
+            {/* /articles and /articles/:slug are deliberately absent: they are
+                Django pages now, and every link to them is a real anchor (see
+                config/serverRoutes.js). Declaring them here would shadow the
+                server-rendered article with a client-rendered shell. */}
             <Route path="/dealers" element={<Dealers />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />

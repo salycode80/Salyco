@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import api from "../api";
 import { getArticleImageUrl, formatArticleDate } from "../utils/articleImage";
@@ -71,8 +70,8 @@ export default function FeaturedArticles() {
             <ol className="flex flex-col gap-3">
               {rest.map((article, i) => (
                 <li key={article.slug}>
-                  <Link
-                    to={`/articles/${article.slug}`}
+                  <a
+                    href={`/articles/${article.slug}/`}
                     className="group flex items-start gap-4 rounded-xl bg-white p-4 border border-brand-mist shadow-[0_1px_4px_rgba(5,46,95,0.06)] transition hover:shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-navy font-persian text-sm font-bold text-white">
@@ -89,23 +88,23 @@ export default function FeaturedArticles() {
                         )}
                       </span>
                     </div>
-                  </Link>
+                  </a>
                 </li>
               ))}
 
-              <Link
-                to="/articles"
+              <a
+                href="/articles/"
                 className="mt-1 inline-flex items-center gap-2 self-start rounded-lg border-2 border-brand-navy bg-white px-5 py-2.5 font-persian text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-navy/5"
               >
                 همه مقالات
                 <ArrowLeft size={16} />
-              </Link>
+              </a>
             </ol>
 
             {/* ── Featured story ── */}
             {featured && (
-              <Link
-                to={`/articles/${featured.slug}`}
+              <a
+                href={`/articles/${featured.slug}/`}
                 className="group relative flex min-h-[360px] flex-col justify-end overflow-hidden rounded-xl shadow-[0_4px_16px_rgba(5,46,95,0.1)]"
               >
                 {featured.image ? (
@@ -136,7 +135,7 @@ export default function FeaturedArticles() {
                     <ArrowLeft size={16} />
                   </span>
                 </div>
-              </Link>
+              </a>
             )}
           </div>
         )}
