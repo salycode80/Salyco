@@ -5655,13 +5655,19 @@ index the site root would put it at / and every canonical tag would be wrong."
 - Consumes: `ArticlePage` (Task 4), `setup_salyco_cms` (Task 14), `services.estimate_reading_time`.
 - Produces: `parse_slugmap(text) -> dict[str, str]` mapping an old path to its Persian replacement; `content_to_blocks(text) -> list[tuple[str, dict]]`; the `migrate_legacy_articles [--dry-run]` command.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_legacy_migration.py`:
 
 ```python
+import base64
+import io
+import shutil
+import tempfile
+
+from django.core.files.base import ContentFile
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from wagtail.contrib.redirects.models import Redirect
 from wagtail.images.models import Image
 from wagtail.models import Page
@@ -5669,6 +5675,14 @@ from wagtail.models import Page
 from articles.legacy import content_to_blocks, parse_slugmap
 from articles.models import ArticlePage
 from articles.models import Article as LegacyArticle
+
+# A real 1x1 PNG, for ImageMigrationTests at the end of the file. Not decoration:
+# Django's ImageField reads the dimensions out of the file when the row is saved
+# (width_field/height_field), so bytes that Pillow cannot decode would leave
+# width and height unset — and those columns are not nullable.
+PNG_1PX = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
 
 SLUGMAP = """OLD : /articles/old-one
 NEW : /articles/جدید-یک
@@ -5726,6 +5740,17 @@ class ContentConversionTests(TestCase):
     def test_whitespace_only_input_produces_nothing(self):
         self.assertEqual(content_to_blocks("\n\n   \n\n"), [])
 
+    def test_crlf_content_converts_the_same_as_lf(self):
+        # Not hypothetical: every one of the four legacy articles in production
+        # separates its paragraphs with CRLF, and not one line ends in a bare LF.
+        # Without normalisation the split still works — r"\n\s*\n" matches across
+        # the "\r\n\r\n" — but each block keeps its stray carriage return, which
+        # then travels into the stored HTML.
+        lf = content_to_blocks("اول.\n\nنکته مهم:\n\nدوم.")
+        crlf = content_to_blocks("اول.\r\n\r\nنکته مهم:\r\n\r\nدوم.")
+        self.assertEqual(lf, crlf)
+        self.assertNotIn("\r", str(crlf))
+
 
 class MigrationCommandTests(TestCase):
     @classmethod
@@ -5771,11 +5796,22 @@ class MigrationCommandTests(TestCase):
         self.run_command()
         self.assertEqual(ArticlePage.objects.get().legacy_id, self.legacy.id)
 
-    def test_it_preserves_the_dates(self):
+    def test_it_preserves_the_publication_date(self):
+        # first_published_at is the article's own date — what the page displays
+        # and what the JSON-LD calls datePublished — and the migration carries it
+        # over. last_published_at is deliberately not asserted: publish() sets it
+        # to now() unconditionally, which is a record of this import publishing
+        # the page rather than a value the command controls.
         self.run_command()
         page = ArticlePage.objects.get()
         self.assertEqual(page.first_published_at, self.legacy.created_at)
-        self.assertEqual(page.last_published_at, self.legacy.updated_at)
+
+    def test_a_published_legacy_article_goes_live(self):
+        # The other half of the draft test below: the flag has to be honoured in
+        # both directions, and Page.live defaults to True, so "it went live" is
+        # the outcome a bug would produce by accident too.
+        self.run_command()
+        self.assertTrue(ArticlePage.objects.get().live)
 
     def test_the_body_carries_the_article_text(self):
         self.run_command()
@@ -5784,8 +5820,14 @@ class MigrationCommandTests(TestCase):
 
     def test_it_creates_a_permanent_redirect_from_the_old_path(self):
         self.run_command()
-        redirect = Redirect.objects.get(old_path=f"/articles/{self.legacy.slug}/")
-        self.assertEqual(redirect.redirect_page, ArticlePage.objects.get())
+        # No trailing slash in the lookup: Redirect.save() normalises old_path
+        # through Redirect.normalise_path, which strips it. Redirect has no custom
+        # manager, so a lookup is a raw query and does not normalise to match.
+        redirect = Redirect.objects.get(old_path=f"/articles/{self.legacy.slug}")
+        # .specific, because the FK hands back a Page and Django's Model.__eq__
+        # compares _meta.concrete_model — so a Page and an ArticlePage with the
+        # same pk are not equal, and asserting on the raw FK always fails.
+        self.assertEqual(redirect.redirect_page.specific, ArticlePage.objects.get())
         # Permanent, because the old URL is never coming back. A 302 would tell
         # the crawler to keep the old entry and re-check it forever.
         self.assertTrue(redirect.is_permanent)
@@ -5806,7 +5848,13 @@ class MigrationCommandTests(TestCase):
         # unquote, because Django runs the Location header through iri_to_uri:
         # the wire form is percent-encoded even though the page's own path is
         # Persian. Asserting the raw Persian here fails on the first run.
-        self.assertEqual(unquote(response["Location"]), expected)
+        #
+        # The trailing slashes are compared loosely because the two sides spell
+        # the same path differently: _slugmap.txt stores a path, while a Wagtail
+        # page URL is always slash-terminated, and the redirect lands on the page.
+        self.assertEqual(
+            unquote(response["Location"]).rstrip("/"), expected.rstrip("/")
+        )
 
     def test_a_second_run_imports_nothing(self):
         self.run_command()
@@ -5833,6 +5881,54 @@ class MigrationCommandTests(TestCase):
     def test_the_legacy_table_is_left_alone(self):
         self.run_command()
         self.assertEqual(LegacyArticle.objects.count(), 1)
+
+
+class ImageMigrationTests(TestCase):
+    """The hero-image path, which the rest of this module does not touch.
+
+    Worth its own class because it is the one part of the command that reads and
+    writes files, and because every one of the four articles this has to import
+    in production carries an image — so it will run for real on the first
+    deploy even though nothing else here exercises it.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls._media = tempfile.mkdtemp()
+        cls._override = override_settings(MEDIA_ROOT=cls._media)
+        cls._override.enable()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls._override.disable()
+        shutil.rmtree(cls._media, ignore_errors=True)
+
+    def setUp(self):
+        call_command("setup_salyco_cms", verbosity=0)
+
+    def test_it_copies_the_legacy_image_into_the_image_library(self):
+        legacy = LegacyArticle.objects.create(
+            title="با تصویر", slug="with-image", excerpt="خلاصه", content="متن کوتاه."
+        )
+        legacy.image.save("hero.png", ContentFile(PNG_1PX), save=True)
+
+        call_command("migrate_legacy_articles", stdout=io.StringIO())
+
+        page = ArticlePage.objects.get(legacy_id=legacy.id)
+        self.assertIsNotNone(page.hero_image)
+        self.assertEqual(page.hero_image.title, "با تصویر")
+        self.assertEqual(page.hero_image_alt, "با تصویر")
+        # The dimensions are read off the file rather than left unset: `width`
+        # and `height` are non-nullable, and Django fills them from the image
+        # itself. Real bytes, not a placeholder string — a fake file would fail
+        # to decode and import as a broken image, which is exactly the failure
+        # this test exists to catch before four production articles hit it.
+        self.assertEqual((page.hero_image.width, page.hero_image.height), (1, 1))
+        # The copy goes to the configured media root, so a test run does not
+        # leave files in the repository's own media/ directory.
+        self.assertTrue(page.hero_image.file.path.startswith(self._media))
 ```
 
 No Persian slug is hard-coded anywhere in this test module: the two slug
@@ -5840,15 +5936,36 @@ assertions read the expectation out of the real `_slugmap.txt` through
 `parse_slugmap`, so editing the map cannot make the suite fail for the wrong
 reason.
 
-18 tests in total.
+21 tests in total.
 
-- [ ] **Step 2: Run it and watch it fail**
+**Observed — the count was wrong.** This section originally ended "18 tests in
+total" while Step 5 expected 17, and the file it describes has neither number.
+The real figure is **21**: three tests had to be added while executing this task
+and are now written into the listings above, each with a note saying why:
+
+- `ContentConversionTests.test_crlf_content_converts_the_same_as_lf`, because
+  every paragraph break in the four real articles is CRLF.
+- `MigrationCommandTests.test_a_published_legacy_article_goes_live`, the other half
+  of the draft test at the end of the file.
+- `ImageMigrationTests.test_it_copies_the_legacy_image_into_the_image_library`, a
+  new class for the hero-image path, which nothing else here touches.
+
+Two existing tests also changed once they met the real behaviour rather than the
+assumed behaviour: `test_it_preserves_the_dates` became
+`test_it_preserves_the_publication_date` and asserts only `first_published_at`
+(see Step 4, defect 2), and `test_the_old_url_redirects_to_the_new_one` compares
+the Location header with the trailing slash stripped. Step 4 lists the four
+command defects that forced those changes.
+
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_legacy_migration -v 2`
 
 Expected: FAIL — `ModuleNotFoundError: No module named 'articles.legacy'`.
 
-- [ ] **Step 3: Write the conversion helpers**
+Observed: as expected, `ModuleNotFoundError: No module named 'articles.legacy'`.
+
+- [x] **Step 3: Write the conversion helpers**
 
 Create `Backend/articles/legacy.py`:
 
@@ -5905,7 +6022,7 @@ def content_to_blocks(text):
     inventing content the author never wrote.
     """
     blocks = []
-    for chunk in re.split(r"\n\s*\n", text or ""):
+    for chunk in re.split(r"\n\s*\n", _normalise_newlines(text)):
         chunk = chunk.strip()
         if not chunk:
             continue
@@ -5919,6 +6036,19 @@ def content_to_blocks(text):
             # the original would otherwise be parsed as markup on render.
             blocks.append(("paragraph", f"<p>{_escape(chunk)}</p>"))
     return blocks
+
+
+def _normalise_newlines(text):
+    """Fold CRLF and lone CR to LF before parsing.
+
+    Not defensive coding for its own sake: every paragraph break in the four
+    articles this has to import is CRLF, with no bare LF anywhere. The split
+    would still find them — r"\\n\\s*\\n" matches across a "\\r\\n\\r\\n" — but each
+    block would keep a trailing carriage return, which then travels into the
+    stored HTML of the article body. Reading the real data is what showed this;
+    it is not visible from the model definition.
+    """
+    return (text or "").replace("\r\n", "\n").replace("\r", "\n")
 
 
 def _is_heading(chunk):
@@ -5935,14 +6065,30 @@ def _escape(text):
     )
 ```
 
-- [ ] **Step 4: Write the command**
+**Observed — the line endings in the real data are CRLF, so the parse gained a
+normalisation step.** This is the one thing about Task 15 that reading the model
+could not have told anyone, and it came out of Step 6 rather than out of a test:
+`Article.content` in production holds thirteen `\r\n\r\n` paragraph separators
+across the four articles and not a single bare `\n`. The split above still finds
+those breaks — `r"\n\s*\n"` matches across a `"\r\n\r\n"` — so the suite would
+have passed and the bug would have shipped: each block keeps the carriage return
+that preceded its terminating newline, and that `\r` then travels into the
+stored HTML of the article body. `_normalise_newlines` folds CRLF and lone CR to
+LF before the split, which is why it is called inside `content_to_blocks` rather
+than by the caller. The corresponding test
+(`ContentConversionTests.test_crlf_content_converts_the_same_as_lf`) asserts both
+that the two inputs agree and that no `\r` survives.
+
+- [x] **Step 4: Write the command**
 
 Create `Backend/articles/management/commands/migrate_legacy_articles.py`:
 
 ```python
 """Import the legacy articles.Article rows as Wagtail ArticlePages.
 
-One transaction, idempotent through legacy_id, and --dry-run writes nothing.
+Idempotent through legacy_id, one transaction per article so a single bad row
+cannot take the run down with it, and --dry-run writes nothing.
+
 The legacy table is left in place: it is both the source and the rollback path,
 and removing it is a separate change after this one has been verified in
 production.
@@ -6032,8 +6178,22 @@ class Command(BaseCommand):
             excerpt=(legacy.excerpt or "")[:500],
             body=blocks,
             legacy_id=legacy.id,
+            # Set from the legacy flag, not left to the default. Page.live
+            # defaults to True and add_child() writes the row without validating
+            # anything, so an unlisted draft would otherwise be published by the
+            # act of importing it. save_revision().publish() below raises it again
+            # for the ones that really are published.
+            live=legacy.is_published,
+            # The article's own date, and the one that matters: it is what the
+            # page shows, what the JSON-LD calls datePublished and what the
+            # sitemap can carry. publish() only fills this in when it is empty
+            # (actions/publish_revision.py:146), so a value set here survives.
+            #
+            # last_published_at is deliberately NOT carried over: publish() sets
+            # it to now() unconditionally (:143), so passing the legacy value
+            # would be dead code. It is Wagtail's record of when this page was
+            # last published, and these articles were published by this import.
             first_published_at=legacy.created_at,
-            last_published_at=legacy.updated_at,
         )
         if dry_run:
             self.stdout.write(f"[dry-run] {legacy.slug} -> {slug}")
@@ -6090,8 +6250,14 @@ class Command(BaseCommand):
     def _replace_redirect(self, legacy, page):
         # Direct and single-hop: a chain of redirects costs a round trip and
         # dilutes what the crawler attributes to the destination.
+        #
+        # normalise_path, because save() runs old_path through it — and it strips
+        # the trailing slash. Redirect has no custom manager, so update_or_create's
+        # lookup is a raw query that does not normalise to match: passing the
+        # trailing-slash form would miss the row written last time and try to
+        # insert a duplicate of it.
         Redirect.objects.update_or_create(
-            old_path=f"/articles/{legacy.slug}/",
+            old_path=Redirect.normalise_path(f"/articles/{legacy.slug}/"),
             defaults={
                 "redirect_page": page,
                 "is_permanent": True,
@@ -6100,13 +6266,58 @@ class Command(BaseCommand):
         )
 ```
 
-- [ ] **Step 5: Run the tests**
+**Observed — four defects in the code above, all found by running it.**
+
+1. **`live=legacy.is_published` was missing.** This is the same `Page.live`
+   defect this plan has now hit at Tasks 7, 8, 9, 11 and 14, and it was caught
+   here by `test_an_unpublished_legacy_article_becomes_a_draft` — the only test
+   in the module that would notice, because `live` defaults to `True` and so an
+   accidental publish looks exactly like a correct one. Passed explicitly.
+
+2. **`last_published_at=legacy.updated_at` was dead code.** Wagtail's publish
+   action sets `object.last_published_at = now` unconditionally
+   (`wagtail/actions/publish_revision.py:143`) — unlike `first_published_at`,
+   which it fills in only when it is `None` (`:146`). The argument was dropped on
+   the floor, which is why the module's dates test failed on `last` while passing
+   on `first`, and why that test now asserts only `first_published_at`. The value
+   the command would have written (`2026-07-19`) is not recoverable through
+   `last_published_at` at all; it is already carried by `first_published_at`, and
+   `last_published_at` means "when this page was last published", which for these
+   articles is the import.
+
+3. **The redirect lookup used the trailing-slash path and would have
+   double-inserted.** `Redirect.save()` runs `old_path` through
+   `Redirect.normalise_path`, which strips the trailing slash, and `Redirect` has
+   no custom manager — so `update_or_create`'s lookup is a raw query that does
+   *not* normalise to match, and the second run would have missed the row and
+   tried to insert a duplicate of it (`unique_together` on `old_path`, `site`).
+   The lookup now runs the same `normalise_path` the save does.
+
+4. **The redirect assertion needed `.specific`.** `redirect.redirect_page` is a
+   `Page`, and Django's `Model.__eq__` compares `_meta.concrete_model` — verified
+   in the shell: `Page._meta.concrete_model` is `Page` while
+   `ArticlePage._meta.concrete_model` is `ArticlePage`, so the two are never equal
+   even at the same pk. The test compares `.specific`.
+
+A fifth thing that is not a defect but was a genuine gap: **nothing else in this
+module touches `_attach_image`** — the one part of the command that reads and
+writes files — and every one of the four production articles carries a hero
+image, so that code runs for the first time on the first deploy. It now has its
+own class, `ImageMigrationTests`, with a real 1×1 PNG rather than a placeholder
+string, because Django decodes the file on save to fill the non-nullable
+`width`/`height` columns and would import a broken image from fake bytes.
+
+- [x] **Step 5: Run the tests**
 
 Run: `python manage.py test articles.tests_legacy_migration -v 2`
 
 Expected: PASS (17 tests).
 
-- [ ] **Step 6: Rehearse against the real data, writing nothing**
+Observed: PASS, but **21 tests**, not 17 — the three added while executing this
+task are listed above, and the prose count of 18 was wrong for the file as
+written. `python manage.py test articles core` also passes, 138 tests.
+
+- [x] **Step 6: Rehearse against the real data, writing nothing**
 
 Run:
 
@@ -6120,7 +6331,32 @@ Expected: four lines of `[dry-run] <old-slug> -> <persian-slug>` and a summary o
 `failed`, the reason is printed with its legacy id; fix the parse rather than
 lowering the guard.
 
-- [ ] **Step 7: Do it for real**
+**Observed — this cannot be run here, and the reason matters.** The local
+database holds **zero** legacy `Article` rows: the four articles this command
+exists to import live in production, and `Backend/db.sqlite3` is development
+data. Run as written here the command prints `total=0 migrated=0 skipped=0
+failed=0` and proves nothing. The rehearsal below stands in for it and is what
+the CRLF finding came from.
+
+To rehearse against the real data without a database of your own to import into,
+read the four articles out of the live API and run the command inside a
+transaction that is rolled back. Write it as a standalone script with
+`django.setup()` — **not** through `manage.py shell` with piped stdin, which
+executes line by line through `InteractiveConsole` (so any indented block raises
+`IndentationError`) and, worse, commits whatever `with transaction.atomic():`
+did manage to run before the error. That is a mistake this task already made
+once: four `Article` rows were written to the dev database and had to be deleted
+by hand.
+
+What the rehearsal produced, matching the expectation above exactly: four
+`[dry-run] <old> -> <persian>` lines; `total=4 migrated=4 skipped=0 failed=0`;
+the same on the real run; `total=4 migrated=0 skipped=4 failed=0` on the second;
+word counts preserved article by article (213→213, 230→230, 224→224, 228→228);
+four live pages carrying the original `2026-07-19` dates; and four permanent
+single-hop redirects. The database was then confirmed clean — `Article: 0`,
+`ArticlePage: 0`, `Redirect: 0`, `Pages: 3`.
+
+- [x] **Step 7: Do it for real**
 
 Run `python manage.py migrate_legacy_articles`, then confirm:
 
@@ -6132,7 +6368,16 @@ curl -sI http://127.0.0.1:8000/articles/bhtrn-tsh-br-mrdrd-o-ds-mr-dm-st/
 Expected: `301` to `/articles/بهترین-تشک-برای-کمردرد/`, and that URL returns 200.
 The second command must report `migrated=0 skipped=4` — the idempotency check.
 
-- [ ] **Step 8: Commit**
+**Observed — deferred, as Step 6 explains: there is nothing local to import.**
+The rehearsal verified the same outcomes against the real rows (four migrated,
+`skipped=4` on the second run, four permanent redirects, four live pages at the
+original dates); what remains is running it against the production database
+after deploy. This is the migration's own one-time step, and the legacy table is
+deliberately left in place so that running it and checking the four URLs is
+safe to do in place. Do not delete `articles.Article` until the four redirects
+and four pages have been confirmed answering on the live host.
+
+- [x] **Step 8: Commit**
 
 ```bash
 git add Backend/articles/legacy.py Backend/articles/management/commands/migrate_legacy_articles.py Backend/articles/tests_legacy_migration.py
@@ -6148,8 +6393,21 @@ get a permanent one-hop 301.
 
 articles.Article is left untouched and undeleted: it is the source, the rollback
 path, and its removal is a separate change for after this is verified in
-production."
+production.
+
+Three things the real data forced, which the plan did not anticipate: the stored
+bodies are CRLF, so the parse normalises newlines before splitting — otherwise a
+carriage return travels into every stored paragraph; the command sets
+live=legacy.is_published explicitly, because Page.live defaults to True and
+add_child() validates nothing, so an unlisted draft would be published by the act
+of importing it; and last_published_at is deliberately not carried over, because
+Wagtail's publish action overwrites it unconditionally."
 ```
+
+Observed: committed with the message above plus that closing paragraph. The plan
+document goes in the same commit, as it has for every task in this plan — the
+record of what was found and the code that was changed for it are easier to read
+together than apart.
 
 ---
 
