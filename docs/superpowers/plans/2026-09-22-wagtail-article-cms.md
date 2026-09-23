@@ -5268,7 +5268,7 @@ direction: rtl flips the slug, URL and email inputs, which breaks them."
 - Consumes: `ArticleIndexPage` (Task 4), `GlobalSeoSettings` (Task 2), `settings.SITE_URL`.
 - Produces: the `setup_salyco_cms` management command. It is idempotent; running it twice changes nothing.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_setup_command.py`:
 
@@ -5337,13 +5337,51 @@ The last test is the important one: a setup command that resets what an editor
 configured is a command nobody dares run twice, and this one has to be safe to
 run on every deploy.
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_setup_command -v 2`
 
 Expected: FAIL — `CommandError: Unknown command: 'setup_salyco_cms'`.
 
-- [ ] **Step 3: Write the command**
+Observed: FAILED (errors=7), each `django.core.management.base.CommandError:
+Unknown command: 'setup_salyco_cms'`. As expected.
+
+- [x] **Step 3: Write the command**
+
+**Observed — two defects in this step's original code, both found by running it.**
+The version first written from this step failed all 7 tests with
+`Site.MultipleObjectsReturned: get() returned more than one Site -- it returned 2!`.
+Two independent causes, both fixed in the code below:
+
+1. **`_ensure_site` created a second default site.** `get_or_create(hostname=...)`
+   cannot find the site Wagtail's initial data already made — that one is
+   `localhost`, rooted at its own "Welcome" page — so the lookup missed and
+   inserted a new row with `is_default_site=True`. Nothing stops that at write
+   time: `get_or_create` never calls `full_clean()`, and Wagtail's "only one site
+   can be default" rule is in `Site.clean()` (`wagtail/models/sites.py:186-197`),
+   not in the database. The error therefore surfaced one line later, in
+   `_ensure_seo_settings`'s `Site.objects.get(is_default_site=True)`. The fix is
+   to locate the site by `is_default_site` and repoint it. The same pass also
+   normalises `port`: the placeholder site carries port 80, and since Wagtail
+   infers the scheme from the port (`root_url()`), leaving it would have made
+   every canonical tag and sitemap entry `http://` on an `https://` site.
+
+2. **The `seo.pk is not None` guard was dead code.** `BaseSiteSetting.for_site` is
+   `queryset.get_or_create(site=site)` for site settings, so the object it returns
+   always has a pk and the guard always fired — the SEO defaults would never have
+   been applied, on the first run or any later one. Step 3's own note already
+   suspected the premise and asked for it to be verified against the installed
+   Wagtail; verifying it showed the unsaved-instance behaviour belongs to the
+   *generic* base (`BaseGenericSetting.for_site`, `settings/models.py:186-188`),
+   which is a different class from `BaseSiteSetting.for_site` (`:151-160`). The
+   fix is to test for an existing row before calling `for_site`.
+
+   This one is easy to miss, because four of the five defaults are already the
+   model's own field defaults — `test_it_creates_the_seo_settings_with_the_instagram_handle`
+   only fails on `instagram_url`, which is the one that is blank by default.
+   Confirmed by mutation: reinstating the `pk is not None` guard makes exactly
+   that test fail with `AssertionError: '' != 'https://instagram.com/salyco.ir'`,
+   and no other.
 
 Create `Backend/articles/management/__init__.py` and
 `Backend/articles/management/commands/__init__.py` as empty files.
@@ -5370,6 +5408,8 @@ from articles.snippets import GlobalSeoSettings
 
 COLLECTIONS = ["مقالات", "محصولات", "عمومی"]
 
+SITE_NAME = "سالیکو"
+
 SEO_DEFAULTS = {
     "brand_name": "Salyco",
     "brand_name_fa": "سالیکو",
@@ -5384,16 +5424,22 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        hostname = urlparse(settings.SITE_URL).hostname
+        parsed = urlparse(settings.SITE_URL)
+        hostname = parsed.hostname
         if not hostname:
             raise ValueError(f"SITE_URL is not a usable URL: {settings.SITE_URL!r}")
+        # Wagtail's Site has no scheme field: root_url() infers https from port
+        # 443 and http from port 80, so the port is how the scheme is expressed.
+        # Deriving it from SITE_URL keeps the canonical tags in step with the one
+        # place the site's own address is configured.
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
 
         self._sync_sites_framework(hostname)
         root = self._root_page()
-        self._ensure_site(root, hostname)
+        site = self._ensure_site(root, hostname, port)
         self._ensure_index(root)
         self._ensure_collections()
-        self._ensure_seo_settings()
+        self._ensure_seo_settings(site)
 
         self.stdout.write(self.style.SUCCESS("CMS setup complete."))
 
@@ -5420,18 +5466,50 @@ class Command(BaseCommand):
             )
         return root
 
-    def _ensure_site(self, root, hostname):
-        site, created = Site.objects.get_or_create(
-            hostname=hostname,
-            defaults={"port": 443, "is_default_site": True, "root_page": root,
-                      "site_name": "سالیکو"},
-        )
-        if created:
+    def _ensure_site(self, root, hostname, port):
+        """Repoint the default site at the Wagtail root.
+
+        The site is found by `is_default_site`, never by hostname. Wagtail's own
+        initial data already creates a default site — hostname "localhost", rooted
+        at its own "Welcome" page — so a `get_or_create(hostname=...)` lookup does
+        not find it and instead creates a *second* default site. Nothing rejects
+        that at the point of creation: `get_or_create` writes the row without
+        calling `full_clean()`, and Wagtail's "only one site can be default" rule
+        lives in `Site.clean()`. The damage shows up on the next lookup, as
+        `Site.objects.get(is_default_site=True)` raising MultipleObjectsReturned —
+        which takes down the SEO settings below and any other reader.
+        """
+        site = Site.objects.filter(is_default_site=True).first()
+        if site is None:
+            site = Site(
+                hostname=hostname,
+                port=port,
+                is_default_site=True,
+                root_page=root,
+                site_name=SITE_NAME,
+            )
+            site.save()
             self.stdout.write(f"Wagtail site {hostname} created")
-        elif site.root_page_id != root.id:
+            return site
+
+        changes = []
+        for field, value in (
+            ("hostname", hostname),
+            ("port", port),
+            ("site_name", SITE_NAME),
+        ):
+            if getattr(site, field) != value:
+                setattr(site, field, value)
+                changes.append(field)
+        if site.root_page_id != root.id:
             site.root_page = root
-            site.save(update_fields=["root_page"])
-            self.stdout.write("Wagtail site root reset to the Wagtail root page")
+            changes.append("root_page")
+        if changes:
+            site.save(update_fields=changes)
+            self.stdout.write(
+                f"Wagtail site repointed at the Wagtail root ({', '.join(changes)})"
+            )
+        return site
 
     def _ensure_index(self, root):
         index = ArticleIndexPage.objects.first()
@@ -5459,31 +5537,40 @@ class Command(BaseCommand):
             root.add_child(instance=Collection(name=name))
             self.stdout.write(f"Collection {name} created")
 
-    def _ensure_seo_settings(self):
-        site = Site.objects.get(is_default_site=True)
-        seo = GlobalSeoSettings.for_site(site)
-        if seo.pk is not None:
-            # Never overwrite: an editor may have set every one of these.
+    def _ensure_seo_settings(self, site):
+        """Fill in the SEO defaults, once, and never again.
+
+        The existence check has to happen *before* `for_site` is called.
+        `BaseSiteSetting.for_site` is `get_or_create(site=site)`, so it creates the
+        row as a side effect and the returned object always has a pk — making the
+        obvious `if seo.pk is not None: return` guard dead code that would leave
+        the defaults unapplied forever. (The unsaved-instance behaviour belongs to
+        the *generic* setting base, `BaseGenericSetting.for_site`, which is a
+        different class.)
+        """
+        if GlobalSeoSettings.objects.filter(site=site).exists():
+            # An editor may have set every one of these; on a per-deploy command,
+            # that has to win.
             return
+        seo = GlobalSeoSettings.for_site(site)
         for field, value in SEO_DEFAULTS.items():
             setattr(seo, field, value)
         seo.save()
         self.stdout.write("Global SEO settings created with Salyco defaults")
 ```
 
-`GlobalSeoSettings.for_site(site)` returns an unsaved instance when none exists,
-so `seo.pk is None` is the correct "not configured yet" test — verify this
-against the installed Wagtail version by running the tests; if `for_site` instead
-raises, wrap it in `try/except GlobalSeoSettings.DoesNotExist` and create the row
-with `site=site`.
+Both defects above were found by running this task's own tests, which is what
+Step 4 is for — see the Observed notes.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `python manage.py test articles.tests_setup_command -v 2`
 
 Expected: PASS (7 tests).
 
-- [ ] **Step 5: Remove the skip from Task 4**
+Observed: PASS (7 tests) in 0.46s.
+
+- [x] **Step 5: Remove the skip from Task 4**
 
 In `Backend/articles/tests_pages.py`, delete the
 `@skip("site created by setup_salyco_cms in Task 14")` decorator and the
@@ -5491,7 +5578,19 @@ In `Backend/articles/tests_pages.py`, delete the
 its own site — if it does not, call `call_command("setup_salyco_cms")` in a
 `setUp` for that one class.
 
-- [ ] **Step 6: Run it against the real database**
+Observed: the decorator read `@skip("site hostname set by setup_salyco_cms in
+Task 14")`, and the test is `test_the_default_site_uses_the_canonical_hostname`.
+It calls the command directly rather than via a class-wide `setUp`: that class's
+other two tests build their own tree on purpose (`make_index`'s docstring — a bug
+in the command must not be able to make the model tests pass), and they use the
+`site_on_root()` fixture, so running the command for the whole class would create
+a second index alongside theirs. `from unittest import skip` was used nowhere
+else in the file and is now removed; `call_command` is imported in its place.
+
+`articles.tests_pages` + `articles.tests_setup_command` together: 15 tests, OK,
+no skips. It was 7 tests with 1 skip before.
+
+- [x] **Step 6: Run it against the real database**
 
 Run:
 
@@ -5504,7 +5603,32 @@ Expected: the first run reports each thing it created; the second reports
 nothing but `CMS setup complete.` Then open `/cms/pages/` and confirm «مقالات»
 appears as a child of the root.
 
-- [ ] **Step 7: Commit**
+Observed: exactly that. Run one reported the `django.contrib.sites` row, the
+Wagtail site repointed (`hostname, port, site_name, root_page` — the placeholder
+site was rooted at "Welcome" with port 80, so all four changed), the articles
+index, the three collections and the SEO settings; run two printed only
+`CMS setup complete.`
+
+The database afterwards, read back through the shell: one site
+(`salyco.ir`, port 443, default, «سالیکو»), the index live at depth 2 with
+`get_url() == "/articles/"`, four collections (`Root` plus the three),
+`brand_name_fa == "سالیکو"` and `instagram_url == "https://instagram.com/salyco.ir"`,
+and the root's children are `["Welcome to your new Wagtail site!", "مقالات"]`.
+
+The browser half of this step is deferred to the Task 16 acceptance pass, with
+the rest of the visual checks.
+
+**Observed — one thing that step leaves behind.** Wagtail's placeholder "Welcome"
+page is still in the tree, and it is publicly reachable: `/home/` returns 200 and
+renders Wagtail's stock text. It is not advertised anywhere — the sitemap is a
+curated list and `/home/` is not in it, and nothing links to it — so the exposure
+is a guessed URL rather than a crawled one. It is reported rather than deleted:
+`setup_salyco_cms` runs on every deploy and its whole contract is that it never
+overwrites what an editor changed, so a command that deletes a page it did not
+create is the wrong place for this. Deleting it is one click in the CMS, or a
+deliberate separate step. Flagged for Task 16.
+
+- [x] **Step 7: Commit**
 
 ```bash
 git add Backend/articles/management Backend/articles/tests_setup_command.py Backend/articles/tests_pages.py

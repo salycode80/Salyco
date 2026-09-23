@@ -1,7 +1,7 @@
-from unittest import skip
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.core.management import call_command
 from django.test import TestCase
 from wagtail.models import Page, Site
 
@@ -92,7 +92,11 @@ class ArticleUrlTests(TestCase):
         article = make_article(index)
         self.assertEqual(article.get_url(), "/articles/rahnama/")
 
-    @skip("site hostname set by setup_salyco_cms in Task 14")
     def test_the_default_site_uses_the_canonical_hostname(self):
+        # Unlike the two above, this one is about the arrangement the command
+        # produces rather than about the tree the tests build, so it runs the
+        # command. SITE_URL is the single source of the site's own address, and
+        # the point of the assertion is that nothing has a hostname of its own.
+        call_command("setup_salyco_cms")
         site = Site.objects.get(is_default_site=True)
         self.assertEqual(site.hostname, urlparse(settings.SITE_URL).hostname)
