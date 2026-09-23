@@ -33,6 +33,14 @@ The spec's template sketch lists `category_page.html` and `tag_page.html`. Both 
 
 The spec also describes `wagtailcore/root.html` returning 404 as insurance for a misconfigured proxy sending `/` to Django. A template cannot set a response status, so this plan does it with an explicit `^$` route in `core/urls.py` before the Wagtail catch-all, which is testable and does the same job.
 
+## Note on execution order
+
+**Task 5 runs before Task 4.** The page models import `services.estimate_reading_time` at module level because `ArticlePage.save()` calls it, so `articles/models.py` cannot be imported until `articles/services.py` exists — and Task 4's tests import the models. Task 5 depends on nothing but Task 3, so it moves ahead of Task 4 without any other change. Task 6 stays where it is: it needs the page models, which by then exist.
+
+The task numbers are unchanged, so every "(Task N)" cross-reference in this document still means what it says. Only the order of two adjacent tasks differs.
+
+Task 2 also lands the first article migration, so Task 4's is `0003_*`, not `0002_*`.
+
 ---
 
 ### Task 1: Install Wagtail and bring up `/cms/`
@@ -1123,9 +1131,11 @@ title containing </script> cannot break out of the structured-data tag."
 
 ### Task 4: Page models and migrations
 
+> **Order:** run Task 5 first — see "Note on execution order" at the top of this document.
+
 **Files:**
 - Modify: `Backend/articles/models.py`
-- Create: `Backend/articles/migrations/0002_articlepages.py` (generated)
+- Create: `Backend/articles/migrations/0003_*.py` (generated)
 - Test: `Backend/articles/tests_pages.py` (create)
 
 **Interfaces:**
@@ -1506,7 +1516,7 @@ python manage.py makemigrations articles
 python manage.py migrate
 ```
 
-Expected: a new `articles/migrations/0002_*.py` (the autodetector names it; do not rename it) plus migrations for `taggit`, `wagtailcore`, `wagtailimages`, `wagtaildocs`, `wagtailredirects`, `wagtailsites`, `wagtailusers`, `wagtailforms`-adjacent apps and `django.contrib.sites`. `makemigrations` must report no missing migrations when run a second time.
+Expected: a new `articles/migrations/0003_*.py` (the autodetector names it; do not rename it) plus migrations for `taggit`, `wagtailcore`, `wagtailimages`, `wagtaildocs`, `wagtailredirects`, `wagtailsites`, `wagtailusers`, `wagtailforms`-adjacent apps and `django.contrib.sites`. `makemigrations` must report no missing migrations when run a second time.
 
 - [ ] **Step 5: Run the page tests**
 
@@ -1542,7 +1552,7 @@ rollback path."
 - Consumes: `BodyBlock` (Task 3).
 - Produces: `block_text(block) -> str`, `body_to_text(body) -> str`, `estimate_reading_time(body) -> int`, `WORDS_PER_MINUTE = 200`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_services.py`:
 
@@ -1615,13 +1625,13 @@ class BodyTextTests(TestCase):
         self.assertEqual(body_to_text(body()), "")
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_services -v 2`
 
 Expected: FAIL — `ModuleNotFoundError: No module named 'articles.services'`.
 
-- [ ] **Step 3: Write the service**
+- [x] **Step 3: Write the service**
 
 Create `Backend/articles/services.py`:
 
@@ -1701,7 +1711,7 @@ def estimate_reading_time(body):
 `RichText` object passed to `_clean` goes through `strip_tags`, which calls
 `str()` on it — that yields the stored HTML source.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `python manage.py test articles.tests_services -v 2`
 
@@ -1709,7 +1719,7 @@ Expected: PASS (9 tests). If `test_image_alt_text_is_not_counted` fails, the
 `image` branch is missing from `block_text` — it must return `""` and the
 `assertEqual` is the guard.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Backend/articles/services.py Backend/articles/tests_services.py
