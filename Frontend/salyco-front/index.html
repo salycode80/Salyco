@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <!-- Generated from public/logo3.png (the swan mark) by the favicon block in
@@ -12,8 +12,21 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#003087" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) resolve on iOS.
+         The mobile tab bar is fixed to the bottom edge, so without it the bar
+         would sit under the home indicator. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#052E5F" />
+    <!-- The palette. src/index.css maps Tailwind's names onto these variables
+         rather than restating the hex values, so this stylesheet has to load
+         before anything paints: an undefined custom property does not fall back
+         to a default, it makes the declaration invalid, and the failure shows up
+         as transparent or black surfaces rather than as an error. Django's
+         article pages link the same file from their own template. -->
+    <link rel="stylesheet" href="/tokens.css" />
     <meta
       name="description"
       content="سالیکو — تولیدکننده تشک و محصولات خواب با بیش از دو دهه تجربه. تشک طبی و فنری با گارانتی معتبر."

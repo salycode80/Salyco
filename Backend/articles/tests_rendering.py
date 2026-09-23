@@ -100,6 +100,16 @@ class ArticleRenderingTests(TestCase):
         self.assertIn("<details", html)
         self.assertIn("<summary", html)
 
+    def test_the_page_links_both_stylesheets(self):
+        # tokens.css holds the palette; article.css consumes it. A 404 for
+        # either is invisible — the response is still 200 and the page still
+        # renders — but the article loses its colours and its reading measure.
+        # React's half of this contract is index.html, checked by
+        # Frontend/salyco-front/verify-tokens.mjs.
+        html = self.get().content.decode()
+        self.assertIn('<link rel="stylesheet" href="/tokens.css">', html)
+        self.assertIn('href="/static/articles/article.css"', html)
+
     def test_the_body_carries_no_tailwind_utility_classes(self):
         # The article CSS is plain semantic CSS, because Django templates cannot
         # compile Tailwind's @theme. A stray bg-brand-navy here would silently do

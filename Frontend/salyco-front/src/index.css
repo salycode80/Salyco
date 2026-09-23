@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Self-hosted Vazirmatn font. Loading weights 400, 500, 600, and 700 because
    the UI uses font-medium and font-semibold throughout. Without the real cuts,
    the browser synthesizes the weight, making Persian text noticeably blurrier. */
@@ -35,30 +43,65 @@
   font-display: swap;
 }
 
-@theme {
-  --font-persian: "Vazirmatn", sans-serif;
+/* Tailwind's names, mapped onto the shared palette in public/tokens.css — which
+   is what the Django-rendered article pages read, since they cannot compile
+   Tailwind. The hex values live there and only there; this block is the
+   translation layer, so a brand tweak reaches both halves of the site.
 
-  /* Warm wheat / wood palette — paired with the brand navy to break the
-     cold, monotonous all-blue look across pages. */
-  --color-wheat-50: #faf6ee;
-  --color-wheat-100: #f3ebda;
-  --color-wheat-200: #e8d9bd;
-  --color-wood-300: #d2b48c; /* wheat / light wood */
-  --color-wood-400: #c19a6b; /* camel */
-  --color-wood-500: #a97e50; /* wood */
-  --color-wood-600: #8a6440; /* deep walnut */
+   `inline` is required, not cosmetic: without it Tailwind declares an
+   intermediate theme variable and emits `var(--color-brand-navy)`, which
+   resolves to a value Tailwind may tree-shake out of the bundle. With `inline`
+   the utility carries `var(--salyco-navy)` directly, so the palette is whatever
+   tokens.css says it is.
+
+   tests: `node verify-tokens.mjs` fails if a token is added on one side only. */
+@theme inline {
+  --font-persian: var(--salyco-font-persian);
+  --font-sans: var(--salyco-font-sans);
+
+  --color-brand-navy: var(--salyco-navy);
+  --color-brand-white: var(--salyco-white);
+  --color-brand-warm-white: var(--salyco-warm-white);
+  --color-brand-mist: var(--salyco-mist);
+  --color-action-hover: var(--salyco-action-hover);
+  --color-text-primary: var(--salyco-text-primary);
+  --color-text-secondary: var(--salyco-text-secondary);
+  --color-border-control: var(--salyco-border-control);
+  --color-status-success: var(--salyco-status-success);
+  --color-status-success-bg: var(--salyco-status-success-bg);
+  --color-status-warning: var(--salyco-status-warning);
+  --color-status-warning-bg: var(--salyco-status-warning-bg);
+  --color-status-error: var(--salyco-status-error);
+  --color-status-error-bg: var(--salyco-status-error-bg);
+  --color-status-info: var(--salyco-status-info);
+  --color-status-info-bg: var(--salyco-status-info-bg);
 }
 
-/* Height reserved by the fixed navbar. Pages offset their top padding by this
-   value so content never sits behind the bar. It grows on desktop where the
-   navbar switches to its two-row layout. */
+/* Space reserved by the chrome the layout has to clear. Pages offset their top
+   padding by --navbar-height so content never sits behind the bar, and App.jsx
+   pads the page bottom by --tabbar-height so the tab bar never covers the
+   footer's last row. Each is zero wherever its bar is not rendered: below lg the
+   desktop navbar is gone (the mobile top bar replaces it), and from lg up the
+   two mobile bars are. Every one of the ~30 `pt-[var(--navbar-height)]` call
+   sites follows this automatically.
+
+   The top inset is folded into --navbar-height rather than left on <body>:
+   <body> is not offset from a fixed element, so carrying it in both places would
+   reserve the notch twice. 68px is MobileTopBar's h-[68px].
+
+   --tabbar-height carries three things, because MobileTabBar floats: its own
+   72px, the 12px it sits above the bottom edge by (inset-x-3/bottom-3), and the
+   home indicator it has to clear. Pages pad by the sum, so the footer's last row
+   stays visible above the floating bar rather than behind it. */
 :root {
-  --navbar-height: 108px;
+  --navbar-height: calc(68px + env(safe-area-inset-top, 0px));
+  --tabbar-height: calc(84px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 1024px) {
   :root {
-    --navbar-height: 112px;
+    --navbar-height: calc(116px + env(safe-area-inset-top, 0px));
+    --tabbar-height: 0px;
   }
 }
 
@@ -75,7 +118,9 @@ html {
    sizing. Headings keep the tighter leading they were designed with. */
 body {
   font-family: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
-  line-height: 1.75;
+  line-height: 1.875;
+  color: var(--color-text-primary);
+  background: var(--color-brand-white);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -91,7 +136,7 @@ h4 {
    default outline for aesthetics; this keeps them reachable by keyboard.
    :focus-visible means mouse clicks stay clean. */
 :focus-visible {
-  outline: 2px solid #003087;
+  outline: 2px solid var(--color-brand-navy);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -104,8 +149,10 @@ h4 {
   font-variant-numeric: tabular-nums;
 }
 
-/* Hide the scrollbar on the horizontally-scrollable category row while keeping
-   it scrollable (Tailwind has no built-in utility for this). */
+/* Hide the scrollbar on a horizontally-scrollable rail while keeping it
+   scrollable (Tailwind has no built-in utility for this). Used by the product
+   lightbox's thumbnail strip; the navbar's category row used to need it too,
+   before that row became desktop-only and stopped scrolling. */
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -138,8 +185,44 @@ body {
   animation: toast-in 200ms ease-out;
 }
 
+/* AccountSheet entry, opened from either control in the mobile top bar. The
+   backdrop fades and the panel rises from below the fold as one gesture — the
+   panel's curve is a decelerating one, so it arrives quickly and settles rather
+   than travelling at a constant speed into the stop.
+
+   Entry only: the sheet is unmounted on close, so there is nothing left to
+   animate out. Adding an exit means holding it mounted through the transition,
+   which is a different component shape. */
+@keyframes sheet-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-panel-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheet-backdrop-enter {
+  animation: sheet-backdrop-in 200ms ease-out;
+}
+
+.sheet-panel-enter {
+  animation: sheet-panel-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .toast-enter {
+  .toast-enter,
+  .sheet-backdrop-enter,
+  .sheet-panel-enter {
     animation: none;
   }
 
@@ -154,3 +237,17 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Shared control geometry. Utilities can opt into compact icon controls. */
+@layer base {
+  button, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select {
+    min-height: 3rem;
+  }
+  input:not([type="checkbox"]):not([type="radio"]), textarea, select {
+    border-color: var(--color-border-control);
+    border-radius: .5rem;
+  }
+  button { font-size: 1rem; font-weight: 600; }
+  :lang(fa) { letter-spacing: 0; }
+}
+footer :focus-visible, .bg-brand-navy :focus-visible { outline-color: white; }

@@ -4063,7 +4063,7 @@ guard, and it is why `_url()` takes a path and prefixes `SITE_URL` itself.
 - Consumes: `src/index.css`'s existing `@theme` block.
 - Produces: `/tokens.css` at the SPA root, defining `--salyco-*` custom properties that both `src/index.css` and `article.css` read.
 
-- [ ] **Step 1: Extract the tokens**
+- [x] **Step 1: Extract the tokens**
 
 Read every token out of the `@theme` block in `Frontend/salyco-front/src/index.css`
 (the block starting at line 46) and write them to
@@ -4102,7 +4102,7 @@ becomes `--salyco-navy: #052e5f`, `--color-text-primary: #1c2b3a` becomes
 
 Do not invent a token that is not in `@theme`, and do not drop one.
 
-- [ ] **Step 2: Point `@theme` at the variables**
+- [x] **Step 2: Point `@theme` at the variables**
 
 In `Frontend/salyco-front/src/index.css`, replace the `@theme { ... }` block's
 declarations with the same names mapped onto the shared variables, and change
@@ -4132,7 +4132,7 @@ declarations with the same names mapped onto the shared variables, and change
 }
 ```
 
-- [ ] **Step 3: Write the agreement check**
+- [x] **Step 3: Write the agreement check**
 
 Create `Frontend/salyco-front/verify-tokens.mjs`:
 
@@ -4181,7 +4181,7 @@ if (failures.length) {
 console.log(`OK — ${declared.size} tokens declared, ${mapped.length} mapped.`);
 ```
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run, from `Frontend/salyco-front/`:
 
@@ -4192,29 +4192,35 @@ node verify-tokens.mjs
 Expected: `OK — N tokens declared, N mapped.` Any line it prints is a real gap
 between the two files; fix the file it names.
 
-- [ ] **Step 5: Build and inspect the compiled CSS**
+- [x] **Step 5: Build and inspect the compiled CSS**
 
 Run:
 
 ```bash
 npm run build
-grep -o 'bg-brand-navy{[^}]*}' dist/assets/*.css | head -3
+grep -o 'background-color:var(--salyco-navy)' dist/assets/*.css | head -1
 ```
 
-Expected: the rule carries `var(--salyco-navy)`, not `var(--color-brand-navy)` and
-not a literal `#052e5f`. If it shows `var(--color-brand-navy)`, `@theme inline`
-did not take effect — check for a stray second `@theme` block.
+Expected: one match. Not `var(--color-brand-navy)`, and not a literal `#052e5f`.
+If it shows `var(--color-brand-navy)`, `@theme inline` did not take effect — check
+for a stray second `@theme` block.
+
+**Do not grep for `bg-brand-navy{[^}]*}`, as this step first said.** Tailwind
+groups selectors, so the emitted rule is
+`.bg-brand-navy,.bg-brand-navy\/10{background-color:var(--salyco-navy)}` — the
+class name is never followed directly by `{`, and the grep returns nothing on a
+perfectly good build. A check that cannot pass is worse than no check.
 
 This step is the whole risk of the refactor. A green build proves nothing here;
 only the emitted rule does.
 
-- [ ] **Step 6: Check the homepage visually**
+- [x] **Step 6: Check the homepage visually**
 
 Run `npm run dev` and open the homepage. Confirm the navy header, the warm-white
 body and the mist borders still render — a broken mapping shows up as
 transparent or black surfaces, not as an error. Check at 360px and at 1440px.
 
-- [ ] **Step 7: Write the article typography**
+- [x] **Step 7: Write the article typography**
 
 Append to `Backend/articles/static/articles/article.css`, reading the same tokens:
 
@@ -4290,7 +4296,7 @@ If `--salyco-status-error` is not among the tokens, add it to `tokens.css` and
 map it in `index.css` — the `@theme` block has a status-error colour under
 whatever name it currently uses; use that exact value.
 
-- [ ] **Step 8: Run the whole backend suite**
+- [x] **Step 8: Run the whole backend suite**
 
 Run, from `Backend/`:
 
@@ -4301,10 +4307,10 @@ python manage.py test articles core -v 1
 Expected: PASS. Then view an article at 360px and 1024px and confirm the 640px
 measure holds and nothing overflows horizontally.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
-git add Frontend/salyco-front/public/tokens.css Frontend/salyco-front/src/index.css Frontend/salyco-front/verify-tokens.mjs Backend/articles/static/articles/article.css
+git add Frontend/salyco-front/public/tokens.css Frontend/salyco-front/src/index.css Frontend/salyco-front/index.html Frontend/salyco-front/verify-tokens.mjs Backend/articles/static/articles/article.css Backend/articles/tests_rendering.py
 git commit -m "refactor(css): one source of truth for the design tokens
 
 The palette moves to public/tokens.css as plain custom properties and
@@ -4316,6 +4322,48 @@ what makes a brand tweak reach both halves of the site.
 verify-tokens.mjs fails loudly if a token is added to one file and not the
 other, which is otherwise an invisible half-repaint."
 ```
+
+**Observed — what this task turned out to need beyond the steps above:**
+
+1. **`index.html` had to be modified, and the plan did not list it.** The Files
+   block named only `tokens.css`, `index.css`, `article.css` and the verify
+   script, but a palette nothing links is a palette that does not exist: with
+   `@theme inline` every Tailwind colour utility compiles to `var(--salyco-*)`,
+   so an unlinked `tokens.css` makes every declaration invalid and the whole app
+   renders without colour. The Django half already had its link from Task 7
+   (`base_article.html:34`); the React half had none. `verify-tokens.mjs` now
+   asserts the link as well, and `tests_rendering.py` gained
+   `test_the_page_links_both_stylesheets` for the other half.
+
+2. **`@theme inline` does still emit the `--color-*` aliases, but only the ones
+   something references.** Measured on the built bundle: `--color-brand-navy`,
+   `--color-brand-white`, `--color-brand-mist`, `--color-text-primary`,
+   `--color-text-secondary` and `--color-border-control` are all present;
+   `--color-brand-warm-white`, `--color-action-hover` and the eight status
+   tokens are absent, because no hand-written rule or JSX attribute mentions
+   them. That matters because three components pass these to SVG
+   (`GuaranteeDisk.jsx`, `Articles.jsx`) and four rules in `index.css` use them
+   in plain CSS — all six of those references keep their alias alive, so nothing
+   broke. The rule to remember: an alias survives exactly as long as something
+   outside Tailwind names it.
+
+3. **The remaining literal navies are arbitrary values, not tokens.** The built
+   CSS still contains 20 occurrences of `#052e5f`, all from ~142
+   `rgba(5,46,95,α)` shadows and overlays written inline in components. There is
+   no such token in `@theme`, and inventing one is what the plan forbids, so
+   they are left alone. The palette is now single-sourced for *tokens*; these
+   are alpha derivatives of navy that no token expresses.
+
+4. **The article page's chrome had no styling in any task, and the hero image
+   overflowed the viewport.** Measured at 360px before the fix: `.article__hero-image`
+   laid out at its intrinsic 1200px inside a 360px viewport — a `width-1200`
+   rendition with no CSS rule lays out at natural size — and the `h1` sat at the
+   UA's 2em (32px) under the body's inherited 30px leading, a line-height
+   smaller than the font size. Both are now covered, along with the header,
+   footer, breadcrumb, byline, tags, CTA and card text, using only the tokens
+   in `tokens.css`. `.article-callout--important` was added for the same reason:
+   the admin offers four variants and the plan styled three, so an editor
+   choosing "مهم" would have seen no change.
 
 ---
 

@@ -1,0 +1,36 @@
+/* Salyco design tokens, from Design.md v2.
+ *
+ * This file is the single source of truth for the palette. It is plain CSS
+ * custom properties rather than Tailwind's @theme because the article pages are
+ * Django templates, which cannot compile Tailwind — and duplicating the hex
+ * values into a second stylesheet would drift silently on the next brand tweak.
+ *
+ * src/index.css maps Tailwind's names onto these; nginx serves this file from
+ * the SPA root at /tokens.css, exactly as it already serves /fonts/.
+ *
+ * Nothing here defines a value: every declaration is a literal. A var() that
+ * pointed at another var() would move the question of where the palette lives
+ * one file further along instead of answering it. */
+:root {
+  --salyco-navy: #052e5f;
+  --salyco-white: #ffffff;
+  --salyco-warm-white: #f7f5f0;
+  --salyco-mist: #e4e5e2;
+  --salyco-action-hover: #032247;
+  --salyco-text-primary: #1c2b3a;
+  --salyco-text-secondary: #526171;
+  --salyco-border-control: #788594;
+  --salyco-status-success: #21633e;
+  --salyco-status-success-bg: #eef7f0;
+  --salyco-status-warning: #81520b;
+  --salyco-status-warning-bg: #fff5e5;
+  --salyco-status-error: #a52a32;
+  --salyco-status-error-bg: #fff0f1;
+  /* Info is navy on a tint of it rather than a fifth hue: the notice bar is a
+     quieter relative of the brand surface, not a separate semantic colour. */
+  --salyco-status-info: #052e5f;
+  --salyco-status-info-bg: #eef3f8;
+
+  --salyco-font-persian: "Vazirmatn", sans-serif;
+  --salyco-font-sans: "Inter", "Vazirmatn", sans-serif;
+}
