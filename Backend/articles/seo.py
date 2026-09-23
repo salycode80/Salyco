@@ -48,8 +48,13 @@ def site_settings_for(request):
     return GlobalSeoSettings.for_site(site)
 
 
-def meta_title(page, site_settings=None):
-    raw = (page.seo_title or page.title or "").strip()
+def with_title_suffix(raw, site_settings=None):
+    """Append the brand suffix to a title string.
+
+    Separate from meta_title because an archive has no seo_title field to read:
+    its heading comes from the category snippet, not from a page.
+    """
+    raw = (raw or "").strip()
     suffix = (
         getattr(site_settings, "default_title_suffix", "") or DEFAULT_TITLE_SUFFIX
     ).strip()
@@ -58,6 +63,10 @@ def meta_title(page, site_settings=None):
         # title, so an editor who typed the suffix by hand is not punished for it.
         return raw
     return f"{raw} | {suffix}"
+
+
+def meta_title(page, site_settings=None):
+    return with_title_suffix(page.seo_title or page.title or "", site_settings)
 
 
 def meta_description(page, site_settings=None):
@@ -130,6 +139,31 @@ def page_meta_context(page, request=None):
         "meta": build_meta(page, request, site_settings),
         "seo_settings": site_settings,
     }
+
+
+def archive_meta(page, request, title, description, path, robots=None):
+    """Metadata for a sub-route of `page` — a category or a tag archive.
+
+    The og:* fields are re-derived rather than patched: build_meta fills them
+    from the page's own title, so an archive that replaced only "title" would
+    announce the index's name on every social card while its <title> tag said
+    something else.
+    """
+    site_settings = site_settings_for(request)
+    meta = build_meta(page, request, site_settings)
+    title = with_title_suffix(title, site_settings)
+    meta.update(
+        {
+            "title": title,
+            "og_title": title,
+            "description": description,
+            "og_description": description,
+            "canonical": absolute_url(path),
+        }
+    )
+    if robots is not None:
+        meta["robots"] = robots
+    return meta
 
 
 def _publisher(site_settings):

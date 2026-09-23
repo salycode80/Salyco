@@ -1,0 +1,21 @@
+{% comment %}
+  Server-rendered links, no JavaScript. rel="prev"/"next" are what tell a
+  crawler the pages form one sequence rather than duplicates of each other.
+{% endcomment %}
+{% if articles.has_other_pages %}
+  <nav class="article-pagination" aria-label="صفحه‌بندی">
+    {% if articles.has_previous %}
+      <a class="article-pagination__link" rel="prev"
+         href="{{ base_url }}?page={{ articles.previous_page_number }}">قبلی</a>
+    {% endif %}
+
+    <span class="article-pagination__status">
+      صفحه {{ articles.number }} از {{ articles.paginator.num_pages }}
+    </span>
+
+    {% if articles.has_next %}
+      <a class="article-pagination__link" rel="next"
+         href="{{ base_url }}?page={{ articles.next_page_number }}">بعدی</a>
+    {% endif %}
+  </nav>
+{% endif %}

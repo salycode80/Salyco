@@ -1,0 +1,33 @@
+{% extends "articles/base_article.html" %}
+
+{% block content %}
+  <div class="article-shell">
+    <header class="index__header">
+      <h1 class="index__title">{{ page.hero_title|default:page.title }}</h1>
+      {% if page.hero_description %}
+        <p class="index__description">{{ page.hero_description }}</p>
+      {% endif %}
+    </header>
+
+    {% if page.featured_categories.all %}
+      <nav class="index__categories" aria-label="دسته‌بندی‌ها">
+        {% for category in page.featured_categories.all %}
+          <a class="index__category" href="{{ page.get_url }}category/{{ category.slug }}/">
+            {{ category.name }}
+          </a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+
+    {% if articles %}
+      <div class="article-grid">
+        {% for article in articles %}
+          {% include "articles/partials/article_card.html" %}
+        {% endfor %}
+      </div>
+      {% include "articles/partials/pagination.html" %}
+    {% else %}
+      <p class="archive__empty">هنوز مقاله‌ای منتشر نشده است.</p>
+    {% endif %}
+  </div>
+{% endblock %}

@@ -2995,11 +2995,28 @@ check above loads an article rather than the index.
 - Create: `Backend/articles/templates/articles/archive.html`
 - Create: `Backend/articles/templates/articles/partials/pagination.html`
 - Modify: `Backend/articles/models.py` (add the `route()` handlers to `ArticleIndexPage`)
+- Modify: `Backend/articles/seo.py` (`with_title_suffix`, `archive_meta`)
+- Modify: `Backend/articles/static/articles/article.css` (grid and card rules)
 - Test: `Backend/articles/tests_archives.py` (create)
 
 **Interfaces:**
-- Consumes: `ArticleIndexPage.published_articles()` and `.paginate()` (Task 4).
-- Produces: `/articles/`, `/articles/category/<slug>/`, `/articles/tag/<slug>/`, and `?page=N` on all three. The archive template reads an `archive` context dict with keys `kind` (`"category"` or `"tag"`), `title`, `description`, `noindex`.
+- Consumes: `ArticleIndexPage.published_articles()` and `.paginate()` (Task 4); `build_meta` (Task 6).
+- Produces: `/articles/`, `/articles/category/<slug>/`, `/articles/tag/<slug>/`, and `?page=N` on all three. The archive template reads an `archive` context dict with keys `kind` (`"category"` or `"tag"`), `title`, `description`, `noindex`; every listing template reads `articles` (a `Page`) and `base_url` (a str, for the pagination links).
+
+**Corrections to the original task text** (all found while executing; see the Observed note):
+
+1. `setUpTestData` never repoints the default `Site` — the same defect Task 7 had. Without it nothing under the real Root has a URL and every request 404s. The class also needs `@plain_staticfiles`, because both listing templates extend `base_article.html`, which calls `{% static %}`.
+2. The pagination assertions in Step 1 are backwards. `published_articles()` orders `-first_published_at, -id`, so `ARTICLES_PER_PAGE + 3` = 15 articles put 14…3 on page 1 and 2,1,0 on page 2 — `assertIn("مقاله 0", first)` and `assertNotIn("مقاله 0", second)` are both false. Replaced with ordering-independent card counts, and the fixture now sets explicit increasing `first_published_at` values so "newest first" is true by construction rather than by the `-id` tiebreak.
+3. `test_the_category_archive_filters`'s `assertNotIn("مقاله 1<", body)` sentinel is fragile. Exactly 8 of the 15 articles are in the `guide` category, so the card count is the exact assertion.
+4. `test_a_draft_never_appears_in_a_listing` needs `live=False`; `Page.live` defaults to `True`, so the fixture built a *published* page and asserted nothing.
+5. `test_the_tag_archive_is_noindex` is vacuous — it never asserts the tagged article actually appears. A tag archive that matches nothing renders a 200 with an empty listing.
+6. `meta["title"] = f"{archive['title']} | سالیکو"` hardcodes the suffix instead of going through the SEO constant and the `GlobalSeoSettings` override.
+7. `category_archive` carries a dead `from .seo import build_meta, site_settings_for` line, and Step 3 imports `TemplateResponse`/`settings` that only `_archive_response` uses.
+8. `_archive_response` calls `self.get_context(request)`, which after Step 7 paginates the index listing — a wasted COUNT and page query on every archive request, discarded on the next line.
+9. Step 3 overwrites `meta["title"]` and `meta["description"]` *after* `build_meta` has already derived `og_title`/`og_description` from the page's own title, so every archive would ship an `og:title` naming the index instead of the archive.
+10. `{% if page.featured_categories %}` is always true — a related manager is truthy even when empty. `{% if page.featured_categories.all %}` is the version that evaluates the queryset.
+11. The tag route does not need `\w` at all; see the Observed note on `[^/]+`.
+
 
 - [ ] **Step 1: Write the failing test**
 
@@ -3017,12 +3034,26 @@ class ArchiveTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         root = Page.objects.get(depth=1)
+        # Repoint the default site at the Wagtail Root before anything is built.
+        # Wagtail's own initial data roots it at its "Welcome" page, so without
+        # this nothing under the real root has a URL and every request 404s.
+        # Task 14 does the same thing for real via setup_salyco_cms.
+        site = Site.objects.get(is_default_site=True)
+        site.root_page = root
+        site.save()
+
         cls.index = ArticleIndexPage(title="مقالات", slug="articles")
         root.add_child(instance=cls.index)
 
         cls.guide = ArticleCategory.objects.create(name="راهنما", slug="rahnama")
         cls.other = ArticleCategory.objects.create(name="خواب", slug="khab")
 
+        # Explicit, increasing timestamps. The listing orders by
+        # -first_published_at and publish() stamps "now", so fifteen pages
+        # published in a loop can share a timestamp and fall back to the -id
+        # tiebreak — which would make "newest first" true by accident rather
+        # than by construction.
+        base = datetime(2026, 1, 1, tzinfo=UTC)
         cls.articles = []
         for i in range(ARTICLES_PER_PAGE + 3):
             article = ArticlePage(
@@ -3034,29 +3065,84 @@ class ArchiveTests(TestCase):
             )
             cls.index.add_child(instance=article)
             article.save_revision().publish()
+            ArticlePage.objects.filter(pk=article.pk).update(
+                first_published_at=base + timedelta(days=i)
+            )
             cls.articles.append(article)
+
+    def tag(self, article, name):
+        """Attach a tag and commit it.
+
+        The save() is the whole helper. ArticlePageTag.content_object is a
+        ParentalKey, so modelcluster hands back a DeferringRelatedManager whose
+        add() deliberately does not write to the database (see
+        modelcluster/contrib/taggit.py) — it stages the tag in memory and the
+        rows land on the next page save. Without it this test would build an
+        archive over an empty through table and prove nothing.
+        """
+        article.tags.add(name)
+        article.save()
 
     def test_the_index_lists_articles(self):
         response = self.client.get("/articles/")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("مقاله 0", response.content.decode())
+        # 14 is the newest, so it is on the first page.
+        self.assertIn(">مقاله 14</h3>", response.content.decode())
 
     def test_the_index_paginates(self):
+        # 15 articles at 12 per page: 12 and 3, whichever way they are ordered.
         first = self.client.get("/articles/").content.decode()
         second = self.client.get("/articles/?page=2").content.decode()
-        self.assertIn("مقاله 0", first)
-        self.assertNotIn("مقاله 0", second)
+        self.assertEqual(cards(first), ARTICLES_PER_PAGE)
+        self.assertEqual(cards(second), 3)
+
+    def test_the_second_page_holds_the_oldest_articles(self):
+        first = self.client.get("/articles/").content.decode()
+        second = self.client.get("/articles/?page=2").content.decode()
+        self.assertIn(">مقاله 0</h3>", second)
+        self.assertNotIn(">مقاله 0</h3>", first)
+
+    def test_the_pagination_links_carry_rel_prev_and_next(self):
+        # What tells a crawler the pages are one sequence rather than duplicates.
+        # 15 articles at 12 per page is exactly two pages, so page 1 is the one
+        # with a next and page 2 the one with a prev.
+        first = self.client.get("/articles/").content.decode()
+        second = self.client.get("/articles/?page=2").content.decode()
+        self.assertIn('rel="next"', first)
+        self.assertIn('href="/articles/?page=2"', first)
+        self.assertNotIn('rel="prev"', first)
+        self.assertIn('rel="prev"', second)
+        self.assertIn('href="/articles/?page=1"', second)
+        # The last page must not advertise a page 3: a rel="next" pointing at a
+        # 404 is how a crawler learns to distrust the whole sequence.
+        self.assertNotIn('rel="next"', second)
 
     def test_the_category_archive_filters(self):
         response = self.client.get("/articles/category/rahnama/")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
-        self.assertIn("مقاله 0", body)
-        self.assertNotIn("مقاله 1<", body)
+        # The even-numbered articles are the guide's: 0,2,...,14.
+        self.assertEqual(cards(body), 8)
+        self.assertIn(">مقاله 0</h3>", body)
+        self.assertNotIn(">مقاله 1</h3>", body)
 
     def test_the_category_archive_is_indexable(self):
         response = self.client.get("/articles/category/rahnama/")
         self.assertIn("index,follow", response.content.decode())
+
+    def test_the_category_archive_canonical_is_the_archive_path(self):
+        # Not the index's URL: two archives sharing a canonical would tell a
+        # crawler that one of them does not exist.
+        response = self.client.get("/articles/category/rahnama/")
+        self.assertIn(
+            '<link rel="canonical" href="https://salyco.ir/articles/category/rahnama/">',
+            response.content.decode(),
+        )
+
+    def test_the_category_archive_title_names_the_category(self):
+        response = self.client.get("/articles/category/rahnama/")
+        self.assertIn("<h1", response.content.decode())
+        self.assertIn("راهنما", response.content.decode())
 
     def test_an_inactive_category_is_404(self):
         self.guide.is_active = False
@@ -3066,22 +3152,83 @@ class ArchiveTests(TestCase):
     def test_an_unknown_category_is_404(self):
         self.assertEqual(self.client.get("/articles/category/nope/").status_code, 404)
 
-    def test_the_tag_archive_is_noindex(self):
-        article = self.articles[0]
-        article.tags.add("تشک")
+    def test_the_tag_archive_lists_the_tagged_article(self):
+        self.tag(self.articles[0], "تشک")
         response = self.client.get("/articles/tag/تشک/")
         self.assertEqual(response.status_code, 200)
+        # Without this the test passes on an empty listing, which is exactly the
+        # failure it is meant to catch — taggit slugs Persian with
+        # allow_unicode, so the route has to match a non-ASCII slug.
+        self.assertEqual(cards(response.content.decode()), 1)
+
+    def test_the_tag_archive_is_noindex(self):
+        self.tag(self.articles[0], "تشک")
+        response = self.client.get("/articles/tag/تشک/")
         self.assertIn("noindex,follow", response.content.decode())
 
+    def test_an_unknown_tag_is_404(self):
+        # Not a 200 with an empty listing: taggit's Tag table is global and any
+        # typo in a URL would otherwise be an infinite space of thin pages.
+        self.assertEqual(self.client.get("/articles/tag/nope/").status_code, 404)
+
     def test_a_draft_never_appears_in_a_listing(self):
+        # live=False: Page.live defaults to True, so without it this creates a
+        # published page and asserts nothing.
         draft = ArticlePage(
-            title="منتشرنشده", slug="hidden", excerpt="x", body=[]
+            title="منتشرنشده", slug="hidden", excerpt="x", body=[], live=False
         )
         self.index.add_child(instance=draft)
-        self.assertNotIn("منتشرنشده", self.client.get("/articles/").content.decode())
+        body = self.client.get("/articles/").content.decode()
+        self.assertNotIn("منتشرنشده", body)
+        self.assertNotIn("hidden", body)
+
+    def test_an_article_with_no_category_appears_in_the_index_only(self):
+        orphan = ArticlePage(
+            title="بی‌دسته", slug="orphan", excerpt="x", body=[]
+        )
+        self.index.add_child(instance=orphan)
+        orphan.save_revision().publish()
+        self.assertIn(">بی‌دسته</h3>", self.client.get("/articles/").content.decode())
+        self.assertNotIn(
+            ">بی‌دسته</h3>",
+            self.client.get("/articles/category/rahnama/").content.decode(),
+        )
 ```
 
-The test `test_a_draft_never_appears_in_a_listing` creates the draft in `setUpTestData`'s class — move that creation into the test method body (it is already there) but note `setUpTestData` is class-level, so `self.index` is shared across tests; `add_child` inside a test is fine because each test runs in a transaction.
+with the module header:
+
+```python
+"""The listings: the index, the category archive and the tag archive.
+
+These are the pages a crawler reaches first and the ones most likely to
+silently duplicate each other, so the assertions cover both what is listed and
+what the robots directive says about listing it.
+"""
+from datetime import UTC, datetime, timedelta
+
+from django.test import TestCase
+from wagtail.models import Page, Site
+
+from articles.models import ARTICLES_PER_PAGE, ArticleIndexPage, ArticlePage
+from articles.snippets import ArticleCategory
+from articles.testing_support import plain_staticfiles
+
+# The card links to the article, so this counts cards without depending on the
+# surrounding markup. Titles alone would not do: "مقاله 1" is a substring of
+# "مقاله 14".
+CARD = 'href="/articles/a-'
+
+
+def cards(html):
+    return html.count(CARD)
+
+
+@plain_staticfiles
+```
+
+The draft is created inside the test method rather than in `setUpTestData`
+because `setUpTestData` is class-level and shared; `add_child` inside a test is
+fine because each test runs in a transaction.
 
 - [ ] **Step 2: Run it and watch it fail**
 
@@ -3089,9 +3236,9 @@ Run: `python manage.py test articles.tests_archives -v 2`
 
 Expected: FAIL — 404s, because no routes exist and no index template exists.
 
-- [ ] **Step 3: Add the routes to the index page**
+- [x] **Step 3: Add the routes to the index page**
 
-In `Backend/articles/models.py`, change the class declaration to mix in the router and add the handlers:
+In `Backend/articles/models.py`, change the class declaration to mix in the router:
 
 ```python
 from wagtail.contrib.routable_page.models import RoutablePageMixin, route
@@ -3100,16 +3247,39 @@ from wagtail.contrib.routable_page.models import RoutablePageMixin, route
 class ArticleIndexPage(RoutablePageMixin, Page):
 ```
 
-Then add these methods to the class, after `get_context`:
+Split `get_context`'s metadata half out into `_seo_context`, so the archive
+routes can take it without the index's own listing — and replace the methods as
+follows:
 
 ```python
-    @route(r"^category/(?P<slug>[\w-]+)/$")
+    def _seo_context(self, request):
+        """The metadata every /articles/ response shares.
+
+        Split out of get_context so the archive routes can take it without also
+        taking the index's own listing: get_context paginates, and an archive
+        that called it would run a COUNT and a page query on every request and
+        then throw both away.
+        """
+        from .seo import breadcrumb_json_ld, page_meta_context
+
+        return {
+            **page_meta_context(self, request),
+            "json_ld": [breadcrumb_json_ld(self)],
+        }
+
+    def get_context(self, request, *args, **kwargs):
+        # Reached by /articles/ itself, through RoutablePageMixin.index_route.
+        context = super().get_context(request, *args, **kwargs)
+        context.update(self._seo_context(request))
+        context["articles"] = self.paginate(request, self.published_articles())
+        context["base_url"] = self.get_url()
+        return context
+
+    # [^/]+ rather than [\w-]+ so a Persian slug matches regardless of the regex
+    # engine's Unicode flag. Safe because every slug reaching these routes came
+    # from slugify(), which never emits a slash.
+    @route(r"^category/(?P<slug>[^/]+)/$")
     def category_archive(self, request, slug):
-        from django.shortcuts import get_object_or_404
-        from django.template.response import TemplateResponse
-
-        from .seo import build_meta, site_settings_for
-
         category = get_object_or_404(ArticleCategory, slug=slug, is_active=True)
         return self._archive_response(
             request,
@@ -3117,64 +3287,129 @@ Then add these methods to the class, after `get_context`:
             archive={
                 "kind": "category",
                 "title": category.name,
-                "description": category.description,
+                # seo_description is the editor's deliberate override; the
+                # on-page description is the fallback so the tag is never empty.
+                "description": (category.seo_description or category.description or ""),
                 "noindex": False,
             },
         )
 
-    @route(r"^tag/(?P<slug>[\w-]+)/$")
+    @route(r"^tag/(?P<slug>[^/]+)/$")
     def tag_archive(self, request, slug):
         # Tag archives are noindex,follow: they duplicate the article list for
         # every tag an editor invents, and a thin duplicate page competes with
         # the articles it points at.
+        tag = get_object_or_404(Tag, slug=slug)
         return self._archive_response(
             request,
-            queryset=self.published_articles().filter(tags__slug=slug),
+            queryset=self.published_articles().filter(tags=tag),
             archive={
                 "kind": "tag",
-                "title": f"برچسب: {slug}",
+                "title": f"برچسب: {tag.name}",
                 "description": "",
                 "noindex": True,
             },
         )
 
     def _archive_response(self, request, queryset, archive):
-        from django.template.response import TemplateResponse
+        from .seo import archive_meta
 
-        from .seo import build_meta, site_settings_for
-
-        site_settings = site_settings_for(request)
-        context = self.get_context(request)
+        # request.path is the canonical's *path*; the host still comes from
+        # SITE_URL, which is the part that would otherwise leak an internal
+        # hostname into a public document.
+        context = super().get_context(request)
+        context.update(self._seo_context(request))
         context.update(
             {
                 "archive": archive,
                 "articles": self.paginate(request, queryset),
                 "base_url": request.path,
-                "seo_settings": site_settings,
+                "meta": archive_meta(
+                    self,
+                    request,
+                    title=archive["title"],
+                    description=archive["description"],
+                    path=request.path,
+                    robots="noindex,follow" if archive["noindex"] else None,
+                ),
             }
         )
-        meta = build_meta(self, request, site_settings)
-        meta["title"] = f"{archive['title']} | سالیکو"
-        meta["description"] = archive["description"]
-        meta["canonical"] = f"{settings.SITE_URL}{request.path}"
-        if archive["noindex"]:
-            meta["robots"] = "noindex,follow"
-        context["meta"] = meta
         return TemplateResponse(request, "articles/archive.html", context)
 ```
 
-`request.path` here is safe to use for the canonical's *path* — the host still
-comes from `SITE_URL`, which is the part that matters. Remove the unused
-`TemplateResponse`/`build_meta` imports from the `category_archive` handler
-(the `from .seo import ...` line inside it is dead once `_archive_response`
-owns that work) — the only import that handler needs is `get_object_or_404`.
+`super().get_context(request)` rather than `self.get_context(request)`: the
+latter is `ArticleIndexPage`'s own override, which paginates. `super()` reaches
+`Page.get_context`, which supplies `page`, `self` and `request` and nothing else.
 
-- [ ] **Step 4: Write the shared archive template**
+Also add the imports this needs to the top of `models.py`:
+`from django.shortcuts import get_object_or_404`, `from django.template.response
+import TemplateResponse`, and `Tag` alongside the existing
+`from taggit.models import TaggedItemBase`.
+
+**Step 3a: `seo.py` gains two functions.**
+
+`with_title_suffix` is the existing suffix rule lifted out of `meta_title`, so an
+archive — which has no `seo_title` field to read — can use the same one. The plan
+originally hardcoded `| سالیکو` here, which ignores both the constant and the
+`GlobalSeoSettings` override:
+
+```python
+def with_title_suffix(raw, site_settings=None):
+    """Append the brand suffix to a title string.
+
+    Separate from meta_title because an archive has no seo_title field to read:
+    its heading comes from the category snippet, not from a page.
+    """
+    raw = (raw or "").strip()
+    suffix = (
+        getattr(site_settings, "default_title_suffix", "") or DEFAULT_TITLE_SUFFIX
+    ).strip()
+    if not suffix or raw.endswith(suffix):
+        return raw
+    return f"{raw} | {suffix}"
+
+
+def meta_title(page, site_settings=None):
+    return with_title_suffix(page.seo_title or page.title or "", site_settings)
+
+
+def archive_meta(page, request, title, description, path, robots=None):
+    """Metadata for a sub-route of `page` — a category or a tag archive.
+
+    The og:* fields are re-derived rather than patched: build_meta fills them
+    from the page's own title, so an archive that replaced only "title" would
+    announce the index's name on every social card while its <title> tag said
+    something else.
+    """
+    site_settings = site_settings_for(request)
+    meta = build_meta(page, request, site_settings)
+    title = with_title_suffix(title, site_settings)
+    meta.update(
+        {
+            "title": title,
+            "og_title": title,
+            "description": description,
+            "og_description": description,
+            "canonical": absolute_url(path),
+        }
+    )
+    if robots is not None:
+        meta["robots"] = robots
+    return meta
+```
+
+- [x] **Step 4: Write the shared archive template**
 
 Create `Backend/articles/templates/articles/archive.html`:
 
 ```html
 {% extends "articles/base_article.html" %}
+
+{% comment %}
+  The shared shell for a category or tag archive. Both are sub-routes of the
+  index, so they differ only in the heading and in whether a crawler should
+  index them — which is in `archive`, not in two near-identical templates.
+{% endcomment %}
 
 {% block content %}
   <div class="article-shell">
@@ -3199,13 +3434,15 @@ Create `Backend/articles/templates/articles/archive.html`:
 {% endblock %}
 ```
 
-- [ ] **Step 5: Write the pagination partial**
+- [x] **Step 5: Write the pagination partial**
 
 Create `Backend/articles/templates/articles/partials/pagination.html`:
 
 ```html
-{# Server-rendered links, no JavaScript. rel="prev"/"next" are what tell a
-   crawler the pages form one sequence rather than duplicates. #}
+{% comment %}
+  Server-rendered links, no JavaScript. rel="prev"/"next" are what tell a
+  crawler the pages form one sequence rather than duplicates of each other.
+{% endcomment %}
 {% if articles.has_other_pages %}
   <nav class="article-pagination" aria-label="صفحه‌بندی">
     {% if articles.has_previous %}
@@ -3225,7 +3462,11 @@ Create `Backend/articles/templates/articles/partials/pagination.html`:
 {% endif %}
 ```
 
-- [ ] **Step 6: Write the index template**
+The original `{# ... #}` here spanned two lines, which as Task 7 found is not a
+comment at all — Django's `tag_re` has no `re.DOTALL`, so the note would have
+been printed into every listing. `{% comment %}` is the multi-line form.
+
+- [x] **Step 6: Write the index template**
 
 Create `Backend/articles/templates/articles/article_index_page.html`:
 
@@ -3241,7 +3482,7 @@ Create `Backend/articles/templates/articles/article_index_page.html`:
       {% endif %}
     </header>
 
-    {% if page.featured_categories %}
+    {% if page.featured_categories.all %}
       <nav class="index__categories" aria-label="دسته‌بندی‌ها">
         {% for category in page.featured_categories.all %}
           <a class="index__category" href="{{ page.get_url }}category/{{ category.slug }}/">
@@ -3265,27 +3506,21 @@ Create `Backend/articles/templates/articles/article_index_page.html`:
 {% endblock %}
 ```
 
-- [ ] **Step 7: Give the index its own `articles` and `base_url`**
+`.all` on the `{% if %}` is load-bearing: `page.featured_categories` is a related
+manager, which is truthy even when nothing is related, so the original condition
+would have rendered an empty `<nav>` on every index page.
 
-`ArticleIndexPage.get_context` currently only adds metadata. Add the listing:
+- [x] **Step 7: Give the index its own `articles` and `base_url`**
 
-```python
-    def get_context(self, request, *args, **kwargs):
-        from .seo import breadcrumb_json_ld, page_meta_context
+Folded into Step 3's `get_context` above — the listing and `base_url` are added
+there, alongside `_seo_context`.
 
-        context = super().get_context(request, *args, **kwargs)
-        context.update(page_meta_context(self, request))
-        context["json_ld"] = [breadcrumb_json_ld(self)]
-        context["articles"] = self.paginate(request, self.published_articles())
-        context["base_url"] = self.get_url()
-        return context
-```
+- [x] **Step 8: Add the grid CSS**
 
-- [ ] **Step 8: Add the grid CSS**
-
-Append to `Backend/articles/static/articles/article.css`:
+Appended to `Backend/articles/static/articles/article.css`:
 
 ```css
+/* ── Listings ── */
 .article-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -3294,41 +3529,126 @@ Append to `Backend/articles/static/articles/article.css`:
 }
 
 @media (min-width: 768px) {
-  .article-grid { grid-template-columns: repeat(2, 1fr); }
+  .article-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 1024px) {
-  .article-grid { grid-template-columns: repeat(3, 1fr); }
+  .article-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.archive__header,
+.index__header {
+  margin-block: 40px 8px;
+}
+
+.archive__description,
+.index__description {
+  max-width: 640px;
+  /* Fallbacks carry the tokens' real values, not Tailwind's nearest: a fallback
+     that disagrees with the token is a colour that changes the day Task 10
+     lands tokens.css, which is the drift the shared file exists to stop. */
+  color: var(--salyco-text-secondary, #526171);
+}
+
+.index__categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.article-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-block: 32px;
 }
 
 .article-card__link {
   display: block;
   height: 100%;
-  border: 1px solid var(--salyco-mist);
+  border: 1px solid var(--salyco-mist, #e4e5e2);
   border-radius: 12px;
   background: #fff;
   overflow: hidden;
   text-decoration: none;
+  color: inherit;
 }
 
-.article-card__image { width: 100%; height: auto; display: block; }
-.article-card__body { padding: 16px; }
+.article-card__image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.article-card__body {
+  padding: 16px;
+}
 ```
 
-- [ ] **Step 9: Run the tests**
+Two corrections to the original block. `--salyco-slate` does not exist: Task 10
+derives the token file one-for-one from `@theme` in `src/index.css`, whose only
+secondary-text token is `--color-text-secondary` → `--salyco-text-secondary`, and
+the plan forbids inventing a token. Its fallback `#475569` was Tailwind's
+slate-600, not a Salyco colour. The `--salyco-mist` fallback is now the token's
+real value (`#e4e5e2`) rather than Tailwind's slate-200, so the colour does not
+shift when Task 10 lands `tokens.css`.
+
+- [x] **Step 9: Run the tests**
 
 Run: `python manage.py test articles.tests_archives -v 2`
 
-Expected: PASS (8 tests). `test_the_tag_archive_is_noindex` navigates to a
-percent-encoded Persian URL — Django's test client encodes it for you, but if it
-404s, check that the `slug` converter in the tag route matches Persian: `[\w-]+`
-does not match Persian letters under a non-Unicode regex. Change both routes'
-converters to `[^/]+` if so.
+Observed: `Ran 15 tests` / `OK`. Then the whole app plus its neighbours:
 
-- [ ] **Step 10: Commit**
+Run: `python manage.py test articles mattress core`
+
+Observed: `Ran 131 tests` / `OK (skipped=1)` — up from 116 before this task.
+
+`test_the_tag_archive_is_noindex` navigates to a percent-encoded Persian URL.
+`[^/]+` was chosen for both routes up front rather than after a failure: `[\w-]+`
+does match Persian under Python's default Unicode `\w`, but relying on that means
+a route pattern whose correctness depends on a regex flag set elsewhere, and
+every slug reaching these routes came from `slugify()`, which never emits `/`.
+
+- [x] **Step 10: Measure the rendering in a browser**
+
+Run a scratch server (`DEBUG=True`, a scratch sqlite file — `settings.py`
+hard-codes `BASE_DIR / 'db.sqlite3'` with no env override, so the default
+settings would seed the real dev database), seed it with 15 articles plus an
+uncategorised one, a draft and a tagged one, and read the layout back out of a
+real browser through CDP.
+
+Observed, on the index, the category archive, page 2 and the tag archive at 360,
+768 and 1440:
+
+| width | grid tracks | cards (index / category / page 2 / tag) | h1 | `rel=next` | overflow |
+|-------|-------------|------------------------------------------|----|-----------|----------|
+| 360   | 1           | 12 / 8 / 4 / 1                           | 1  | only index | none    |
+| 768   | 2           | 12 / 8 / 4 / 1                           | 1  | only index | none    |
+| 1440  | 3           | 12 / 8 / 4 / 1                           | 1  | only index | none    |
+
+`article.css` parsed to **13 rules** at every width. A rule count of 0 is the
+signature of a stylesheet the browser never received, and the track counts above
+are the independent proof it applied: the same file that gives 1 column at 360
+gives 3 at 1440.
+
+Two things the numbers also show. The index renders **11 images for 12 cards**:
+the twelfth is the uncategorised article, seeded without a hero image, and is the
+visible proof that a card degrades cleanly without one. And `/tokens.css` is a
+404, as Task 7's note already records — Task 10 creates it, and the fallback
+values in the CSS above are what carries the palette until then.
+
+This step is not optional. Django's test suite asserts what the HTML says, and
+nothing in it can see a media query that never matched.
+
+- [x] **Step 11: Commit**
 
 ```bash
-git add Backend/articles/models.py Backend/articles/templates/articles Backend/articles/static Backend/articles/tests_archives.py
+git add Backend/articles/models.py Backend/articles/seo.py Backend/articles/templates/articles Backend/articles/static Backend/articles/tests_archives.py
 git commit -m "feat(cms): article index, category and tag archives
 
 Category and tag archives are sub-routes of the index rather than page types, so
@@ -3336,6 +3656,56 @@ a category exists once as a snippet and once as a URL. Tag archives are
 noindex,follow: they duplicate content per tag and compete with the articles
 they link to."
 ```
+
+**Observed:** the largest defect this task turned up was in the *test*, and it
+was a silent one. `article.tags.add("تشک")` does not write to the database.
+`ArticlePageTag.content_object` is a `ParentalKey`, so modelcluster returns a
+**DeferringRelatedManager**, and `modelcluster/contrib/taggit.py` says so in as
+many words — "this will be a DeferringRelatedManager which allows writing related
+objects without committing them to the database", and "the whole point of this
+module is that the add/remove/set/clear operations don't write to the database".
+`add()` stages the tag in memory and the rows land on the next `save()`. The
+first run of the tag test asserted against an empty `articles_articlepagetag`
+table and failed with `0 != 1`; the probe that found it printed the through table
+as `[]` while `tags.names()` cheerfully returned `['تشک']`, because `names()`
+reads the cluster's in-memory state rather than the database. `tags.add(...)`
+followed by `article.save()` is what an editor's save does through the admin, and
+what any management command or data migration that writes tags must do too — no
+other task in this plan writes tags, but the next one that does will hit this
+unless it is written down here.
+
+The second was a plan defect that would have shipped quietly: `_archive_response`
+called `self.get_context(request)` and then replaced `articles`, running a COUNT
+and a page query on every archive request for a result it discarded. Splitting
+`_seo_context` out of `get_context` is what made taking the shared metadata
+without the index's listing possible.
+
+The third is worth recording because it is the same class of bug as Task 7's
+`og:title`: `build_meta` derives `og_title` and `og_description` from the page's
+own title *before* the archive overwrites `title`, so every category and tag page
+would have announced "مقالات | سالیکو" on its social card while its `<title>` tag
+said "راهنما | سالیکو". `archive_meta` re-derives all four together.
+
+Two smaller corrections. `Page.live` defaults to `True` — the same trap as Task 7
+— so the draft fixture needed `live=False` or the test measured a published page.
+And `{% if page.featured_categories %}` is true for an empty related manager, so
+the index would have rendered an empty `<nav>`; `.all` is what makes the
+condition mean anything.
+
+The `[^/]+` route converters were chosen before running anything rather than
+after a failure. `[\w-]+` does match Persian, because Python's `\w` is
+Unicode-aware for `str` patterns — but a route pattern whose correctness depends
+on a regex flag set in another module is the kind of thing that breaks when
+someone adds `re.ASCII` for an unrelated reason.
+
+Verified rather than assumed: the browser measurements in Step 10, and that
+`filter(tags=tag)` in the tag route really does join through `ArticlePageTag` —
+the only way that assertion passes is if the through rows exist and the join finds
+them.
+
+Accepted gap, unchanged from Task 7: `/tokens.css` 404s until Task 10, so the
+listing CSS carries fallback values. They are the tokens' real values, so nothing
+shifts colour when the token file lands.
 
 ---
 

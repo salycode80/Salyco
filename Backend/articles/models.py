@@ -3,16 +3,19 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.shortcuts import get_object_or_404
+from django.template.response import TemplateResponse
 from django.utils.text import slugify
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
-from taggit.models import TaggedItemBase
+from taggit.models import Tag, TaggedItemBase
 from wagtail.admin.panels import (
     FieldPanel,
     MultiFieldPanel,
     ObjectList,
     TabbedInterface,
 )
+from wagtail.contrib.routable_page.models import RoutablePageMixin, route
 from wagtail.fields import StreamField
 from wagtail.models import Page
 
@@ -73,7 +76,7 @@ class ArticlePageTag(TaggedItemBase):
     )
 
 
-class ArticleIndexPage(Page):
+class ArticleIndexPage(RoutablePageMixin, Page):
     """The one page articles live under, at /articles/.
 
     Carries the category and tag archives as sub-routes rather than as page
@@ -131,13 +134,89 @@ class ArticleIndexPage(Page):
 
         return Paginator(queryset, ARTICLES_PER_PAGE).get_page(request.GET.get("page"))
 
-    def get_context(self, request, *args, **kwargs):
+    def _seo_context(self, request):
+        """The metadata every /articles/ response shares.
+
+        Split out of get_context so the archive routes can take it without also
+        taking the index's own listing: get_context paginates, and an archive
+        that called it would run a COUNT and a page query on every request and
+        then throw both away.
+        """
         from .seo import breadcrumb_json_ld, page_meta_context
 
+        return {
+            **page_meta_context(self, request),
+            "json_ld": [breadcrumb_json_ld(self)],
+        }
+
+    def get_context(self, request, *args, **kwargs):
+        # Reached by /articles/ itself, through RoutablePageMixin.index_route.
         context = super().get_context(request, *args, **kwargs)
-        context.update(page_meta_context(self, request))
-        context["json_ld"] = [breadcrumb_json_ld(self)]
+        context.update(self._seo_context(request))
+        context["articles"] = self.paginate(request, self.published_articles())
+        context["base_url"] = self.get_url()
         return context
+
+    # [^/]+ rather than [\w-]+ so a Persian slug matches regardless of the regex
+    # engine's Unicode flag. Safe because every slug reaching these routes came
+    # from slugify(), which never emits a slash.
+    @route(r"^category/(?P<slug>[^/]+)/$")
+    def category_archive(self, request, slug):
+        category = get_object_or_404(ArticleCategory, slug=slug, is_active=True)
+        return self._archive_response(
+            request,
+            queryset=self.published_articles().filter(category=category),
+            archive={
+                "kind": "category",
+                "title": category.name,
+                # seo_description is the editor's deliberate override; the
+                # on-page description is the fallback so the tag is never empty.
+                "description": (category.seo_description or category.description or ""),
+                "noindex": False,
+            },
+        )
+
+    @route(r"^tag/(?P<slug>[^/]+)/$")
+    def tag_archive(self, request, slug):
+        # Tag archives are noindex,follow: they duplicate the article list for
+        # every tag an editor invents, and a thin duplicate page competes with
+        # the articles it points at.
+        tag = get_object_or_404(Tag, slug=slug)
+        return self._archive_response(
+            request,
+            queryset=self.published_articles().filter(tags=tag),
+            archive={
+                "kind": "tag",
+                "title": f"برچسب: {tag.name}",
+                "description": "",
+                "noindex": True,
+            },
+        )
+
+    def _archive_response(self, request, queryset, archive):
+        from .seo import archive_meta
+
+        # request.path is the canonical's *path*; the host still comes from
+        # SITE_URL, which is the part that would otherwise leak an internal
+        # hostname into a public document.
+        context = super().get_context(request)
+        context.update(self._seo_context(request))
+        context.update(
+            {
+                "archive": archive,
+                "articles": self.paginate(request, queryset),
+                "base_url": request.path,
+                "meta": archive_meta(
+                    self,
+                    request,
+                    title=archive["title"],
+                    description=archive["description"],
+                    path=request.path,
+                    robots="noindex,follow" if archive["noindex"] else None,
+                ),
+            }
+        )
+        return TemplateResponse(request, "articles/archive.html", context)
 
 
 class ArticlePage(Page):

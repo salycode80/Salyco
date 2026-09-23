@@ -1,0 +1,29 @@
+{% extends "articles/base_article.html" %}
+
+{% comment %}
+  The shared shell for a category or tag archive. Both are sub-routes of the
+  index, so they differ only in the heading and in whether a crawler should
+  index them — which is in `archive`, not in two near-identical templates.
+{% endcomment %}
+
+{% block content %}
+  <div class="article-shell">
+    <header class="archive__header">
+      <h1 class="archive__title">{{ archive.title }}</h1>
+      {% if archive.description %}
+        <p class="archive__description">{{ archive.description }}</p>
+      {% endif %}
+    </header>
+
+    {% if articles %}
+      <div class="article-grid">
+        {% for article in articles %}
+          {% include "articles/partials/article_card.html" %}
+        {% endfor %}
+      </div>
+      {% include "articles/partials/pagination.html" %}
+    {% else %}
+      <p class="archive__empty">هنوز مقاله‌ای در این بخش منتشر نشده است.</p>
+    {% endif %}
+  </div>
+{% endblock %}

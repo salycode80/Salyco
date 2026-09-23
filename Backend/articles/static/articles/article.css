@@ -17,3 +17,72 @@
 .article-body__heading {
   scroll-margin-top: 96px;
 }
+
+/* ── Listings ── */
+.article-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-block: 32px;
+}
+
+@media (min-width: 768px) {
+  .article-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .article-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.archive__header,
+.index__header {
+  margin-block: 40px 8px;
+}
+
+.archive__description,
+.index__description {
+  max-width: 640px;
+  /* Fallbacks carry the tokens' real values, not Tailwind's nearest: a fallback
+     that disagrees with the token is a colour that changes the day Task 10
+     lands tokens.css, which is the drift the shared file exists to stop. */
+  color: var(--salyco-text-secondary, #526171);
+}
+
+.index__categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.article-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-block: 32px;
+}
+
+.article-card__link {
+  display: block;
+  height: 100%;
+  border: 1px solid var(--salyco-mist, #e4e5e2);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+
+.article-card__image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.article-card__body {
+  padding: 16px;
+}
