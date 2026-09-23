@@ -1,0 +1,67 @@
+{% load static article_tags wagtailcore_tags %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{{ meta.title }}</title>
+  <meta name="description" content="{{ meta.description }}">
+  <link rel="canonical" href="{{ meta.canonical }}">
+  <meta name="robots" content="{{ meta.robots }}">
+
+  <meta property="og:type" content="{{ meta.og_type }}">
+  <meta property="og:locale" content="{{ meta.og_locale }}">
+  <meta property="og:site_name" content="{{ seo_settings.brand_name_fa|default:'سالیکو' }}">
+  <meta property="og:title" content="{{ meta.og_title }}">
+  <meta property="og:description" content="{{ meta.og_description }}">
+  <meta property="og:url" content="{{ meta.canonical }}">
+  {% if meta.og_image %}
+    <meta property="og:image" content="{{ meta.og_image }}">
+    <meta property="og:image:width" content="{{ meta.og_image_width }}">
+    <meta property="og:image:height" content="{{ meta.og_image_height }}">
+  {% endif %}
+  <meta name="twitter:card" content="{{ meta.twitter_card }}">
+  <meta name="twitter:title" content="{{ meta.og_title }}">
+  <meta name="twitter:description" content="{{ meta.og_description }}">
+  {% if meta.og_image %}<meta name="twitter:image" content="{{ meta.og_image }}">{% endif %}
+
+  {% comment %}
+    The shared design tokens, extracted so Django and the React app read one
+    palette instead of two that drift. Served from the SPA root by nginx,
+    exactly as /fonts/ already is.
+  {% endcomment %}
+  <link rel="stylesheet" href="/tokens.css">
+  <link rel="stylesheet" href="{% static 'articles/article.css' %}">
+
+  {% for block in json_ld %}{% json_ld_script block %}{% endfor %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="article-page">
+  <a class="article-skip" href="#main">پرش به محتوای اصلی</a>
+
+  <header class="article-header">
+    <div class="article-shell article-header__inner">
+      <a class="article-header__brand" href="/">
+        <img src="/salyco-logo-navy.svg" alt="سالیکو" width="120" height="40">
+      </a>
+      <nav class="article-header__nav" aria-label="ناوبری اصلی">
+        <a href="/">خانه</a>
+        <a href="/products">محصولات</a>
+        <a href="/articles/" aria-current="page">مقالات</a>
+        <a href="/contact">تماس با ما</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="article-footer">
+    <div class="article-shell">
+      <p>© سالیکو — راهنمای انتخاب تشک و خواب بهتر.</p>
+    </div>
+  </footer>
+</body>
+</html>

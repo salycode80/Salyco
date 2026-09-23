@@ -1,0 +1,68 @@
+{% extends "articles/base_article.html" %}
+{% load wagtailcore_tags wagtailimages_tags article_tags %}
+
+{% block content %}
+  <div class="article-shell">
+    {% include "articles/partials/breadcrumb.html" %}
+
+    <article class="article" itemscope itemtype="https://schema.org/Article">
+      <header class="article__header">
+        {% if page.category %}
+          <a class="article__category" href="{{ page.category_archive_url }}">
+            {{ page.category.name }}
+          </a>
+        {% endif %}
+
+        {# The only h1 on the page. No block can emit one. #}
+        <h1 class="article__title">{{ page.title }}</h1>
+
+        {% if page.subtitle %}
+          <p class="article__subtitle">{{ page.subtitle }}</p>
+        {% endif %}
+
+        <p class="article__meta">
+          {% if page.author %}
+            <span itemprop="author">{{ page.author.name }}</span>
+          {% endif %}
+          {% if page.first_published_at %}
+            {# Jalali, like every other date on the site — see jalali_long. #}
+            <time datetime="{{ page.first_published_at|date:'c' }}">
+              {{ page.first_published_at|jalali_long }}
+            </time>
+          {% endif %}
+          <span>{{ page.estimated_reading_time|fa_digits }} دقیقه مطالعه</span>
+        </p>
+
+        {% if page.excerpt %}
+          <p class="article__excerpt">{{ page.excerpt }}</p>
+        {% endif %}
+      </header>
+
+      {% if page.hero_image %}
+        <figure class="article__hero">
+          {% image page.hero_image width-1200 class="article__hero-image" alt=page.hero_image_alt %}
+        </figure>
+      {% endif %}
+
+      <div class="article-body">
+        {% for block in page.body %}
+          {% include_block block %}
+        {% endfor %}
+      </div>
+
+      {% if page.tags.all %}
+        <ul class="article-tags">
+          {% for tag in page.tags.all %}
+            <li class="article-tags__item">
+              {% comment %}
+                A tag archive is a sub-route of the index, so the URL is the
+                index path plus the tag slug.
+              {% endcomment %}
+              <a href="{{ page.tag_archive_url_base }}{{ tag.slug }}/">{{ tag.name }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </article>
+  </div>
+{% endblock %}

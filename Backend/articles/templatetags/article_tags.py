@@ -32,6 +32,30 @@ def link_href(link):
     return link.get("url") or ""
 
 
+@register.filter
+def fa_digits(value):
+    """Write a numeral with Persian digits: 12 -> ۱۲.
+
+    "1 دقیقه مطالعه" next to "۱۰ سال ضمانت" reads as a rendering fault.
+    """
+    from mattress.utils import persian_digits
+
+    return persian_digits(value)
+
+
+@register.filter
+def jalali_long(value):
+    """A date the way the rest of the site writes dates out: '۹ مهر ۱۴۰۵'.
+
+    Delegates to mattress.utils so there is one calendar implementation. The
+    <time datetime="..."> attribute stays ISO — only the visible text changes,
+    because a machine reading the markup wants the unambiguous form.
+    """
+    from mattress.utils import format_jalali_long
+
+    return format_jalali_long(value)
+
+
 @register.simple_tag
 def json_ld_script(data):
     """Serialise a JSON-LD dict into a script tag that cannot be broken out of.

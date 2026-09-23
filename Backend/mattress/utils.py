@@ -65,6 +65,41 @@ def format_jalali(value: date | None) -> str:
     return f"{jy:04d}/{jm:02d}/{jd:02d}"
 
 
+# Indexed by Jalali month number - 1. The names the SPA's utils/jalali.js
+# carries, in the same order, so an article date and a product date read
+# identically.
+JALALI_MONTHS = (
+    "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+    "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند",
+)
+
+_PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+
+
+def persian_digits(value) -> str:
+    """Write a number with Persian digits, the way the site writes numbers.
+
+    "1 دقیقه مطالعه" beside "۱۰ سال ضمانت" reads as a rendering fault, not as a
+    deliberate choice, so anything user-facing that carries a numeral goes
+    through here.
+    """
+    return str(value).translate(_PERSIAN_DIGITS)
+
+
+def format_jalali_long(value: date | None) -> str:
+    """Render a date the way the site writes dates out: '۹ مهر ۱۴۰۵'.
+
+    Django's own `date:"j F Y"` under LANGUAGE_CODE 'fa' produces "23 سپتامبر
+    2026" — the Persian word for September attached to a Gregorian date. That
+    names the right day and reads as wrong, and it is inconsistent with every
+    other date on the site, which the SPA renders through formatJalaliLong.
+    """
+    if value is None:
+        return ""
+    jy, jm, jd = to_jalali(value)
+    return f"{jd} {JALALI_MONTHS[jm - 1]} {jy}".translate(_PERSIAN_DIGITS)
+
+
 def get_warranty_public_url(serial_number: str, request=None) -> str:
     """Absolute URL the warranty QR points at.
 

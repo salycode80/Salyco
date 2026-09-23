@@ -1,0 +1,19 @@
+/* Semantic article styles. Plain CSS rather than Tailwind utilities, because
+   Django templates cannot compile Tailwind's @theme — see the design doc's
+   "Article styling uses the same tokens through one file". */
+.article-shell {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+.article-body,
+.article__header,
+.article__excerpt {
+  max-width: 640px; /* Design.md's standalone paragraph measure. */
+  margin-inline: auto;
+}
+
+.article-body__heading {
+  scroll-margin-top: 96px;
+}

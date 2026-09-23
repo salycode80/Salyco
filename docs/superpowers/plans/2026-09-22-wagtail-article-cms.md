@@ -1127,6 +1127,15 @@ json_ld_script escapes <, > and & the way Django's own json_script does, so a
 title containing </script> cannot break out of the structured-data tag."
 ```
 
+**Observed (fixed later, during Task 7):** this task's `blocks/faq.html` was written with a
+three-line `{# ... #}` comment, which Django does not treat as a comment — `tag_re` in
+`django/template/base.py` has no `re.DOTALL`, so a `{#` whose `#}` is on the next line falls
+through as literal text and is printed into the page. A reader of any article carrying a FAQ
+block saw the developer's note above the questions. Task 7 converted it to `{% comment %}`
+and added `test_no_template_comment_leaks_into_the_response`, which asserts on `{#` and `{%`
+across the whole response. The other six block templates were single-line or had no comment
+and were unaffected.
+
 ---
 
 ### Task 4: Page models and migrations
@@ -2305,24 +2314,50 @@ does not exist."
 **Files:**
 - Create: `Backend/articles/templates/articles/base_article.html`
 - Create: `Backend/articles/templates/articles/article_page.html`
-- Create: `Backend/articles/templates/articles/partials/{breadcrumb,article_card,faq_section}.html`
+- Create: `Backend/articles/templates/articles/partials/{breadcrumb,article_card}.html`
+- Create: `Backend/articles/static/articles/article.css`
+- Create: `Backend/articles/testing_support.py` (see Step 3)
+- Modify: `Backend/articles/templatetags/article_tags.py` (two filters, Step 7)
+- Modify: `Backend/mattress/utils.py` (the Jalali long formatter, Step 7)
 - Test: `Backend/articles/tests_rendering.py` (create)
 
 **Interfaces:**
-- Consumes: `page_meta_context` (Task 6), `json_ld_script` (Task 3), block templates (Task 3).
-- Produces: the public HTML for one article, at `articles/article_page.html`. Later tasks extend `base_article.html`.
+- Consumes: `page_meta_context` (Task 6), `json_ld_script` (Task 3), block templates (Task 3), `to_jalali` (existing, `mattress/utils.py`).
+- Produces: the public HTML for one article, at `articles/article_page.html`; `plain_staticfiles` and the `jalali_long` / `fa_digits` filters for later tasks. Later tasks extend `base_article.html`.
 
-- [ ] **Step 1: Write the failing test**
+**Corrections to the original task text**, all found while executing it and recorded in
+the Observed note at the end:
+
+1. `partials/faq_section.html` is **dropped**. Nothing in the plan ever included it, and
+   `blocks/faq.html` (Task 3) already renders the whole section in place, so it would have
+   been a second copy of one section with one set of class names, drifting from the real one.
+2. The fixture must repoint the default site at the Wagtail Root, or `get_url()` returns
+   `None` and the request 404s.
+3. The draft fixture must pass `live=False`; `Page.live` defaults to `True`.
+4. Multi-line `{# #}` comments are **not comments** in Django, and leak into the HTML.
+5. `date:"j F Y"` renders a Persian-named *Gregorian* date, which is not what the rest of
+   the site shows.
+
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_rendering.py`:
 
 ```python
+"""What a reader — and a crawler — receives from /articles/<slug>/.
+
+Every assertion here reads `response.content`, the bytes Django sent, rather
+than a parsed DOM. That is deliberate: the requirement this work exists to
+satisfy is that the article is present *before any JavaScript runs*, and only
+the raw response can prove it.
+"""
 import json
+from datetime import UTC, datetime
 
 from django.test import TestCase
-from wagtail.models import Page
+from wagtail.models import Page, Site
 
 from articles.models import ArticleIndexPage, ArticlePage
+from articles.testing_support import plain_staticfiles
 
 ARTICLE_BODY = [
     ("heading", {"text": "چگونه انتخاب کنیم", "level": "h2", "anchor_id": ""}),
@@ -2331,10 +2366,20 @@ ARTICLE_BODY = [
 ]
 
 
+@plain_staticfiles
 class ArticleRenderingTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         root = Page.objects.get(depth=1)
+        # Repoint the default site at the Wagtail Root before anything is built.
+        # Wagtail's own initial data roots it at its "Welcome" page, so without
+        # this the article sits under no site's root path: get_url() returns None
+        # (emptying the canonical tag) and the request 404s. Task 14 does the same
+        # thing for real via setup_salyco_cms.
+        site = Site.objects.get(is_default_site=True)
+        site.root_page = root
+        site.save()
+
         cls.index = ArticleIndexPage(title="مقالات", slug="articles")
         root.add_child(instance=cls.index)
         cls.article = ArticlePage(
@@ -2386,7 +2431,12 @@ class ArticleRenderingTests(TestCase):
             json.loads(chunk.split("</script>")[0])
 
     def test_a_draft_is_not_public(self):
-        draft = ArticlePage(title="پیش‌نویس", slug="draft", excerpt="x", body=[])
+        # live=False is the whole test. Page.live defaults to True, and add_child
+        # validates nothing, so without it this builds a *published* page and the
+        # assertion below would be measuring a 200.
+        draft = ArticlePage(
+            title="پیش‌نویس", slug="draft", excerpt="x", body=[], live=False
+        )
         self.index.add_child(instance=draft)
         self.assertEqual(self.client.get("/articles/draft/").status_code, 404)
 
@@ -2401,15 +2451,87 @@ class ArticleRenderingTests(TestCase):
         # nothing.
         html = self.get().content.decode()
         self.assertNotIn("bg-brand-navy", html)
+
+    def test_no_template_comment_leaks_into_the_response(self):
+        # Django's tag_re has no re.DOTALL (template/base.py), so a {# ... #}
+        # spanning a newline is not a comment — it is emitted verbatim, and a
+        # reader sees the note the developer wrote to themselves. {# #} is safe
+        # only on one line; anything longer needs {% comment %}.
+        html = self.get().content.decode()
+        self.assertNotIn("{#", html)
+        self.assertNotIn("{%", html)
+
+    def test_the_reading_time_uses_persian_digits(self):
+        # "1 دقیقه مطالعه" beside "۱۰ سال ضمانت" reads as a rendering fault.
+        html = self.get().content.decode()
+        self.assertIn("۱ دقیقه مطالعه", html)
+
+    def test_the_date_is_jalali_like_the_rest_of_the_site(self):
+        # `date:"j F Y"` under LANGUAGE_CODE 'fa' renders "23 سپتامبر 2026": the
+        # Persian word for September on a Gregorian date. Every other date the
+        # site shows goes through the SPA's formatJalaliLong, so this one must
+        # too, or a reader comparing an article to a product sees two calendars.
+        article = ArticlePage.objects.get(pk=self.article.pk)
+        article.first_published_at = datetime(2026, 9, 23, tzinfo=UTC)
+        article.save(update_fields=["first_published_at"])
+        html = self.client.get("/articles/rahnama/").content.decode()
+        self.assertIn("۱ مهر ۱۴۰۵", html)
+        # The machine-readable attribute stays ISO.
+        self.assertIn('datetime="2026-09-23T00:00:00+00:00"', html)
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
-Run: `python manage.py test articles.tests_rendering -v 2`
+Run: `PYTHONUTF8=1 python manage.py test articles.tests_rendering -v 2`
 
 Expected: FAIL — 500 from `TemplateDoesNotExist: articles/article_page.html`.
 
-- [ ] **Step 3: Write the base template**
+Observed: 10 errors, all `TemplateDoesNotExist: articles/article_page.html`. The URL
+resolving at all is the useful signal — it means the site repoint in the fixture worked and
+the request is reaching Wagtail's serve view rather than 404ing.
+
+- [x] **Step 3: Write the test-only staticfiles override**
+
+Create `Backend/articles/testing_support.py`:
+
+```python
+"""Shared fixtures for the article test modules.
+
+Named so Django's discovery — which matches the glob `test*.py` — leaves it
+alone. `testing.py` and `test_support.py` would both be imported as test
+modules; `testing_support` is not.
+"""
+from django.test import override_settings
+
+# The article templates are the project's first Django-rendered pages, and so
+# the first thing here to use {% static %}. Production serves static files
+# through whitenoise's manifest storage, so a URL exists only once
+# collectstatic has written staticfiles.json — which happens at container start
+# (Backend/entrypoint.sh:9) and never during a test run. Django's
+# ManifestStaticFilesStorage skips the manifest when settings.DEBUG is true
+# (contrib/staticfiles/storage.py:174), which is why a page renders fine under
+# runserver and every test render dies with "Missing staticfiles manifest
+# entry".
+#
+# Swapping in the plain storage is the honest trade: the assertion worth making
+# in a test is that the template renders and the URL is a real path, not what
+# whitenoise hashed the filename to. The bytes actually served through nginx are
+# verified separately, on a running instance.
+plain_staticfiles = override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
+)
+```
+
+The module name matters: Django's discovery pattern is the glob `test*.py`, so `testing.py`
+or `test_support.py` would be imported as a test module. `testing_support` does not start
+with `test`, so it is left alone.
+
+- [x] **Step 4: Write the base template**
 
 Create `Backend/articles/templates/articles/base_article.html`:
 
@@ -2442,9 +2564,11 @@ Create `Backend/articles/templates/articles/base_article.html`:
   <meta name="twitter:description" content="{{ meta.og_description }}">
   {% if meta.og_image %}<meta name="twitter:image" content="{{ meta.og_image }}">{% endif %}
 
-  {# The shared design tokens, extracted so Django and the React app read one
-     palette instead of two that drift. Served from the SPA root by nginx,
-     exactly as /fonts/ already is. #}
+  {% comment %}
+    The shared design tokens, extracted so Django and the React app read one
+    palette instead of two that drift. Served from the SPA root by nginx,
+    exactly as /fonts/ already is.
+  {% endcomment %}
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="{% static 'articles/article.css' %}">
 
@@ -2481,14 +2605,22 @@ Create `Backend/articles/templates/articles/base_article.html`:
 </html>
 ```
 
-- [ ] **Step 4: Write the partials**
+Note the two root-relative asset paths, both of which nginx resolves today:
+`/salyco-logo-navy.svg` and `/fonts/` come from the SPA's Vite `public/` directory, which
+the container nginx serves as its document root (`Frontend/salyco-front/nginx.conf:39`).
+`/tokens.css` is Task 10's file and lands in the same directory — until then it 404s, which
+costs nothing, because this task's stylesheet does not read a single token.
+
+- [x] **Step 5: Write the partials**
 
 Create `Backend/articles/templates/articles/partials/breadcrumb.html`:
 
 ```html
-{# Mirrors the BreadcrumbList JSON-LD. Two representations of one chain: this
-   one is for the reader, that one for the crawler, and they are built from the
-   same page ancestors so they cannot disagree. #}
+{% comment %}
+  Mirrors the BreadcrumbList JSON-LD. Two representations of one chain: this
+  one is for the reader, that one for the crawler, and they are built from the
+  same page ancestors so they cannot disagree.
+{% endcomment %}
 <nav class="article-breadcrumb" aria-label="مسیر صفحه">
   <ol class="article-breadcrumb__list">
     {% for item in page.get_ancestors %}
@@ -2508,9 +2640,11 @@ Create `Backend/articles/templates/articles/partials/breadcrumb.html`:
 Create `Backend/articles/templates/articles/partials/article_card.html`:
 
 ```html
-{% load wagtailimages_tags %}
-{# The one card used by the index, the archives and any future "related"
-   section, so a change to the card is a change in one file. #}
+{% load wagtailimages_tags article_tags %}
+{% comment %}
+  The one card used by the index, the archives and any future "related"
+  section, so a change to the card is a change in one file.
+{% endcomment %}
 <article class="article-card">
   <a class="article-card__link" href="{{ article.get_url }}">
     {% if article.hero_image %}
@@ -2525,38 +2659,25 @@ Create `Backend/articles/templates/articles/partials/article_card.html`:
         <p class="article-card__excerpt">{{ article.excerpt }}</p>
       {% endif %}
       <p class="article-card__meta">
-        <span>{{ article.estimated_reading_time }} دقیقه مطالعه</span>
+        <span>{{ article.estimated_reading_time|fa_digits }} دقیقه مطالعه</span>
       </p>
     </div>
   </a>
 </article>
 ```
 
-Create `Backend/articles/templates/articles/partials/faq_section.html`:
+`article_card.html` has no consumer in this task — Task 8's index and archives include it.
+It is created here because it is a template file with no dependency on Task 8's pages, and
+the alternative is a second pass over the same directory one task later. The FAQ partial
+that the original task text listed here was dropped instead: see correction 1.
 
-```html
-{# Kept out of the block template so a page can place the FAQ where the layout
-   wants it rather than only where the editor inserted it. #}
-{% if faq_items %}
-  <section class="article-faq">
-    <h2 class="article-faq__heading">پرسش‌های متداول</h2>
-    {% for item in faq_items %}
-      <details class="article-faq__item">
-        <summary class="article-faq__question">{{ item.question }}</summary>
-        <p class="article-faq__answer">{{ item.answer }}</p>
-      </details>
-    {% endfor %}
-  </section>
-{% endif %}
-```
-
-- [ ] **Step 5: Write the article template**
+- [x] **Step 6: Write the article template**
 
 Create `Backend/articles/templates/articles/article_page.html`:
 
 ```html
 {% extends "articles/base_article.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load wagtailcore_tags wagtailimages_tags article_tags %}
 
 {% block content %}
   <div class="article-shell">
@@ -2582,11 +2703,12 @@ Create `Backend/articles/templates/articles/article_page.html`:
             <span itemprop="author">{{ page.author.name }}</span>
           {% endif %}
           {% if page.first_published_at %}
+            {# Jalali, like every other date on the site — see jalali_long. #}
             <time datetime="{{ page.first_published_at|date:'c' }}">
-              {{ page.first_published_at|date:"j F Y" }}
+              {{ page.first_published_at|jalali_long }}
             </time>
           {% endif %}
-          <span>{{ page.estimated_reading_time }} دقیقه مطالعه</span>
+          <span>{{ page.estimated_reading_time|fa_digits }} دقیقه مطالعه</span>
         </p>
 
         {% if page.excerpt %}
@@ -2610,8 +2732,10 @@ Create `Backend/articles/templates/articles/article_page.html`:
         <ul class="article-tags">
           {% for tag in page.tags.all %}
             <li class="article-tags__item">
-              {# A tag archive is a sub-route of the index, so the URL is the
-                 index path plus the tag slug. #}
+              {% comment %}
+                A tag archive is a sub-route of the index, so the URL is the
+                index path plus the tag slug.
+              {% endcomment %}
               <a href="{{ page.tag_archive_url_base }}{{ tag.slug }}/">{{ tag.name }}</a>
             </li>
           {% endfor %}
@@ -2622,9 +2746,100 @@ Create `Backend/articles/templates/articles/article_page.html`:
 {% endblock %}
 ```
 
-Note: `page.first_published_at|date:"j F Y"` uses the `fa` locale set in Task 1, so the month name comes out Persian. If it renders in English, the locale is not active — check `LANGUAGE_CODE` and that `USE_I18N` is `True`.
+The `<time datetime="...">` attribute stays ISO while the visible text is Jalali. A machine
+reading the markup wants the unambiguous form; a reader wants the one the rest of the site
+writes.
 
-- [ ] **Step 6: Write the minimal stylesheet so the page is readable**
+- [x] **Step 7: Add the two formatting filters**
+
+`date:"j F Y"` under `LANGUAGE_CODE = 'fa'` renders **"23 سپتامبر 2026"** — the Persian word
+for September attached to a Gregorian date. It names the right day and reads as wrong, and
+it disagrees with every other date the site shows, which the SPA renders through
+`formatJalaliLong`. `estimated_reading_time` has the same problem in miniature: `1` beside
+the site's `۱۰ سال ضمانت`.
+
+Both fixes go through the one calendar implementation that already exists.
+
+Append to `Backend/mattress/utils.py`, after `format_jalali`:
+
+```python
+# Indexed by Jalali month number - 1. The names the SPA's utils/jalali.js
+# carries, in the same order, so an article date and a product date read
+# identically.
+JALALI_MONTHS = (
+    "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+    "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند",
+)
+
+_PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+
+
+def persian_digits(value) -> str:
+    """Write a number with Persian digits, the way the site writes numbers.
+
+    "1 دقیقه مطالعه" beside "۱۰ سال ضمانت" reads as a rendering fault, not as a
+    deliberate choice, so anything user-facing that carries a numeral goes
+    through here.
+    """
+    return str(value).translate(_PERSIAN_DIGITS)
+
+
+def format_jalali_long(value: date | None) -> str:
+    """Render a date the way the site writes dates out: '۹ مهر ۱۴۰۵'.
+
+    Django's own `date:"j F Y"` under LANGUAGE_CODE 'fa' produces "23 سپتامبر
+    2026" — the Persian word for September attached to a Gregorian date. That
+    names the right day and reads as wrong, and it is inconsistent with every
+    other date on the site, which the SPA renders through formatJalaliLong.
+    """
+    if value is None:
+        return ""
+    jy, jm, jd = to_jalali(value)
+    return f"{jd} {JALALI_MONTHS[jm - 1]} {jy}".translate(_PERSIAN_DIGITS)
+```
+
+Then add the two filters to `Backend/articles/templatetags/article_tags.py`:
+
+```python
+@register.filter
+def fa_digits(value):
+    """Write a numeral with Persian digits: 12 -> ۱۲.
+
+    "1 دقیقه مطالعه" next to "۱۰ سال ضمانت" reads as a rendering fault.
+    """
+    from mattress.utils import persian_digits
+
+    return persian_digits(value)
+
+
+@register.filter
+def jalali_long(value):
+    """A date the way the rest of the site writes dates out: '۹ مهر ۱۴۰۵'.
+
+    Delegates to mattress.utils so there is one calendar implementation. The
+    <time datetime="..."> attribute stays ISO — only the visible text changes,
+    because a machine reading the markup wants the unambiguous form.
+    """
+    from mattress.utils import format_jalali_long
+
+    return format_jalali_long(value)
+```
+
+Check the conversion against dates whose Jalali value is known before trusting it:
+
+```
+PYTHONUTF8=1 python -c "
+from datetime import date
+from mattress.utils import format_jalali_long
+for d in (date(2026,9,23), date(2026,3,21), date(2026,3,20), date(2024,2,29)):
+    print(d, '->', format_jalali_long(d))
+"
+```
+
+Expected — 1405-07-01, 1405-01-01, 1404-12-29, 1402-12-10 respectively. The first three are
+Nowruz and the day before it, which is where an off-by-one in this arithmetic shows up.
+
+- [x] **Step 8: Write the minimal stylesheet so the page is readable**
 
 Create `Backend/articles/static/articles/article.css` with just the layout rules this task needs; Task 10 adds the token-driven typography:
 
@@ -2650,29 +2865,126 @@ Create `Backend/articles/static/articles/article.css` with just the layout rules
 }
 ```
 
-- [ ] **Step 7: Run the tests**
+- [x] **Step 9: Run the tests**
 
-Run: `python manage.py test articles.tests_rendering -v 2`
+Run: `PYTHONUTF8=1 python manage.py test articles.tests_rendering -v 2`
 
-Expected: PASS (10 tests). `test_the_json_ld_parses` expects three blocks; if the FAQ count differs, the `faq_json_ld` walk in Task 6 is not seeing the `faq` block type — check that the StreamValue's `block_type` is `"faq"`.
+Expected: PASS (13 tests).
 
-- [ ] **Step 8: Look at it in a browser**
+Observed: `Ran 13 tests in 0.844s / OK`, and `articles mattress core` → `Ran 116 tests /
+OK (skipped=1)`.
 
-Run: `python manage.py runserver`, then open `http://127.0.0.1:8000/articles/rahnama/`.
+If `test_the_json_ld_parses` counts a different number of blocks, the `faq_json_ld` walk in
+Task 6 is not seeing the `faq` block type — check that the StreamValue's `block_type` is
+`"faq"`.
 
-Confirm with **View Source** — not the DevTools Elements panel — that `<title>`, `<link rel="canonical">`, the `<h1>` and the body `<p>` elements are present with JavaScript disabled. Then resize to 360px and confirm no horizontal scroll.
+- [x] **Step 10: Verify in a real browser over CDP, not a screenshot flag**
 
-- [ ] **Step 9: Commit**
+Inspect the served page in Chrome through the DevTools Protocol rather than with
+`chrome --headless --screenshot --window-size=360,900`: that flag sets the *window*, not the
+layout viewport, so the document lays out wider than asked and a horizontal-overflow check
+passes when it should fail. `Emulation.setDeviceMetricsOverride` sets the viewport the layout
+engine actually uses.
+
+Seed a scratch database so the real `db.sqlite3` is not touched, run `runserver` against it,
+and read back `document.documentElement.scrollWidth` minus `clientWidth` at 360px, 768px and
+1440px.
+
+Observed, against a seeded article of ~960 words:
+
+| viewport | overflow | `.article-body` width |
+|---|---|---|
+| 360px | 0px | 312px |
+| 768px | 0px | 640px |
+| 1440px | 0px | 640px |
+
+`lang`/`dir` were `fa`/`rtl`, there was exactly one `<h1>`, the canonical was
+`https://salyco.ir/articles/rahnama-1/` with no local host in it, three `application/ld+json`
+blocks parsed, and `document.styleSheets` reported 3 CSS rules — which is what proves
+`article.css` was actually applied rather than 404ing. A rule count of 0 there is the
+signature of a stylesheet the browser never got.
+
+The `tokens.css` request 404s, as expected: Task 10 creates it, and this task's stylesheet
+reads no token. A 404 for one of the two stylesheets is fine here; a 404 for `article.css`
+is not.
+
+- [x] **Step 11: Commit**
 
 ```bash
-git add Backend/articles/templates Backend/articles/static Backend/articles/tests_rendering.py
+git add Backend/articles/templates Backend/articles/static Backend/articles/tests_rendering.py Backend/articles/testing_support.py Backend/articles/templatetags/article_tags.py Backend/mattress/utils.py Backend/articles/templates/articles/blocks/faq.html
 git commit -m "feat(cms): server-rendered article page
 
 The body text, title, canonical, robots and JSON-LD are all in the response
 before any JavaScript runs, which is the entire point of the change. The page
 carries exactly one h1 and the FAQ uses <details> so its answers are in the
-served HTML."
+served HTML.
+
+Four defects found by reading the bytes rather than the assertions:
+
+- Django's tag_re has no re.DOTALL, so a {# ... #} comment spanning a newline
+  is not a comment — it is emitted verbatim. Every multi-line comment in the
+  article templates was leaking into the page, including one already shipped
+  in blocks/faq.html. All of them are {% comment %} now, and a test asserts no
+  template syntax survives into the response.
+
+- date:\"j F Y\" under LANGUAGE_CODE 'fa' renders \"23 سپتامبر 2026\": the
+  Persian word for September on a Gregorian date. Every other date the site
+  shows goes through the SPA's formatJalaliLong, so the article date does now
+  too, through the to_jalali that already existed.
+
+- estimated_reading_time rendered as \"1 دقیقه مطالعه\" beside the site's
+  \"۱۰ سال ضمانت\".
+
+- The tests could not render at all: whitenoise's manifest storage needs a
+  staticfiles.json that only collectstatic writes, and that runs at container
+  start. Tests override the storage; the served bytes are checked separately."
 ```
+
+**Observed: what this task actually turned up.**
+
+*Four defects, all of the same kind — the code was correct and the output was not.* None
+would have been caught by asserting on a parsed DOM, because the DOM contained what the
+assertion asked for; the faults were in the surrounding bytes.
+
+1. **Multi-line `{# #}` is not a comment.** `django/template/base.py` compiles
+   `tag_re = re.compile(r"({%.*?%}|{{.*?}}|{#.*?#})")` — no `re.DOTALL`. A `.` will not
+   cross a newline, so a `{#` whose `#}` is on the next line fails to match, falls through
+   as TEXT, and is printed. The rendered page carried the developer's own notes, including
+   one from Task 3's already-committed `blocks/faq.html`. The rule: `{# #}` on one line
+   only, `{% comment %}` for anything longer. `test_no_template_comment_leaks_into_the_response`
+   now asserts on `{#` and `{%`, which no legitimate article HTML can contain.
+
+2. **The draft fixture was not a draft.** `Page.live` defaults to `True` and `add_child`
+   is treebeard's method, which validates nothing (the same fact Task 4's page-tree tests
+   ran into), so `ArticlePage(title="پیشنویس", ...)` is a *published* page. The test failed
+   with `200 != 404` — the good outcome, since the alternative is a test that passes while
+   measuring the wrong thing.
+
+3. **`date:"j F Y"` is not a Persian date.** It is a Gregorian date spelled in Persian
+   letters. The task text's own note — "the month name comes out Persian" — was true and
+   beside the point. Fixed through `mattress.utils.to_jalali`, which already existed and
+   whose sibling `format_jalali_long` now mirrors the SPA's `formatJalaliLong` exactly, so
+   an article date and a product date cannot drift apart.
+
+4. **The tests could not render a page with a `{% static %}` tag.** Production's
+   `whitenoise.storage.CompressedManifestStaticFilesStorage` resolves a URL only from
+   `staticfiles.json`, which `collectstatic` writes at container start
+   (`Backend/entrypoint.sh:9`). `ManifestStaticFilesStorage._url` skips the manifest when
+   `DEBUG` is true (`contrib/staticfiles/storage.py:174`), which is why the page rendered
+   fine under `runserver` and every test died with `Missing staticfiles manifest entry`.
+   `articles/testing_support.py` carries the override and the explanation; Task 8's
+   rendering tests import the same decorator.
+
+*Deliberate deviation from the original task text:* `partials/faq_section.html` is not
+created. `blocks/faq.html` renders the whole section — heading, `<details>` items, class
+names — in place through `include_block`, and the partial was never included by any template
+in the plan. A second copy of one section would have drifted from the real one, so the file
+was dropped rather than left as dead markup.
+
+*One thing this task does not do:* `/articles/` — the index — still 500s with
+`TemplateDoesNotExist: articles/article_index_page.html`, because that template is Task 8's.
+This is the same accepted gap the routing note in Task 4 describes, and it is why the visual
+check above loads an article rather than the index.
 
 ---
 

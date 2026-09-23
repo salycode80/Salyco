@@ -1,0 +1,24 @@
+{% load wagtailimages_tags article_tags %}
+{% comment %}
+  The one card used by the index, the archives and any future "related"
+  section, so a change to the card is a change in one file.
+{% endcomment %}
+<article class="article-card">
+  <a class="article-card__link" href="{{ article.get_url }}">
+    {% if article.hero_image %}
+      {% image article.hero_image fill-640x360 class="article-card__image" alt=article.hero_image_alt %}
+    {% endif %}
+    <div class="article-card__body">
+      {% if article.category %}
+        <span class="article-card__category">{{ article.category.name }}</span>
+      {% endif %}
+      <h3 class="article-card__title">{{ article.title }}</h3>
+      {% if article.excerpt %}
+        <p class="article-card__excerpt">{{ article.excerpt }}</p>
+      {% endif %}
+      <p class="article-card__meta">
+        <span>{{ article.estimated_reading_time|fa_digits }} دقیقه مطالعه</span>
+      </p>
+    </div>
+  </a>
+</article>

@@ -1,0 +1,19 @@
+{% comment %}
+  Mirrors the BreadcrumbList JSON-LD. Two representations of one chain: this
+  one is for the reader, that one for the crawler, and they are built from the
+  same page ancestors so they cannot disagree.
+{% endcomment %}
+<nav class="article-breadcrumb" aria-label="مسیر صفحه">
+  <ol class="article-breadcrumb__list">
+    {% for item in page.get_ancestors %}
+      {% if item.depth > 1 %}
+        <li class="article-breadcrumb__item">
+          <a href="{{ item.get_url }}">{{ item.title }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+    <li class="article-breadcrumb__item article-breadcrumb__item--current" aria-current="page">
+      {{ page.title }}
+    </li>
+  </ol>
+</nav>
