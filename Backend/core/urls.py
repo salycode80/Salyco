@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path ,include
 from django.conf import settings
 from django.conf.urls.static import static
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
 from users.views import (
     AuthCompleteView,
     AuthStartView,
@@ -55,6 +57,18 @@ urlpatterns = [
     path("api/", include("orders.urls")),
     path("api/", include("payments.urls")),
     path("api/banners/", include("banners.urls")),
+    path("api/", include("gallery.urls")),
+
+    # ── Article CMS ───────────────────────────────────────────────────────────
+    # The editorial CMS, deliberately NOT at /admin/ — that path stays Django's
+    # admin, where the existing models are managed. Both resolve to the same user
+    # accounts; only the surface differs.
+    #
+    # wagtail.documents is installed because Wagtail's admin reverses its URLs,
+    # so leaving it unrouted produces NoReverseMatch on pages that merely link to
+    # the document chooser.
+    path("cms/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
 ]
 
 if settings.DEBUG:

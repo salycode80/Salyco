@@ -29,6 +29,15 @@ services:
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      # Canonical origin for the article metadata, the sitemap and robots.txt.
+      # Listed here for the same reason as ZIBAL_MERCHANT below: this service
+      # enumerates its environment explicitly, so a variable present in .env but
+      # absent from this list never reaches the container. The code's own
+      # fallback (https://salyco.ir) is correct, so omitting this is not a
+      # breakage — but an explicit value is what makes the deployment
+      # self-documenting, and a wrong SITE_URL puts the wrong host in every
+      # canonical tag and every sitemap entry at once.
+      SITE_URL: ${SITE_URL}
       # Zibal payment gateway. These MUST be listed here: this service
       # enumerates its environment explicitly, so a variable present in .env but
       # absent from this list never reaches the container — and ZIBAL_MERCHANT

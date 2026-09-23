@@ -13,3 +13,9 @@ qrcode[pil]
 gunicorn
 whitenoise
 requests
+
+# Article CMS. Pinned exactly: wagtail>=7.4 resolves to 8.0, which requires
+# djangorestframework>=3.18 and would force an upgrade of the framework every
+# existing endpoint in this project is built on. 7.4.3 is the LTS line (support
+# to 2027-11-02) and needs only DRF>=3.15.1, which 3.17.1 satisfies.
+wagtail==7.4.3

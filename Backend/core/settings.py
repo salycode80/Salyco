@@ -110,6 +110,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     "corsheaders",
     "rest_framework",
     "core",
@@ -121,6 +122,34 @@ INSTALLED_APPS = [
     "orders",
     "payments",
     "banners",
+    "gallery",
+
+    # ── Wagtail (article CMS only) ────────────────────────────────────────────
+    # Wagtail is the CMS for articles, not the website: the catalogue, cart,
+    # warranty and account pages stay on the existing DRF API and the React SPA.
+    # See docs/superpowers/specs/2026-09-22-wagtail-article-cms-design.md.
+    #
+    # wagtail.contrib.forms is deliberately absent — this project has no Wagtail
+    # form pages, and an unused app is an unused migration.
+    #
+    # "wagtail" and "modelcluster" are listed separately from the wagtail.* apps
+    # because they are apps in their own right: "wagtail" provides the wagtailcore
+    # models (Page, Site, Locale), so omitting it makes every wagtail.models
+    # import raise "doesn't declare an explicit app_label".
+    "wagtail",
+    "modelcluster",
+    "taggit",
+    "wagtail.contrib.redirects",
+    "wagtail.contrib.routable_page",
+    "wagtail.contrib.settings",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
 ]
 
 MIDDLEWARE = [
@@ -133,9 +162,35 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Makes an old article slug 301 to its new one. Runs on process_request,
+    # before URL resolution, so a redirect is found even though no page has that
+    # path any more.
+    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
+
+# ── Wagtail (article CMS) ─────────────────────────────────────────────────────
+SITE_ID = 1
+
+# The canonical origin for every URL the CMS or the sitemap emits. Read from the
+# environment rather than from the request on purpose: host nginx → container
+# nginx → gunicorn stand between Django and the client, so one wrong
+# X-Forwarded-* header would otherwise put "http://backend:8000/..." into a
+# canonical tag and a social card. The `or` (not a getenv default) is load
+# bearing — Compose substitutes an unset variable to the empty string, and
+# getenv would then return "" rather than the fallback.
+SITE_URL = (os.getenv('SITE_URL') or 'https://salyco.ir').rstrip('/')
+
+WAGTAIL_SITE_NAME = "مدیریت محتوای سالیکو"
+WAGTAILADMIN_BASE_URL = SITE_URL
+# The update check calls wagtail.org on every admin page load. The production box
+# is a small Iranian host and a slow outbound request there costs more than the
+# version notice is worth.
+WAGTAIL_ENABLE_UPDATE_CHECK = False
+# Unauthenticated visitors to /cms/ go to the Wagtail login. This also changes
+# the DRF browsable API's login link, which is harmless — same user accounts.
+LOGIN_URL = "/cms/login/"
 
 TEMPLATES = [
     {
@@ -147,6 +202,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'wagtail.contrib.settings.context_processors.settings',
             ],
         },
     },
@@ -191,7 +247,14 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'
+# 'fa' rather than 'en-us': this is a Persian-first brand and both admins are
+# read by Persian-speaking staff. Note this also translates the pre-existing
+# Django admin — see the design doc's "Flagged" note in Section 1.
+LANGUAGE_CODE = 'fa'
+LANGUAGES = [
+    ('fa', 'فارسی'),
+    ('en', 'English'),
+]
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
