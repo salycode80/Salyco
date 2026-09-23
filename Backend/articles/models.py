@@ -1,6 +1,13 @@
 from django.db import models
 from django.utils.text import slugify
 
+# Re-exported so Django's app registry sees them. Snippets live in their own
+# module to keep this file readable, but a model in a module that models.py never
+# imports is not part of the app at all: makemigrations reports "No changes
+# detected" and the tables are never created. The dependency runs one way only —
+# snippets.py imports nothing from here.
+from .snippets import ArticleAuthor, ArticleCategory, GlobalSeoSettings  # noqa: F401
+
 
 class Article(models.Model):
     title = models.CharField(max_length=255)

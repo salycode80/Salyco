@@ -312,13 +312,15 @@ that empty string instead of the fallback."
 
 **Files:**
 - Create: `Backend/articles/snippets.py`
+- Modify: `Backend/articles/models.py` (re-export only)
+- Create: `Backend/articles/migrations/0002_*.py` (generated)
 - Test: `Backend/articles/tests_snippets.py` (create)
 
 **Interfaces:**
 - Consumes: nothing.
 - Produces: `ArticleCategory` (fields `name`, `slug`, `description`, `image`, `seo_title`, `seo_description`, `is_active`, `sort_order`); `ArticleAuthor` (fields `name`, `slug`, `author_type` — `"Person"` or `"Organization"` — `job_title`, `short_bio`, `avatar`, `linkedin_url`, `instagram_url`, `website_url`, `is_active`); `GlobalSeoSettings` (a `BaseSiteSetting` with `brand_name`, `brand_name_fa`, `default_title_suffix`, `default_meta_description`, `default_og_image`, `organization_logo`, `instagram_url`, `telegram_url`, `linkedin_url`, `aparat_url`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_snippets.py`:
 
@@ -364,13 +366,13 @@ class GlobalSeoSettingsTests(TestCase):
         self.assertIn(GlobalSeoSettings, registry)
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_snippets -v 2`
 
 Expected: FAIL — `ModuleNotFoundError: No module named 'articles.snippets'`.
 
-- [ ] **Step 3: Write the snippets**
+- [x] **Step 3: Write the snippets**
 
 Create `Backend/articles/snippets.py`:
 
@@ -563,21 +565,61 @@ class GlobalSeoSettings(BaseSiteSetting):
         verbose_name_plural = "تنظیمات سئو"
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Register the snippets with the app and migrate**
+
+`makemigrations` will report **"No changes detected in app 'articles'"** until
+`models.py` imports the new module. Django's autodetector only sees models
+reachable from the app's `models` module, so a snippet in a module nothing
+imports is not part of the app at all — no table, no admin registration, no
+error. Add to the top of `Backend/articles/models.py`, above the existing
+`Article` class:
+
+```python
+# Re-exported so Django's app registry sees them. Snippets live in their own
+# module to keep this file readable, but a model in a module that models.py never
+# imports is not part of the app at all: makemigrations reports "No changes
+# detected" and the tables are never created. The dependency runs one way only —
+# snippets.py imports nothing from here.
+from .snippets import ArticleAuthor, ArticleCategory, GlobalSeoSettings  # noqa: F401
+```
+
+Then generate and apply the migration:
+
+```bash
+python manage.py makemigrations articles
+python manage.py migrate
+```
+
+Expected: `0002_articleauthor_articlecategory_globalseosettings.py`, creating the
+three models. Do not rename it. A second `makemigrations` must report no changes.
+
+- [x] **Step 5: Run the tests**
 
 Run: `python manage.py test articles.tests_snippets -v 2`
 
 Expected: PASS (6 tests).
 
-- [ ] **Step 5: Commit**
+**Observed:** `Ran 6 tests in 0.009s / OK`, and
+`slugify("راهنمای خرید", allow_unicode=True) == "راهنمای-خرید"` held. The first
+run of this suite produced four `no such table: articles_articlecategory` errors
+from `django.db.utils.OperationalError` — that is what a missing migration looks
+like from inside a test, and it is the failure Step 4 prevents.
+
+- [x] **Step 6: Commit**
 
 ```bash
-git add Backend/articles/snippets.py Backend/articles/tests_snippets.py
+git add Backend/articles/snippets.py Backend/articles/tests_snippets.py \
+        Backend/articles/models.py Backend/articles/migrations/0002_articleauthor_articlecategory_globalseosettings.py
 git commit -m "feat(cms): article category, author and global SEO snippets
 
 Slugs are generated with allow_unicode=True: plain slugify() reduces
 «راهنمای خرید» to an empty string, which would collide every Persian
-category onto the same slug."
+category onto the same slug.
+
+models.py re-exports the three models. A model in a module that models.py
+never imports is invisible to Django's app registry — makemigrations
+reports 'No changes detected' and no table is ever created, with no error
+to explain why."
 ```
 
 ---
