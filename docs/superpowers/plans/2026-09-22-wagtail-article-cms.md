@@ -4378,7 +4378,7 @@ other, which is otherwise an invisible half-repaint."
 - Consumes: `ArticlePage` (Task 4), `body_to_text` (Task 5).
 - Produces: unchanged response shapes at `GET /api/articles/` (a bare array of `title`, `slug`, `excerpt`, `image`, `created_at`) and `GET /api/articles/<slug>/` (the same plus `content`, `updated_at`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_api.py`:
 
@@ -4478,14 +4478,14 @@ That last test is the one that would otherwise be written wrong: seeding the ext
 articles *before* the first capture would compare two identical lists and pass
 even with a per-row query.
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_api -v 2`
 
 Expected: FAIL — the list returns empty, because the views still query
 `Article.objects` and the test only creates pages.
 
-- [ ] **Step 3: Rewrite the views**
+- [x] **Step 3: Rewrite the views**
 
 Replace the body of `Backend/articles/views.py`:
 
@@ -4536,7 +4536,7 @@ class ArticleDetail(generics.RetrieveAPIView):
         return published_articles()
 ```
 
-- [ ] **Step 4: Rewrite the serializers**
+- [x] **Step 4: Rewrite the serializers**
 
 Replace the body of `Backend/articles/serializers.py`:
 
@@ -4591,20 +4591,20 @@ If `first_published_at` is null for a draft-facing request the field serialises
 as `None`; that is correct and matches the old `created_at` being present on
 every row. For a live article Wagtail always sets it on publish.
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `python manage.py test articles.tests_api -v 2`
 
 Expected: PASS (8 tests).
 
-- [ ] **Step 6: Confirm the homepage still works**
+- [x] **Step 6: Confirm the homepage still works**
 
 Run `python manage.py runserver` and `npm run dev`, then open the homepage and
 scroll to «از وبلاگ سالیکو». The four cards must render with titles and dates —
 that component reads `published_at || created_at`, and `created_at` is the field
 this change kept. Then open `/search?q=تشک`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add Backend/articles/views.py Backend/articles/serializers.py Backend/articles/tests_api.py
@@ -4619,6 +4619,23 @@ content stays plain text: that is what the old TextField held and what the React
 detail page rendered inside whitespace-pre-wrap, so HTML here would print
 literal tags for any consumer still reading the field."
 ```
+
+**Observed:**
+
+1. **The draft fixture was live, for the fourth time on this plan.** `Page.live`
+   defaults to `True` and `add_child()` is treebeard's, so it validates nothing:
+   a fixture that omits `save_revision().publish()` still creates a *published*
+   page. Tasks 7, 8 and 9 each hit this and each corrected it locally; Task 11's
+   draft needed `live=False` for the same reason, and the test that caught it was
+   `test_drafts_are_not_listed` — the one whose whole purpose is the filter. Any
+   future fixture in this codebase should pass `live=False` explicitly rather
+   than rely on the default.
+
+2. **`prefetch_related("tags")` was added to the view's queryset**, one line
+   beyond the plan's text. Tag names are not in either serializer, so it changes
+   no response today — but the flatness test in this task would be the thing to
+   catch a per-row tag query if one is ever serialised, and prefetching now means
+   the test's green light does not depend on nobody adding that field.
 
 ---
 
