@@ -40,6 +40,7 @@ The spec also describes `wagtailcore/root.html` returning 404 as insurance for a
 **Files:**
 - Modify: `Backend/requirements.txt`
 - Modify: `Backend/core/settings.py`
+- Modify: `Backend/core/urls.py`
 - Modify: `docker-compose.yml`
 - Test: `Backend/core/tests_cms.py` (create)
 
@@ -47,7 +48,7 @@ The spec also describes `wagtailcore/root.html` returning 404 as insurance for a
 - Consumes: nothing.
 - Produces: `settings.SITE_URL` (str, no trailing slash). `/cms/` reachable. `wagtail.*` in `INSTALLED_APPS`. `SITE_ID = 1`.
 
-- [ ] **Step 1: Add the pin**
+- [x] **Step 1: Add the pin**
 
 Append to `Backend/requirements.txt`:
 
@@ -59,7 +60,7 @@ Append to `Backend/requirements.txt`:
 wagtail==7.4.3
 ```
 
-- [ ] **Step 2: Install it**
+- [x] **Step 2: Install it**
 
 Run, from `Backend/`:
 
@@ -70,7 +71,7 @@ python -c "import wagtail, django; print(wagtail.VERSION, django.__version__)"
 
 Expected: `(7, 4, 3, 'final', 0) 6.0.6`. If the second command reports a different interpreter than the one that runs `manage.py`, install again with that interpreter — this repo has both a global Python and an ignored `Backend/env/`, and mixing them produces an import error much later.
 
-- [ ] **Step 3: Write the failing test**
+- [x] **Step 3: Write the failing test**
 
 Create `Backend/core/tests_cms.py`:
 
@@ -116,13 +117,13 @@ class CmsSettingsTests(TestCase):
         self.assertIn("/admin/login/", response["Location"])
 ```
 
-- [ ] **Step 4: Run it and watch it fail**
+- [x] **Step 4: Run it and watch it fail**
 
 Run: `python manage.py test core.tests_cms -v 2`
 
 Expected: FAIL — `ImportError`/`AttributeError` on `settings.SITE_URL`, and 404 on `/cms/`.
 
-- [ ] **Step 5: Wire the settings**
+- [x] **Step 5: Wire the settings and mount the CMS at `/cms/`**
 
 In `Backend/core/settings.py`, add `'django.contrib.sites',` to `INSTALLED_APPS` immediately after `'django.contrib.staticfiles',`, then append the Wagtail apps after `"gallery",`:
 
@@ -134,6 +135,13 @@ In `Backend/core/settings.py`, add `'django.contrib.sites',` to `INSTALLED_APPS`
     #
     # wagtail.contrib.forms is deliberately absent — this project has no
     # Wagtail form pages, and an unused app is an unused migration.
+    #
+    # "wagtail" and "modelcluster" are listed separately from the wagtail.* apps
+    # because they are apps in their own right: "wagtail" provides the wagtailcore
+    # models (Page, Site, Locale), so omitting it makes every wagtail.models
+    # import raise "doesn't declare an explicit app_label". Verified the hard way.
+    "wagtail",
+    "modelcluster",
     "taggit",
     "wagtail.contrib.redirects",
     "wagtail.contrib.routable_page",
@@ -189,6 +197,35 @@ WAGTAIL_ENABLE_UPDATE_CHECK = False
 LOGIN_URL = "/cms/login/"
 ```
 
+Then mount the CMS in `Backend/core/urls.py`. Add to the imports:
+
+```python
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
+```
+
+and append to the end of `urlpatterns`, after the last `path("api/", include(...))`:
+
+```python
+    # ── Article CMS ───────────────────────────────────────────────────────────
+    # The editorial CMS, deliberately NOT at /admin/ — that path stays Django's
+    # admin, where the existing models are managed. Both resolve to the same user
+    # accounts; only the surface differs.
+    #
+    # wagtail.documents is installed because Wagtail's admin reverses its URLs,
+    # so leaving it unrouted produces NoReverseMatch on pages that merely link to
+    # the document chooser.
+    path("cms/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
+]
+```
+
+`wagtail.urls` is deliberately **not** included here. It is the frontend
+page-serving URLconf — a separate module from the admin — and its catch-all
+pattern matches `^$`, so including it now would make the bare Wagtail Root page
+resolve and then 500 on a missing template. It arrives in Task 9 together with
+the `^$` guard that prevents exactly that.
+
 Change the internationalization block so the CMS and the existing admin both read Persian:
 
 ```python
@@ -210,7 +247,7 @@ USE_TZ = True
 presentation of every existing warranty and order timestamp, which is unrelated
 to articles.)
 
-- [ ] **Step 6: Add `SITE_URL` to the compose environment**
+- [x] **Step 6: Add `SITE_URL` to the compose environment**
 
 In `docker-compose.yml`, under the `backend` service's `environment:`, after `FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}`:
 
@@ -225,7 +262,7 @@ In `docker-compose.yml`, under the `backend` service's `environment:`, after `FR
 
 Add `SITE_URL=https://salyco.ir` to the repo-root `.env` (it is gitignored; do not commit it). Without the line Compose passes an empty string, which the `or` guard turns back into the default — correct, but only by accident.
 
-- [ ] **Step 7: Run the tests and the checks**
+- [x] **Step 7: Run the tests and the checks**
 
 Run:
 
@@ -236,7 +273,7 @@ python manage.py test core.tests_cms -v 2
 
 Expected: `check` reports no issues; all 5 tests PASS.
 
-- [ ] **Step 8: Verify migrate and collectstatic still work**
+- [x] **Step 8: Verify migrate and collectstatic still work**
 
 Run:
 
@@ -247,7 +284,13 @@ python manage.py collectstatic --noinput
 
 Expected: both succeed. `collectstatic` is the risky one — `CompressedManifestStaticFilesStorage` raises on any static file that is referenced but not collected, and the Wagtail admin ships a large JS/CSS surface. If it raises `ValueError: The file '...' could not be found`, replace the `staticfiles` backend with `"whitenoise.storage.CompressedStaticFilesStorage"` in `STORAGES`, re-run, and note it in the commit message: compression is kept, only the manifest's immutable cache-busting for admin assets is given up.
 
-- [ ] **Step 9: Commit**
+**Observed:** `242 static files copied, 692 post-processed` — the manifest storage
+handles the Wagtail admin static without complaint, so that fallback was not
+needed and `STORAGES` is unchanged. Before `collectstatic` runs, Django logs
+`UserWarning: No directory at: Backend\staticfiles\` from WhiteNoise; it is
+harmless and disappears once the directory exists.
+
+- [x] **Step 9: Commit**
 
 ```bash
 git add Backend/requirements.txt Backend/core/settings.py Backend/core/tests_cms.py docker-compose.yml
