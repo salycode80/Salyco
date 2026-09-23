@@ -1863,7 +1863,7 @@ count is inflated by markup or chrome."
 - Consumes: `ArticlePage` / `ArticleIndexPage` (Task 4), `GlobalSeoSettings` (Task 2), `article_tags.json_ld_script` (Task 3).
 - Produces: `absolute_url(path) -> str`, `meta_title(page, site_settings=None) -> str`, `meta_description(page, site_settings=None) -> str`, `canonical_url(page) -> str`, `robots_directive(page, request=None) -> str`, `social_image(page, site_settings=None) -> str`, `build_meta(page, request=None) -> dict`, `site_settings_for(request) -> GlobalSeoSettings | None`, `page_meta_context(page, request=None) -> dict` (keys `meta`, `seo_settings`), `article_json_ld(page, request=None) -> dict`, `breadcrumb_json_ld(page) -> dict`, `faq_json_ld(page) -> dict | None`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_seo.py`:
 
@@ -1876,18 +1876,22 @@ from wagtail.models import Page, Site
 
 from articles.models import ArticleIndexPage, ArticlePage
 from articles.seo import (
-    absolute_url,
     breadcrumb_json_ld,
-    build_meta,
     canonical_url,
     meta_title,
     robots_directive,
 )
-from articles.snippets import ArticleAuthor, GlobalSeoSettings
 
 
 def make_index():
     root = Page.objects.get(depth=1)
+    # Repoint the default site at the Wagtail Root before measuring any URL:
+    # Wagtail's initial data roots it at its own "Welcome" page, so a page under
+    # the real root is under no site's root path and get_url() returns None.
+    site = Site.objects.get(is_default_site=True)
+    site.root_page = root
+    site.save()
+
     index = ArticleIndexPage(title="مقالات", slug="articles")
     root.add_child(instance=index)
     return index
@@ -1952,15 +1956,14 @@ class RobotsTests(TestCase):
 
     def test_a_draft_is_noindex_nofollow(self):
         index = make_index()
-        article = make_article(index)
+        article = make_article(index, live=False)
+        article.save_revision()
         self.assertEqual(robots_directive(article), "noindex,nofollow")
 
 
 class JsonLdScriptTests(TestCase):
     def render(self, data):
-        template = Template(
-            "{% load article_tags %}{% json_ld_script data %}"
-        )
+        template = Template("{% load article_tags %}{% json_ld_script data %}")
         return template.render(Context({"data": data}))
 
     def test_a_script_tag_is_produced(self):
@@ -2004,13 +2007,24 @@ class StructuredDataTests(TestCase):
         json.loads(payload)
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+Two things in that fixture are load-bearing, and both were found by running it:
+
+- **`make_index()` repoints the default site at the Wagtail Root.** Wagtail's own
+  initial data roots the default `Site` at its "Welcome" page, so a page under the
+  real root is under no site's root path and `get_url()` returns `None` — which
+  would make the canonical `https://salyco.ir/` and every breadcrumb entry point at
+  the same URL. Task 4 does the same thing for the same reason.
+- **The draft test sets `live=False`.** `add_child` saves through `Page.save()`, and
+  `Page.live` defaults to `True`, so a page built by the fixture alone is live and
+  would be `index,follow`. The test has to say what it means.
+
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_seo -v 2`
 
 Expected: FAIL — `ModuleNotFoundError: No module named 'articles.seo'`.
 
-- [ ] **Step 3: Write the SEO module**
+- [x] **Step 3: Write the SEO module**
 
 Create `Backend/articles/seo.py`:
 
@@ -2258,13 +2272,18 @@ def faq_json_ld(page):
     }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `python manage.py test articles.tests_seo -v 2`
 
 Expected: PASS (15 tests).
 
-- [ ] **Step 5: Commit**
+**Observed:** `Ran 15 tests in 0.407s / OK`, green on the first run — including the
+canonical and breadcrumb tests, which is the payoff for moving the Wagtail catch-all
+into Task 4. Without that move every one of them would have asserted against
+`https://salyco.ir/` rather than the article's own URL.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add Backend/articles/seo.py Backend/articles/tests_seo.py
