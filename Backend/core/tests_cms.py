@@ -36,3 +36,22 @@ class CmsSettingsTests(TestCase):
         response = self.client.get("/admin/")
         self.assertIn(response.status_code, (301, 302))
         self.assertIn("/admin/login/", response["Location"])
+
+
+class RootUrlTests(TestCase):
+    def test_a_request_for_the_bare_root_is_a_404_not_a_crash(self):
+        # wagtail.urls' catch-all is r"^((?:[\w\-]+/)*)$", which matches ^$, so
+        # without the guard in core/urls.py this request resolves the bare Wagtail
+        # Root page and dies on a missing wagtailcore/page.html. The site is served
+        # by nginx, so reaching Django at "/" means a proxy is misconfigured — and a
+        # 404 explains itself where a 500 does not.
+        self.assertEqual(self.client.get("/").status_code, 404)
+
+    def test_the_article_route_is_registered_under_the_articles_prefix(self):
+        # Not a cosmetic check. Page.get_url() ends in reverse("wagtail_serve"),
+        # which only resolves once wagtail.urls is mounted; before that every
+        # page's get_url() returns None and the canonical tag, the breadcrumbs,
+        # the JSON-LD and the sitemap all go quietly empty.
+        from django.urls import reverse
+
+        self.assertEqual(reverse("wagtail_serve", args=("articles/",)), "/articles/")

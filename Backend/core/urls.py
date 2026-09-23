@@ -15,9 +15,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import HttpResponseNotFound
 from django.urls import path ,include
 from django.conf import settings
 from django.conf.urls.static import static
+from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 from users.views import (
@@ -69,6 +71,24 @@ urlpatterns = [
     # the document chooser.
     path("cms/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
+
+    # ── Article pages ─────────────────────────────────────────────────────────
+    # The pages themselves, at /articles/<slug>/. This is a fallback and must stay
+    # last: every route above it is more specific, and wagtail.urls' catch-all
+    # would otherwise swallow them.
+    #
+    # Mounted here rather than alongside the sitemap because Page.get_url() ends in
+    # reverse("wagtail_serve") — a name only wagtail.urls registers. Until this
+    # route exists every page's get_url() returns None, which would silently empty
+    # the canonical tag, the breadcrumbs, the JSON-LD and the sitemap rather than
+    # raising anything.
+    #
+    # The guard is not decoration. The catch-all is r"^((?:[\w\-]+/)*)$", which
+    # matches ^$, so without it a request to / resolves the bare Wagtail Root and
+    # 500s on a missing wagtailcore/page.html. A template cannot set a response
+    # status, so the 404 has to happen here, where it is also testable.
+    path("", lambda request: HttpResponseNotFound("Not found")),
+    path("", include(wagtail_urls)),
 ]
 
 if settings.DEBUG:

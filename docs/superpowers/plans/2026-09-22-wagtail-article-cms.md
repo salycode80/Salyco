@@ -1135,6 +1135,8 @@ title containing </script> cannot break out of the structured-data tag."
 
 **Files:**
 - Modify: `Backend/articles/models.py`
+- Modify: `Backend/core/urls.py` (mount the Wagtail catch-all — see Step 4)
+- Modify: `Backend/core/tests_cms.py` (add the root-guard test)
 - Create: `Backend/articles/migrations/0003_*.py` (generated)
 - Test: `Backend/articles/tests_pages.py` (create)
 
@@ -1142,17 +1144,23 @@ title containing </script> cannot break out of the structured-data tag."
 - Consumes: `BodyBlock` (Task 3), `ArticleCategory` / `ArticleAuthor` (Task 2).
 - Produces: `ArticleIndexPage` (fields `intro`, `hero_title`, `hero_description`, `featured_article`, `featured_categories`; methods `published_articles()`, `paginate(request, queryset)`; `route()` methods for `category/<slug>/` and `tag/<slug>/`, added in Task 8) and `ArticlePage` (fields `subtitle`, `excerpt`, `hero_image`, `hero_image_alt`, `category`, `author`, `tags`, `body`, `is_featured`, `featured_order`, `estimated_reading_time`, `legacy_id`, `canonical_url_override`, `allow_indexing`, `allow_following`, `og_title`, `og_description`, `og_image`; properties `category_archive_url`, `tag_archive_url`). `ArticlePageTag` is the taggit through model. `ARTICLES_PER_PAGE = 12`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Backend/articles/tests_pages.py`:
 
 ```python
-from django.core.exceptions import ValidationError
+from unittest import skip
+from urllib.parse import urlparse
+
+from django.conf import settings
 from django.test import TestCase
 from wagtail.models import Page, Site
 
 from articles.models import ArticleIndexPage, ArticlePage
-from articles.snippets import ArticleAuthor, ArticleCategory
+
+
+def root():
+    return Page.objects.get(depth=1)
 
 
 def make_index():
@@ -1161,9 +1169,8 @@ def make_index():
     Built here rather than through setup_salyco_cms so each test controls its own
     tree and a bug in the management command cannot make the model tests pass.
     """
-    root = Page.objects.get(depth=1)
     index = ArticleIndexPage(title="مقالات", slug="articles")
-    root.add_child(instance=index)
+    root().add_child(instance=index)
     return index
 
 
@@ -1180,29 +1187,45 @@ def make_article(index, **kwargs):
     return article
 
 
+def site_on_root():
+    """Point the default site at the Wagtail Root, which is what Task 14 does.
+
+    Wagtail's own initial data creates a default site whose root_page is its
+    "Welcome" page, so until this runs a page under the real root has no URL at
+    all — get_url() returns None rather than a path, because the page is not
+    under any site's root. /articles/ being routable is the arrangement the whole
+    design rests on, so the URL tests build it here.
+    """
+    site = Site.objects.get(is_default_site=True)
+    site.root_page = root()
+    site.save()
+    return site
+
+
 class PageTreeTests(TestCase):
     def test_an_article_cannot_live_outside_the_index(self):
-        root = Page.objects.get(depth=1)
-        with self.assertRaises(ValidationError):
-            root.add_child(instance=ArticlePage(title="x", slug="x", excerpt="y"))
+        # can_exist_under rather than add_child: Wagtail does not validate page
+        # types on save. add_child comes from treebeard and writes the row, so
+        # the constraint lives in this predicate — which is what the admin, the
+        # page mover and the "add child page" menu all consult.
+        self.assertFalse(ArticlePage.can_exist_under(root()))
 
     def test_the_index_refuses_a_non_article_child(self):
         index = make_index()
-        with self.assertRaises(ValidationError):
-            index.add_child(instance=Page(title="other", slug="other"))
+        self.assertFalse(Page.can_exist_under(index))
 
     def test_only_one_index_can_exist(self):
         make_index()
-        with self.assertRaises(ValidationError):
-            Page.objects.get(depth=1).add_child(
-                instance=ArticleIndexPage(title="again", slug="articles-2")
-            )
+        self.assertFalse(ArticleIndexPage.can_create_at(root()))
 
     def test_the_index_parent_type_is_the_wagtail_root(self):
         self.assertEqual(ArticleIndexPage.parent_page_types, ["wagtailcore.Page"])
 
     def test_an_article_has_a_subpage_of_nothing(self):
+        # An empty list, not None: Wagtail treats a missing subpage_types as
+        # "any page type", so [] is the only way to say "this is a leaf".
         self.assertEqual(ArticlePage.subpage_types, [])
+        self.assertEqual(ArticlePage.clean_subpage_models(), [])
 
 
 class ArticleUrlTests(TestCase):
@@ -1210,40 +1233,46 @@ class ArticleUrlTests(TestCase):
         # This is the whole reason Site.root_page stays the Wagtail Root: if the
         # index were the site root its own URL would be "/" and every article
         # would sit at "/<slug>/", and every canonical tag would be wrong.
+        site_on_root()
         index = make_index()
         self.assertEqual(index.get_url(), "/articles/")
 
     def test_an_article_url_sits_under_the_index(self):
+        site_on_root()
         index = make_index()
         article = make_article(index)
         self.assertEqual(article.get_url(), "/articles/rahnama/")
 
+    @skip("site hostname set by setup_salyco_cms in Task 14")
     def test_the_default_site_uses_the_canonical_hostname(self):
-        from urllib.parse import urlparse
-
-        from django.conf import settings
-
         site = Site.objects.get(is_default_site=True)
         self.assertEqual(site.hostname, urlparse(settings.SITE_URL).hostname)
 ```
 
-That last test needs a site to exist, and no site does until Task 14 runs
-`setup_salyco_cms`. Decorate it for now and remove the decorator in Task 14:
+Three of these tests are not the shape you would guess, and each was rewritten
+after failing:
 
-```python
-from unittest import skip
+- **`can_exist_under` / `can_create_at`, not `add_child`.** `add_child` comes from
+  treebeard's `MP_Node` — it writes the row and validates nothing. Wagtail keeps
+  the parent/subpage constraint in `Page.can_exist_under(parent)` and
+  `Page.can_create_at(parent)` (`wagtail/models/pages.py:1614,1624`), which is what
+  the admin, the page mover and the add-child menu consult. Asserting on those
+  tests the same rule the CMS enforces.
+- **`site_on_root()`.** Wagtail's own `0002_initial_data` migration creates a
+  default `Site` whose root is its "Welcome" page, so a page under the real Root is
+  under no site's root path and has no URL at all. The helper repoints it, which is
+  what Task 14's `setup_salyco_cms` will do for real.
+- **`ArticlePage.clean_subpage_models()` is asserted alongside `subpage_types`.** A
+  missing `subpage_types` means "any page type"; `[]` is not `None`, so the empty
+  list is what makes a page a leaf, and the second assertion proves it took effect.
 
-    @skip("site created by setup_salyco_cms in Task 14")
-    def test_the_default_site_uses_the_canonical_hostname(self):
-```
-
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `python manage.py test articles.tests_pages -v 2`
 
 Expected: FAIL — `ImportError: cannot import name 'ArticleIndexPage'`.
 
-- [ ] **Step 3: Write the page models**
+- [x] **Step 3: Write the page models**
 
 Append to `Backend/articles/models.py` (leaving the existing `Article` class and its imports untouched; add the new imports at the top of the file):
 
@@ -1257,12 +1286,18 @@ from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, ObjectList, TabbedInterface
-from wagtail.fields import RichTextField, StreamField
+from wagtail.fields import StreamField
 from wagtail.models import Page
 
 from .blocks import BodyBlock
 from .services import estimate_reading_time
-from .snippets import ArticleAuthor, ArticleCategory
+
+# Re-exported so Django's app registry sees them. Snippets live in their own
+# module to keep this file readable, but a model in a module that models.py never
+# imports is not part of the app at all: makemigrations reports "No changes
+# detected" and the tables are never created. The dependency runs one way only —
+# snippets.py imports nothing from here.
+from .snippets import ArticleAuthor, ArticleCategory, GlobalSeoSettings  # noqa: F401
 
 ARTICLES_PER_PAGE = 12
 
@@ -1505,9 +1540,78 @@ class ArticlePage(Page):
         return context
 ```
 
-Delete the now-duplicated `from django.db import models` line that already exists at the top of the file — keep one. `RichTextField` is imported but unused; remove it from the import list.
+The legacy `Article` class stays where it is, below these imports and above the
+two page models, with its own body untouched. There is exactly one
+`from django.db import models` line — the legacy one and the new block share it.
+`RichTextField` is not imported: nothing uses it.
 
-- [ ] **Step 4: Generate and apply the migrations**
+- [x] **Step 4: Mount the Wagtail catch-all**
+
+This step was Task 9's, and it has to happen here. `Page.get_url_parts()` ends in
+`reverse("wagtail_serve", args=(...))` (`wagtail/models/pages.py:1410`); on
+`NoReverseMatch` it returns `(site_id, None, None)`, so `Page.get_url()` returns
+`None`. The name `wagtail_serve` is registered by `wagtail.urls`, which nothing has
+mounted yet — so until this step, **every page in the project has no URL**, and the
+canonical tag, the breadcrumbs, the JSON-LD and Task 9's sitemap all go quietly
+empty rather than raising. Step 5's URL tests are the proof.
+
+In `Backend/core/urls.py`, add to the imports:
+
+```python
+from django.http import HttpResponseNotFound
+from wagtail import urls as wagtail_urls
+```
+
+and append to `urlpatterns`, after the `cms/` and `documents/` routes:
+
+```python
+    # ── Article pages ─────────────────────────────────────────────────────────
+    # The pages themselves, at /articles/<slug>/. This is a fallback and must stay
+    # last: every route above it is more specific, and wagtail.urls' catch-all
+    # would otherwise swallow them.
+    #
+    # Mounted here rather than alongside the sitemap because Page.get_url() ends in
+    # reverse("wagtail_serve") — a name only wagtail.urls registers. Until this
+    # route exists every page's get_url() returns None, which would silently empty
+    # the canonical tag, the breadcrumbs, the JSON-LD and the sitemap rather than
+    # raising anything.
+    #
+    # The guard is not decoration. The catch-all is r"^((?:[\w\-]+/)*)$", which
+    # matches ^$, so without it a request to / resolves the bare Wagtail Root and
+    # 500s on a missing wagtailcore/page.html. A template cannot set a response
+    # status, so the 404 has to happen here, where it is also testable.
+    path("", lambda request: HttpResponseNotFound("Not found")),
+    path("", include(wagtail_urls)),
+```
+
+Add the guard's test to `Backend/core/tests_cms.py`, next to the existing
+`/cms/` and `/admin/` assertions, and the `reverse` check that would have caught
+this bug in Task 1:
+
+```python
+class RootUrlTests(TestCase):
+    def test_a_request_for_the_bare_root_is_a_404_not_a_crash(self):
+        # wagtail.urls' catch-all is r"^((?:[\w\-]+/)*)$", which matches ^$, so
+        # without the guard in core/urls.py this request resolves the bare Wagtail
+        # Root page and dies on a missing wagtailcore/page.html. The site is served
+        # by nginx, so reaching Django at "/" means a proxy is misconfigured — and a
+        # 404 explains itself where a 500 does not.
+        self.assertEqual(self.client.get("/").status_code, 404)
+
+    def test_the_article_route_is_registered_under_the_articles_prefix(self):
+        # Not a cosmetic check. Page.get_url() ends in reverse("wagtail_serve"),
+        # which only resolves once wagtail.urls is mounted; before that every
+        # page's get_url() returns None and the canonical tag, the breadcrumbs,
+        # the JSON-LD and the sitemap all go quietly empty.
+        from django.urls import reverse
+
+        self.assertEqual(reverse("wagtail_serve", args=("articles/",)), "/articles/")
+```
+
+**Observed:** the full suite after this step was `Ran 294 tests ... OK (skipped=1)`,
+so the catch-all shadows no existing route.
+
+- [x] **Step 5: Generate and apply the migrations**
 
 Run:
 
@@ -1518,23 +1622,40 @@ python manage.py migrate
 
 Expected: a new `articles/migrations/0003_*.py` (the autodetector names it; do not rename it) plus migrations for `taggit`, `wagtailcore`, `wagtailimages`, `wagtaildocs`, `wagtailredirects`, `wagtailsites`, `wagtailusers`, `wagtailforms`-adjacent apps and `django.contrib.sites`. `makemigrations` must report no missing migrations when run a second time.
 
-- [ ] **Step 5: Run the page tests**
+**Observed:** `makemigrations articles` wrote
+`0003_articlepage_articleindexpage_articlepagetag_and_more.py`, and
+`makemigrations --check --dry-run` then reported "No changes detected". The task
+moved to Step 4 + 5 rather than Step 4, so the numbering above is the corrected one.
+
+- [x] **Step 6: Run the page tests**
 
 Run: `python manage.py test articles.tests_pages -v 2`
 
-Expected: PASS (8 tests, 1 skipped). The skip is
-`test_the_default_site_uses_the_canonical_hostname` — no site exists until Task
-14 runs `setup_salyco_cms`. Task 14 Step 5 removes the decorator.
+Expected: PASS (7 tests, 1 skipped). The skip is
+`test_the_default_site_uses_the_canonical_hostname` — the site's hostname is
+`localhost` until Task 14 runs `setup_salyco_cms`. Task 14 Step 5 removes the
+decorator.
 
-- [ ] **Step 6: Commit**
+Two of these tests are the only proof that Step 4 worked: before it, both URL tests
+failed with `None != '/articles/'` rather than an error, which is exactly the
+silent-emptiness failure mode Step 4 exists to prevent.
+
+- [x] **Step 7: Commit**
 
 ```bash
-git add Backend/articles/models.py Backend/articles/migrations Backend/articles/tests_pages.py
+git add Backend/articles/models.py Backend/articles/migrations Backend/articles/tests_pages.py \
+        Backend/core/urls.py Backend/core/tests_cms.py
 git commit -m "feat(cms): ArticleIndexPage and ArticlePage
 
 The index is a child of the Wagtail Root rather than the site root, so its own
 URL is /articles/ and every article sits at /articles/<slug>/. Making the index
 the site root would put it at / and every canonical tag would be wrong.
+
+The Wagtail catch-all moves here from Task 9. Page.get_url_parts() ends in
+reverse('wagtail_serve'), so until wagtail.urls is in the URLconf every page in
+the project has no URL — and get_url() returns None rather than raising, which
+would empty the canonical tag, the breadcrumbs, the JSON-LD and the sitemap in
+silence. The ^$ guard that accompanies the catch-all is tested here too.
 
 articles.Article is untouched: it stays as the migration source and the
 rollback path."
@@ -2990,13 +3111,12 @@ class RobotsTests(TestCase):
         self.assertIn("Disallow: /cms/", body)
         self.assertIn("Disallow: /admin/", body)
         self.assertIn("Sitemap: https://salyco.ir/sitemap.xml", body)
+```
 
-
-class RootPathTests(TestCase):
-    def test_a_request_for_the_bare_root_is_a_404_not_a_crash(self):
-        # nginx sends "/" to the SPA, so this only happens if a proxy is
-        # misconfigured — and a 404 explains itself, where a 500 does not.
-        self.assertEqual(self.client.get("/").status_code, 404)
+Do not add a bare-root test here: Task 4 put the `^$` guard in `core/urls.py` and
+its test (`test_a_request_for_the_bare_root_is_a_404_not_a_crash`) in
+`Backend/core/tests_cms.py`, next to the other URL-surface assertions. It is
+already green by the time this task starts.
 ```
 
 - [ ] **Step 2: Run it and watch it fail**
@@ -3102,9 +3222,6 @@ def robots_txt(request):
 In `Backend/core/urls.py`, add to the imports:
 
 ```python
-from django.http import HttpResponseNotFound
-from django.views.defaults import page_not_found
-
 from core.seo_views import robots_txt, sitemap_xml
 ```
 
@@ -3116,33 +3233,22 @@ Append to the end of `urlpatterns`, after the last `path("api/", include(...))`:
     path("robots.txt", robots_txt, name="robots"),
 ```
 
-Then, after the `if settings.DEBUG:` block, add the Wagtail catch-all and the
-root guard — **last, so every explicit route above wins**:
+**The Wagtail catch-all is already here** — Task 4 mounted it, along with the `^$`
+guard. Both had to move earlier than this task: `Page.get_url()` ends in
+`reverse("wagtail_serve")`, which only resolves once `wagtail.urls` is in the
+URLconf, and the canonical tags, breadcrumbs, JSON-LD and this task's sitemap all
+read `get_url()`. What stays in this task is only the crawler surface above.
 
-```python
-# ── Article CMS ───────────────────────────────────────────────────────────────
-# Mounted at the root, not under "articles/". Wagtail resolves a page's URL by
-# walking the page tree from Site.root_page, not by the URLconf, so a request
-# for /articles/foo/ stripped to "foo/" by an "articles/" prefix would look for a
-# child of the Wagtail Root called "foo" and 404.
-#
-# The empty pattern below precedes it so a request for "/" is a 404 rather than
-# a TemplateDoesNotExist 500. nginx sends "/" to the SPA, so this only fires when
-# a proxy is misconfigured — and a 404 explains itself where a 500 does not.
-urlpatterns += [
-    path("", lambda request: HttpResponseNotFound("Not found")),
-    path("", include(wagtail_urls)),
-]
-```
-
-with `from wagtail import urls as wagtail_urls` added to the imports, and
-`page_not_found` removed from the import line above if unused.
+The one thing to check while you are in the file: the catch-all must still be the
+**last** entry in `urlpatterns`, so that `sitemap.xml` and `robots.txt` win over it.
+`path("sitemap.xml", ...)` appended in the `urlpatterns` literal sits above the
+`path("", include(wagtail_urls))` line, which is where it needs to be.
 
 - [ ] **Step 5: Run the tests**
 
 Run: `python manage.py test core.tests_seo_views -v 2`
 
-Expected: PASS (10 tests).
+Expected: PASS (9 tests — the bare-root test moved to `core/tests_cms.py` with the guard in Task 4).
 
 If `test_products_are_listed` fails on a required field, check
 `Mattress.objects.create(...)` in the test against the model's non-null fields
