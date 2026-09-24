@@ -6572,6 +6572,43 @@ to catch — but "the SPA still works" and "the click does a full load" were bot
 inferred from the source rather than watched. Worth an interactive pass before
 release; recorded here so nobody mistakes inference for observation.
 
+**Correction — the inference was right and still missed the bug.** The first
+person to open `localhost:5173/articles` found a blank page, because
+`vite.config.js` proxied only `/api` and `/media`. No `<Link>` survived, exactly
+as the inspection said, so nothing client-transitioned — but nothing reached
+Django either. Vite answered `/articles/` itself with `index.html` (3078 bytes,
+byte-identical to `/`), and the SPA router had no route for it, so the page came
+up empty rather than 404ing. The step could not be satisfied by reading the
+source, because the defect was in the dev server's configuration and not in the
+application's.
+
+**Fixed**: `server.proxy` now mirrors the nginx locations — `/api`, `/media`,
+`/articles`, `/static`, `/cms`, `/documents`, `/sitemap.xml`, `/robots.txt`.
+`/static` is required alongside `/articles`, because the template links its
+stylesheet through `STATIC_URL`; without it Vite returned `index.html` as
+`text/html` for a `.css` request, so the article rendered unthemed while every
+request still reported `200`. `/tokens.css` and `/salyco-logo-navy.svg` are
+deliberately *not* proxied: nginx serves them from the SPA build root, so in dev
+they come from `public/`, which keeps one palette in one file.
+
+Verified afterwards at `localhost:5173/articles/rahnama-kamel/` in a real
+browser: `body` background `rgb(247, 245, 240)`, `h1` `rgb(5, 46, 95)`, header
+`rgb(5, 46, 95)`, prose measure 640px, font Vazirmatn, logo decoded at 154px
+wide, both stylesheets loaded, zero failed requests, zero overflow. The SPA
+surfaces (`/`, `/products`, `/cart`, `/search`) still serve the SPA shell.
+
+**Expect `localhost:8000/articles/` to look broken, and do not "fix" it.**
+Django on its own serves the page's markup and `article.css` (verified: `200
+text/css` at `/static/articles/article.css` — the relative-`STATIC_URL` trap this
+was suspected of being is not real, because Django emits a leading slash). What
+it cannot serve is `/tokens.css` or `/salyco-logo-navy.svg`: both `404` on
+`:8000`, because both live in `Frontend/salyco-front/public/` and in production
+are served by nginx `root /usr/share/nginx/html`, never by Django. With no
+tokens the page keeps its layout and loses its entire palette, which reads as
+"not my website's theme". Port 8000 is not a supported surface for article
+pages — view them through `:5173`, or through a proxy that reproduces the nginx
+split. This was first reported as a styling bug and is not one.
+
 - [x] **Step 7: Verify the CMS end to end**
 
 In `/cms/`: create a new article, add every block type, set a category and an
