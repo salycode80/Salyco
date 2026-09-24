@@ -1,0 +1,128 @@
+{% comment %}
+  The site footer, server-rendered.
+
+  Same navy three-column block the React AboutFooter draws, for the reason the
+  header is duplicated: an article page that ends in one line of copyright
+  reads as a subsite, and this is the surface where a visitor looks for a phone
+  number. Design.md §12 is the authority for the contact values below, and
+  Frontend/salyco-front/src/config/brand.js is their other copy — the two are
+  literals in two languages, so a change to one is a change to both. A
+  GlobalSeoSettings field set would be the real fix and needs a migration; this
+  comment is the standing reminder until someone does that.
+
+  The Enamad seal keeps three details that are load-bearing for its automated
+  check, matching AboutFooter.jsx: rel stays "noopener" (adding "noreferrer"
+  strips the Referer header Enamad reads), the `code` attribute is read by
+  Enamad's own validator, and there is no loading="lazy" because a headless
+  checker that never scrolls this far would not fetch the image.
+{% endcomment %}
+<footer class="site-footer">
+  <div class="article-shell site-footer__inner">
+    <div class="site-footer__grid">
+      <div class="site-footer__col">
+        <a class="site-footer__logo" href="/">
+          <img src="/salyco-logo-white.svg" alt="لوگوی سالیکو" width="120" height="96">
+        </a>
+        <h2 class="site-footer__heading">درباره سالیکو</h2>
+        <hr class="site-footer__rule">
+        <p class="site-footer__text">
+          سالیکو با بیش از دو دهه تجربه در تولید تشک و محصولات خواب، ترکیبی از
+          فناوری مدرن و کیفیت ممتاز را برای خوابی آرام و سالم ارائه می‌دهد.
+          شعار ما: آنجا که خواب بر بال قو آرام می‌گیرد.
+        </p>
+      </div>
+
+      <nav class="site-footer__col" aria-label="دسترسی سریع">
+        <h2 class="site-footer__heading">دسترسی سریع</h2>
+        <hr class="site-footer__rule site-footer__rule--short">
+        <ul class="site-footer__links">
+          <li><a href="/catalog.pdf" download>دانلود کاتالوگ</a></li>
+          <li><a href="/products">محصولات</a></li>
+          <li><a href="/articles/">راهنمای انتخاب تشک</a></li>
+          <li><a href="/warranty/my">خدمات پس از فروش</a></li>
+          <li><a href="/contact">تماس با ما</a></li>
+          <li><a href="/about">درباره ما</a></li>
+        </ul>
+      </nav>
+
+      <div class="site-footer__col">
+        <h2 class="site-footer__heading">تماس با ما</h2>
+        <hr class="site-footer__rule site-footer__rule--short">
+        <ul class="site-footer__contact">
+          <li>
+            <a href="tel:05142222687">
+              <span class="site-footer__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </span>
+              <bdi dir="ltr">۰۵۱-۴۲۲۲۲۶۸۷</bdi>
+            </a>
+          </li>
+          <li>
+            <a href="tel:09933921096">
+              <span class="site-footer__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </span>
+              <bdi dir="ltr">۰۹۹۳۳۹۲۱۰۹۶</bdi>
+            </a>
+          </li>
+          <li>
+            <span class="site-footer__badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </span>
+            <span>نیشابور، خیابان مدرس، خیابان فضل، روبه‌روی فضل ۲۳</span>
+          </li>
+          <li>
+            <a href="https://www.salyco.ir" target="_blank" rel="noopener noreferrer">
+              <span class="site-footer__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                  <path d="M2 12h20"></path>
+                </svg>
+              </span>
+              <bdi dir="ltr">www.salyco.ir</bdi>
+            </a>
+          </li>
+          <li>
+            <a href="https://www.instagram.com/salyco.ir/"
+               target="_blank" rel="noopener noreferrer" aria-label="اینستاگرام سالیکو">
+              <span class="site-footer__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                  <circle cx="12" cy="13" r="3"></circle>
+                </svg>
+              </span>
+              <bdi dir="ltr">@salyco.ir</bdi>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="site-footer__seal">
+      <a href="https://trustseal.enamad.ir/?id=7423184&amp;Code=H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
+         target="_blank" rel="noopener" referrerpolicy="origin">
+        <img src="https://trustseal.enamad.ir/logo.aspx?id=7423184&amp;Code=H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4"
+             alt="نماد اعتماد الکترونیکی" referrerpolicy="origin"
+             code="H0l91jYQCDPJ1VyeHuuoxNVNW7vIEOw4" width="96" height="96">
+      </a>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p class="site-footer__latin" dir="ltr">© {% now "Y" %} Salyco. All rights reserved.</p>
+      <p>طراحی و تولید توسط مهندس امیررضا سلامت</p>
+    </div>
+  </div>
+</footer>

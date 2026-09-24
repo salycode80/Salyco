@@ -1,130 +1,419 @@
 /* Semantic article styles. Plain CSS rather than Tailwind utilities, because
    Django templates cannot compile Tailwind's @theme — see the design doc's
-   "Article styling uses the same tokens through one file". */
+   "Article styling uses the same tokens through one file".
+
+   Every colour here is a --salyco-* token declared in public/tokens.css, and
+   every size is from Design.md's type scale. Nothing in this file restates a
+   hex, so a brand tweak reaches the article pages at the same moment it
+   reaches the React app.
+
+   ── Two things this file has to do that look like housekeeping and are not ──
+
+   1. Reset. The React half gets Tailwind's preflight for free; these pages load
+      no Tailwind, so nothing was giving them `box-sizing: border-box` or the
+      UA's default heading margins. Box-sizing is the one that bit: .article-shell
+      is max-width:1200px, and under content-box sizing that 1200 is the CONTENT
+      box, so the element rendered 1232px wide. Measured at 1440: the nav row's
+      links started at x=104 while the article grid below started at x=120 —
+      the header was 16px wider than the page it sat on.
+
+   2. Typefaces. tokens.css declares the @font-face blocks for Vazirmatn;
+      without them this file's `font-family: var(--salyco-font-persian)`
+      resolved to a name with no face behind it and the whole page rendered in
+      the OS fallback. Do not remove those blocks from tokens.css. */
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6, p, figure, blockquote, ol, ul {
+  margin: 0;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* For the search field's label, which a sighted reader does not need. Not
+   `display:none` — that would take it out of the accessibility tree too. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Design.md §9. Applies to links, buttons and <summary> alike, so the keyboard
+   path is visible everywhere without a per-component rule. */
+:focus-visible {
+  outline: 2px solid var(--salyco-navy);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* §7. Transitions are decoration; a reader who has asked for less motion should
+   not get a card lifting under the cursor. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────────
+   §5: container 1200 max, padding 16 mobile / 24 tablet / 32 desktop. */
 .article-shell {
   max-width: 1200px;
   margin-inline: auto;
   padding-inline: 16px;
 }
 
-.article-body,
-.article__header,
-.article__excerpt {
-  max-width: 640px; /* Design.md's standalone paragraph measure. */
-  margin-inline: auto;
-}
-
-.article-body__heading {
-  scroll-margin-top: 96px;
-}
-
-/* ── Listings ── */
-.article-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  margin-block: 32px;
-}
-
 @media (min-width: 768px) {
-  .article-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .article-shell { padding-inline: 24px; }
 }
 
 @media (min-width: 1024px) {
-  .article-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .article-shell { padding-inline: 32px; }
+}
+
+/* The reading column. 640px is Design.md's standalone-paragraph measure, and it
+   is the single left edge for the breadcrumb, the header block, the hero, the
+   body, the tags and the CTA. The breadcrumb used to sit in the 1200px shell
+   instead, which put it 273px away from the title it introduces. */
+.article-body,
+.article-breadcrumb,
+.article__header,
+.article__hero,
+.article__excerpt,
+.article-cta,
+.article-tags {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+/* An in-page jump has to clear the header only where the header follows the
+   reader. Below 1024 it scrolls away with the page, so the offset is zero —
+   a rule that kept the desktop value here would open a 140px gap above every
+   heading the FAQ and the table of contents link to. */
+:root {
+  --article-header-offset: 140px;
+}
+
+@media (max-width: 1023px) {
+  :root { --article-header-offset: 0px; }
+}
+
+html {
+  scroll-padding-top: var(--article-header-offset);
+}
+
+.article-body__heading {
+  scroll-margin-top: var(--article-header-offset);
+}
+
+/* ── Site header (Design.md §8) ─────────────────────────────────────────────
+   The same two-row header the React Navbar draws. White surface, hairline
+   between the rows and under the whole bar, 72px top row, 44px link row.
+
+   Sticky only from 1024 up. On a phone the link row wraps and the search takes
+   its own full-width row, which measures 206px — fine as the top of a page,
+   but not as a bar that stays on screen and eats a quarter of an 844px
+   viewport for the whole read. */
+.site-header {
+  position: static;
+  background: var(--salyco-white);
+  border-block-end: 1px solid var(--salyco-mist);
+  box-shadow: 0 1px 4px rgba(5, 46, 95, 0.06); /* §7 elevation L1 */
+}
+
+@media (min-width: 1024px) {
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
 }
 
-.archive__header,
-.index__header {
-  margin-block: 40px 8px;
+.site-header__top {
+  border-block-end: 1px solid var(--salyco-mist);
 }
 
-.archive__description,
-.index__description {
-  max-width: 640px;
-  /* Fallbacks carry the tokens' real values, not Tailwind's nearest: a fallback
-     that disagrees with the token is a colour that changes the day Task 10
-     lands tokens.css, which is the drift the shared file exists to stop. */
-  color: var(--salyco-text-secondary, #526171);
-}
-
-.index__categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.article-pagination {
+.site-header__top-inner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 24px;
-  margin-block: 32px;
+  gap: 16px;
+  min-height: 72px;
 }
 
-.article-card__link {
-  display: block;
-  height: 100%;
-  border: 1px solid var(--salyco-mist, #e4e5e2);
-  border-radius: 12px;
-  background: #fff;
-  overflow: hidden;
-  text-decoration: none;
-  color: inherit;
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.article-card__image {
+.site-header__brand img {
+  height: 64px;
+  width: auto;
+}
+
+.site-header__search {
+  position: relative;
+  width: 256px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .site-header__search { width: 420px; }
+}
+
+.site-header__search input {
   width: 100%;
-  height: auto;
-  display: block;
+  min-height: 48px; /* §9 form controls */
+  padding-inline: 44px 16px;
+  border: 1px solid var(--salyco-border-control);
+  border-radius: 8px;
+  background: var(--salyco-white);
+  color: var(--salyco-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 24px;
 }
 
-.article-card__body {
-  padding: 16px;
+.site-header__search input::placeholder {
+  color: var(--salyco-text-secondary);
 }
 
-/* ── Reading typography ────────────────────────────────────────────────────
-   Sizes from Design.md's reading scale rather than Tailwind's: 16/30 for body
-   copy is deliberately looser than the UI's 1.875, because Persian has deep
-   descenders and a tighter leading crowds the line. Every colour here is a
-   --salyco-* token declared in public/tokens.css; none of these rules may
-   restate a hex, or the article pages would stop following a brand tweak while
-   the React app followed it. */
+.site-header__search button {
+  position: absolute;
+  inset-inline-start: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--salyco-text-secondary);
+  cursor: pointer;
+}
+
+.site-header__search button:hover { color: var(--salyco-navy); }
+.site-header__search svg { width: 20px; height: 20px; }
+
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+.site-header__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  color: var(--salyco-navy);
+}
+
+.site-header__icon:hover { background: var(--salyco-warm-white); }
+.site-header__icon svg { width: 20px; height: 20px; }
+
+.site-header__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--salyco-mist);
+}
+
+.site-header__account {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding-inline: 16px;
+  border-radius: 8px;
+  color: var(--salyco-navy);
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-header__account:hover { background: var(--salyco-warm-white); }
+.site-header__account svg { width: 18px; height: 18px; }
+
+.site-header__nav-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+}
+
+.site-header__nav-inner a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-radius: 8px;
+  color: var(--salyco-text-primary);
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 150ms, color 150ms;
+}
+
+/* The current section gets a surface and an underline, not a colour alone —
+   §7 requires a selected state that survives a colour-blind reader. */
+.site-header__nav-inner a[aria-current="page"] {
+  background: var(--salyco-warm-white);
+  color: var(--salyco-navy);
+}
+
+.site-header__nav-inner a::after {
+  content: "";
+  position: absolute;
+  inset-inline: 16px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 150ms;
+}
+
+.site-header__nav-inner a:hover {
+  background: var(--salyco-warm-white);
+  color: var(--salyco-navy);
+}
+
+.site-header__nav-inner a:hover::after { background: rgba(5, 46, 95, 0.3); }
+.site-header__nav-inner a[aria-current="page"]::after { background: var(--salyco-navy); }
+
+/* Phones: the React header hands off to MobileTabBar here. These pages have no
+   tab bar to hand off to, so instead of hiding the navigation the search moves
+   to its own full-width row (§8 gives it the room on mobile) and the link row
+   wraps. Every destination stays reachable, which matters more than the row
+   count. */
+@media (max-width: 1023px) {
+  .site-header__top-inner {
+    flex-wrap: wrap;
+    gap: 12px;
+    min-height: 0;
+    padding-block: 12px;
+  }
+
+  .site-header__brand img { height: 48px; }
+
+  .site-header__search {
+    order: 3;
+    width: 100%;
+  }
+
+  .site-header__nav-inner {
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .site-header__nav-inner a { padding-inline: 12px; }
+  .site-header__nav-inner a::after { inset-inline: 12px; }
+}
+
+/* ── Reading typography ─────────────────────────────────────────────────────
+   Design.md's scale, mobile value first and the desktop value at 768. Every
+   weight is stated rather than inherited: without it an h2 takes the UA's bold
+   and a card title takes 700 where the design asks for 600. */
 body.article-page {
   margin: 0;
-  background: var(--salyco-warm-white);
+  background: var(--salyco-white); /* §3: white is the dominant surface */
   color: var(--salyco-text-primary);
   font-family: var(--salyco-font-persian);
   font-size: 16px;
   line-height: 30px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.article-body__paragraph,
-.article__excerpt,
+/* Persian is a connected script: letter-spacing prises the joins apart. §4 is
+   explicit that it is zero, so it is stated on the elements that could inherit
+   a tracking utility from somewhere else. */
+body.article-page h1,
+body.article-page h2,
+body.article-page h3,
+body.article-page p,
+body.article-page a,
+body.article-page li {
+  letter-spacing: 0;
+}
+
+.article__title,
+.index__title,
+.archive__title {
+  font-size: 28px;
+  line-height: 44px;
+  font-weight: 700;
+  color: var(--salyco-navy);
+  text-wrap: balance;
+}
+
+@media (min-width: 768px) {
+  .article__title,
+  .index__title,
+  .archive__title {
+    font-size: 36px;
+    line-height: 54px;
+  }
+}
+
+.article__title { margin-block: 12px 16px; }
+
+/* The lead, under the h1. */
 .article__subtitle {
+  font-size: 16px;
+  line-height: 30px;
+  font-weight: 400;
+  color: var(--salyco-text-secondary);
+}
+
+@media (min-width: 768px) {
+  .article__subtitle {
+    font-size: 18px;
+    line-height: 34px;
+  }
+}
+
+.article-body__paragraph {
   font-size: 16px;
   line-height: 30px;
   margin-block: 0 16px;
 }
 
-/* The only h1 on the page. Without this it takes the UA's 2em and inherits the
-   body's 30px leading, so a 32px Persian line sits under a line-height smaller
-   than its own font size — measured at 32px/30px — which clips the ascenders
-   and descenders that make Persian tall. */
-.article__title {
-  font-size: 32px;
-  line-height: 48px;
+.article-body__paragraph a {
   color: var(--salyco-navy);
-  margin-block: 8px 16px;
+  text-underline-offset: 3px;
 }
 
 .article-body__heading--h2 {
-  font-size: 28px;
-  line-height: 44px;
+  font-size: 24px;
+  line-height: 38px;
+  font-weight: 700;
   color: var(--salyco-navy);
   margin-block: 40px 16px;
 }
@@ -132,126 +421,102 @@ body.article-page {
 .article-body__heading--h3 {
   font-size: 20px;
   line-height: 32px;
+  font-weight: 600;
   color: var(--salyco-navy);
   margin-block: 32px 12px;
 }
 
-.article-body__paragraph a { color: var(--salyco-navy); text-underline-offset: 3px; }
-
-.article-quote {
-  margin-inline: 0;
-  padding-inline-start: 16px;
-  border-inline-start: 3px solid var(--salyco-navy);
+@media (min-width: 768px) {
+  .article-body__heading--h2 {
+    font-size: 28px;
+    line-height: 44px;
+  }
 }
-
-.article-figure { margin-inline: 0; }
-.article-figure__img { width: 100%; height: auto; border-radius: 12px; }
-.article-figure__caption { font-size: 14px; color: var(--salyco-text-secondary); }
-
-.article-callout {
-  border-radius: 12px;
-  padding: 16px;
-  margin-block: 24px;
-  border-inline-start: 4px solid var(--salyco-navy);
-  background: var(--salyco-white);
-  box-shadow: 0 1px 4px rgba(5, 46, 95, 0.06);
-}
-
-/* warning and important are both "pay attention", but they are separate choices
-   in the admin's variant list — leaving important on the base navy would give
-   an editor no way to see that their choice did anything. */
-.article-callout--warning { border-inline-start-color: var(--salyco-status-error); }
-.article-callout--important { border-inline-start-color: var(--salyco-status-warning); }
-.article-callout--tip { border-inline-start-color: var(--salyco-status-success); }
-
-.article-faq__item {
-  border-block-end: 1px solid var(--salyco-mist);
-  padding-block: 12px;
-}
-
-.article-faq__question { cursor: pointer; font-weight: 600; }
 
 /* Latin text and numerals inside Persian prose need their own direction, or a
    phone number or a model code reorders visually. */
-.article-body [dir="ltr"], .article-body code { direction: ltr; unicode-bidi: isolate; }
+.article-body [dir="ltr"], .article-body code {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
 
-/* ── Page chrome ───────────────────────────────────────────────────────────
-   The header, footer, breadcrumb, byline and tags render from
-   base_article.html, article_page.html and the partials. Without rules here
-   they take the browser's defaults: an h1 at 2em under the body's 30px
-   leading, and UA-blue links on the warm-white page. Every value below is a
-   --salyco-* token, so this file never restates a colour. */
-
-/* Keyboard-only affordance: off-screen until focused, because a sighted reader
-   does not need a "skip to content" link over the masthead. */
-.article-skip {
-  position: absolute;
-  inset-inline-start: -9999px;
-  top: 8px;
-  z-index: 10;
-  padding: 8px 16px;
+/* ── The summary panel ──────────────────────────────────────────────────────
+   Wagtail's `excerpt` is the article's standfirst, and rendering it as one
+   more grey paragraph under the subtitle gave the reader three near-identical
+   blocks of text before any content. A panel says "this is the summary" without
+   a label the editor would have to write. */
+.article__excerpt {
+  margin-block: 24px;
+  padding: 16px 20px;
+  border-inline-start: 3px solid var(--salyco-navy);
   border-radius: 8px;
-  background: var(--salyco-white);
-  color: var(--salyco-navy);
-}
-.article-skip:focus { inset-inline-start: 16px; }
-
-.article-header {
-  background: var(--salyco-navy);
-  color: var(--salyco-white);
+  background: var(--salyco-warm-white);
+  font-size: 16px;
+  line-height: 30px;
+  color: var(--salyco-text-primary);
 }
 
-.article-header__inner {
+.article__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 68px;
-  flex-wrap: wrap;
-}
-
-.article-header__brand { display: inline-flex; align-items: center; }
-.article-header__brand img { display: block; height: 40px; width: auto; }
-
-.article-header__nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-}
-
-.article-header__nav a {
-  color: var(--salyco-white);
-  text-decoration: none;
-  font-size: 14px;
-  opacity: 0.85;
-}
-.article-header__nav a:hover,
-.article-header__nav a[aria-current="page"] { opacity: 1; }
-
-.article-footer {
-  margin-block-start: 48px;
-  border-block-start: 1px solid var(--salyco-mist);
-  background: var(--salyco-white);
+  gap: 4px 8px;
+  margin-block: 0 16px;
   color: var(--salyco-text-secondary);
   font-size: 14px;
-  padding-block: 24px;
+  line-height: 26px;
 }
 
-.article-breadcrumb { margin-block: 16px 24px; font-size: 14px; }
+/* The separator belongs to the presentation, not to the template, and a screen
+   reader should not read it. */
+.article__meta > * + *::before {
+  content: "·";
+  margin-inline-end: 8px;
+  color: var(--salyco-mist);
+}
+
+.article__category {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding-inline: 14px;
+  border-radius: 999px; /* §7: a pill, for a short label */
+  background: var(--salyco-navy);
+  color: var(--salyco-white);
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.article__category:hover { background: var(--salyco-action-hover); }
+
+.article__hero {
+  margin-block: 32px;
+}
+
+.article__hero-image {
+  width: 100%;
+  height: auto;
+  border-radius: 12px; /* §7: cards and media */
+}
+
+/* ── Breadcrumb ─────────────────────────────────────────────────────────── */
+.article-breadcrumb {
+  margin-block: 24px 8px;
+  font-size: 14px;
+  line-height: 26px;
+}
 
 .article-breadcrumb__list {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 8px;
-  margin: 0;
   padding: 0;
   list-style: none;
   color: var(--salyco-text-secondary);
 }
 
-/* A separator carried by the item, not by a literal character in the template:
-   it is punctuation, so it belongs to the presentation, and a screen reader
-   should not read it. */
 .article-breadcrumb__item + .article-breadcrumb__item::before {
   content: "/";
   margin-inline-end: 8px;
@@ -265,107 +530,185 @@ body.article-page {
 .article-breadcrumb__item a:hover { color: var(--salyco-navy); text-decoration: underline; }
 .article-breadcrumb__item--current { color: var(--salyco-text-primary); }
 
-.article__category {
-  display: inline-block;
-  margin-block-start: 8px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: var(--salyco-white);
-  color: var(--salyco-navy);
-  font-size: 13px;
-  text-decoration: none;
+/* ── Quote ──────────────────────────────────────────────────────────────────
+   A pull-quote is a distinct object, not a paragraph with a rule beside it, so
+   it gets a surface of its own. The tint is the palette's info ground — a
+   quieter relative of the brand colour rather than a fifth hue. */
+.article-quote {
+  margin-block: 32px;
+  padding: 24px;
+  border-inline-start: 4px solid var(--salyco-navy);
+  border-radius: 12px;
+  background: var(--salyco-status-info-bg);
 }
 
-.article__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  margin-block: 0 16px;
+.article-quote__text {
+  font-size: 18px;
+  line-height: 34px;
+  font-weight: 500;
+  color: var(--salyco-text-primary);
+}
+
+.article-quote__source {
+  margin-block-start: 12px;
+  font-size: 14px;
+  line-height: 26px;
   color: var(--salyco-text-secondary);
+}
+
+.article-quote__source::before {
+  content: "— ";
+}
+
+.article-quote__source a { color: var(--salyco-navy); }
+
+/* ── Callout ────────────────────────────────────────────────────────────────
+   §12: "status colour always with text". The old rule coloured only a 4px
+   stripe, so a warning and a tip differed by a hue a reader had to decode. Each
+   variant now carries its status ground, its status label colour and its status
+   icon, which is what makes four options mean four things. */
+.article-callout {
+  margin-block: 24px;
+  padding: 20px;
+  border-inline-start: 4px solid var(--callout-accent, var(--salyco-status-info));
+  border-radius: 12px;
+  background: var(--callout-bg, var(--salyco-status-info-bg));
+}
+
+.article-callout--tip {
+  --callout-accent: var(--salyco-status-success);
+  --callout-bg: var(--salyco-status-success-bg);
+}
+
+.article-callout--warning {
+  --callout-accent: var(--salyco-status-error);
+  --callout-bg: var(--salyco-status-error-bg);
+}
+
+.article-callout--important {
+  --callout-accent: var(--salyco-status-warning);
+  --callout-bg: var(--salyco-status-warning-bg);
+}
+
+.article-callout__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block: 0 8px;
   font-size: 14px;
   line-height: 24px;
+  font-weight: 600;
+  color: var(--callout-accent, var(--salyco-status-info));
 }
 
-.article__subtitle {
-  color: var(--salyco-text-secondary);
-  font-size: 18px;
-  line-height: 32px;
+.article-callout__title svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 }
 
-/* Capped to the reading measure rather than left at the rendition's intrinsic
-   1200px: an <img> with no width rule lays out at its natural size, which at a
-   360px viewport is a page 840px wider than the screen. Measured, not assumed
-   — the hero came back 1200px wide inside a 360px viewport before this rule. */
-.article__hero { margin: 24px auto; max-width: 640px; }
+.article-callout__body {
+  font-size: 16px;
+  line-height: 30px;
+  color: var(--salyco-text-primary);
+}
 
-.article__hero-image {
-  display: block;
+/* ── Figures ────────────────────────────────────────────────────────────── */
+.article-figure { margin-block: 32px; }
+
+.article-figure__img {
   width: 100%;
   height: auto;
   border-radius: 12px;
 }
 
-.article-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 640px;
-  margin: 32px auto 0;
-  padding: 0;
-  list-style: none;
-}
-
-.article-tags__item a {
-  display: inline-block;
-  padding: 4px 12px;
-  border: 1px solid var(--salyco-mist);
-  border-radius: 999px;
-  background: var(--salyco-white);
-  color: var(--salyco-text-secondary);
-  font-size: 13px;
-  text-decoration: none;
-}
-.article-tags__item a:hover { border-color: var(--salyco-navy); color: var(--salyco-navy); }
-
-.article-quote__text {
-  margin: 0;
-  font-size: 18px;
-  line-height: 32px;
-  color: var(--salyco-text-primary);
-}
-.article-quote__source {
-  margin-block-start: 8px;
+.article-figure__caption {
+  margin-block-start: 12px;
   font-size: 14px;
+  line-height: 26px;
   color: var(--salyco-text-secondary);
+  text-align: center;
 }
-.article-quote__source a { color: var(--salyco-navy); }
-
-.article-callout__title {
-  margin-block: 0 8px;
-  font-weight: 600;
-  color: var(--salyco-navy);
-}
-.article-callout__body { margin: 0; }
 
 .article-figure__credit { opacity: 0.75; }
 
-.article-faq { margin-block: 32px; }
+/* ── FAQ ────────────────────────────────────────────────────────────────────
+   <details> keeps the answers in the served HTML, so a crawler and a reader
+   with JavaScript off get the same content. What the UA gives it is a 12px
+   triangle and a 20px tap target; §9 asks for 44. */
+.article-faq { margin-block: 40px; }
+
 .article-faq__heading {
+  margin-block-end: 8px;
   font-size: 20px;
   line-height: 32px;
+  font-weight: 600;
   color: var(--salyco-navy);
 }
-.article-faq__answer { color: var(--salyco-text-secondary); }
 
-/* The call to action at the foot of an article. variant is an editor's choice,
-   so the four options have to look like four options — a single style would
-   leave the field looking broken. */
+.article-faq__item { border-block-end: 1px solid var(--salyco-mist); }
+.article-faq__item:first-of-type { border-block-start: 1px solid var(--salyco-mist); }
+
+.article-faq__question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  /* Pulled out by the same amount it pads, so the row's hover surface extends
+     past the text without moving it off the reading column. */
+  margin-inline: -16px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 16px;
+  line-height: 30px;
+  font-weight: 600;
+  color: var(--salyco-navy);
+  transition: background-color 150ms;
+}
+
+/* The UA marker, hidden in both engines. `list-style: none` covers Firefox and
+   modern Chrome; the pseudo-element covers older WebKit. */
+.article-faq__question::-webkit-details-marker { display: none; }
+
+.article-faq__question::after {
+  content: "";
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  -webkit-mask: var(--faq-chevron) center / contain no-repeat;
+  mask: var(--faq-chevron) center / contain no-repeat;
+  transition: transform 150ms;
+}
+
+.article-faq__item[open] .article-faq__question::after { transform: rotate(180deg); }
+.article-faq__question:hover { background: var(--salyco-warm-white); }
+.article-faq__item[open] .article-faq__question { color: var(--salyco-navy); }
+
+.article-faq__answer {
+  padding-block: 0 20px;
+  padding-inline: 16px;
+  margin-inline: -16px;
+  font-size: 16px;
+  line-height: 30px;
+  color: var(--salyco-text-secondary);
+}
+
+/* A chevron as a mask rather than an inline SVG so it inherits currentColor and
+   rotates with one transition. */
+:root {
+  --faq-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* ── Call to action ─────────────────────────────────────────────────────── */
 .article-cta {
-  max-width: 640px;
-  margin: 40px auto;
+  margin-block: 48px;
   padding: 24px;
   border: 1px solid var(--salyco-mist);
-  border-radius: 12px;
+  border-radius: 16px; /* §7: a banner */
   background: var(--salyco-white);
 }
 
@@ -380,107 +723,464 @@ body.article-page {
 
 .article-cta__eyebrow {
   margin-block: 0 8px;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
   color: var(--salyco-text-secondary);
 }
-.article-cta--primary .article-cta__eyebrow { color: var(--salyco-mist); }
 
 .article-cta__title {
   margin-block: 0 8px;
   font-size: 20px;
   line-height: 32px;
+  font-weight: 600;
   color: var(--salyco-navy);
 }
-.article-cta--primary .article-cta__title { color: var(--salyco-white); }
 
 .article-cta__description {
-  margin-block: 0 16px;
+  margin-block: 0 24px;
+  font-size: 16px;
+  line-height: 30px;
   color: var(--salyco-text-secondary);
 }
-.article-cta--primary .article-cta__description { color: var(--salyco-mist); }
 
+.article-cta--primary .article-cta__eyebrow,
+.article-cta--primary .article-cta__description { color: var(--salyco-mist); }
+.article-cta--primary .article-cta__title { color: var(--salyco-white); }
+
+/* §9 button: min height 48, padding-inline 24, radius 8, 16/600. */
 .article-cta__link {
-  display: inline-block;
-  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding-inline: 24px;
   border-radius: 8px;
   background: var(--salyco-navy);
   color: var(--salyco-white);
+  font-size: 16px;
+  line-height: 24px;
   font-weight: 600;
   text-decoration: none;
+  transition: background-color 150ms, color 150ms;
 }
+
+.article-cta__link:hover {
+  background: var(--salyco-action-hover);
+  color: var(--salyco-white);
+}
+
 .article-cta--primary .article-cta__link {
   background: var(--salyco-white);
   color: var(--salyco-navy);
 }
-.article-cta__link:hover { background: var(--salyco-action-hover); color: var(--salyco-white); }
 
-/* ── Listings ── */
-.index__title,
-.archive__title {
-  margin-block: 0 8px;
-  font-size: 32px;
-  line-height: 48px;
+.article-cta--primary .article-cta__link:hover {
+  background: var(--salyco-mist);
   color: var(--salyco-navy);
 }
 
-.index__category {
+/* ── Tags ───────────────────────────────────────────────────────────────── */
+.article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 40px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.article-tags__item a {
+  display: inline-block;
   padding: 6px 14px;
+  border: 1px solid var(--salyco-mist);
+  border-radius: 999px;
+  background: var(--salyco-white);
+  color: var(--salyco-text-secondary);
+  font-size: 14px;
+  line-height: 24px;
+  text-decoration: none;
+  transition: border-color 150ms, color 150ms;
+}
+
+.article-tags__item a:hover {
+  border-color: var(--salyco-navy);
+  color: var(--salyco-navy);
+}
+
+/* ── Index and archive listings ─────────────────────────────────────────── */
+.index__hero {
+  padding-block: 48px;
+  border-block-end: 1px solid var(--salyco-mist);
+  background: var(--salyco-warm-white);
+}
+
+@media (min-width: 768px) {
+  .index__hero { padding-block: 64px; }
+}
+
+.index__description,
+.archive__description {
+  max-width: 640px;
+  margin-block-start: 16px;
+  font-size: 16px;
+  line-height: 30px;
+  color: var(--salyco-text-secondary);
+}
+
+@media (min-width: 768px) {
+  .index__description,
+  .archive__description {
+    font-size: 18px;
+    line-height: 34px;
+  }
+}
+
+.index__categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 24px;
+}
+
+.index__category {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding-inline: 14px;
   border: 1px solid var(--salyco-mist);
   border-radius: 999px;
   background: var(--salyco-white);
   color: var(--salyco-navy);
   font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
   text-decoration: none;
+  transition: border-color 150ms;
 }
+
 .index__category:hover { border-color: var(--salyco-navy); }
 
+.archive__header,
+.index__header {
+  margin-block: 0 8px;
+}
+
+.article-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* §10 product/card grid: 1 / 2 / 3 */
+  gap: 24px;
+  margin-block: 32px 48px;
+}
+
+@media (min-width: 768px) {
+  .article-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .article-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 .archive__empty {
-  color: var(--salyco-text-secondary);
   margin-block: 32px;
+  color: var(--salyco-text-secondary);
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────────
+   §9: white, subtle border, radius 12, padding 24 (16 mobile). One card for
+   the index, the archives and any future related section, so a change to the
+   card is a change in one file. */
+.article-card {
+  display: flex;
+}
+
+.article-card__link {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--salyco-mist);
+  border-radius: 12px;
+  background: var(--salyco-white);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 1px 4px rgba(5, 46, 95, 0.06); /* §7 L1 */
+  transition: box-shadow 150ms, border-color 150ms, transform 150ms;
+}
+
+.article-card__link:hover {
+  border-color: var(--salyco-border-control);
+  box-shadow: 0 4px 16px rgba(5, 46, 95, 0.1); /* §7 L2 */
+  transform: translateY(-2px);
+}
+
+/* A fixed ratio so a row of cards keeps one baseline whether or not an editor
+   gave an article a hero image. */
+.article-card__image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--salyco-warm-white);
+}
+
+.article-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  .article-card__body { padding: 24px; }
 }
 
 .article-card__category {
-  display: inline-block;
-  margin-block-end: 8px;
-  color: var(--salyco-navy);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 22px;
   font-weight: 600;
+  color: var(--salyco-navy);
 }
 
 .article-card__title {
-  margin-block: 0 8px;
+  font-size: 20px;
+  line-height: 32px;
+  font-weight: 600;
   color: var(--salyco-navy);
-  font-size: 18px;
-  line-height: 28px;
+  text-wrap: balance;
 }
 
 .article-card__excerpt {
-  margin-block: 0 12px;
-  color: var(--salyco-text-secondary);
   font-size: 14px;
-  line-height: 24px;
+  line-height: 26px;
+  color: var(--salyco-text-secondary);
 }
 
+/* Pushed to the foot of the card so the meta rows line up across a row of
+   cards with different excerpt lengths. */
 .article-card__meta {
-  margin: 0;
+  margin-block-start: auto;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--salyco-mist);
+  font-size: 12px;
+  line-height: 22px;
   color: var(--salyco-text-secondary);
-  font-size: 13px;
+}
+
+/* ── Pagination ─────────────────────────────────────────────────────────── */
+.article-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-block: 32px 48px;
 }
 
 .article-pagination__link {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding-inline: 16px;
+  min-height: 48px;
+  padding-inline: 24px;
   border: 1px solid var(--salyco-mist);
   border-radius: 8px;
   background: var(--salyco-white);
   color: var(--salyco-navy);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
   text-decoration: none;
+  transition: border-color 150ms, background-color 150ms;
 }
-.article-pagination__link:hover { border-color: var(--salyco-navy); }
+
+.article-pagination__link:hover {
+  border-color: var(--salyco-navy);
+  background: var(--salyco-warm-white);
+}
 
 .article-pagination__status {
   color: var(--salyco-text-secondary);
   font-size: 14px;
+  line-height: 26px;
 }
+
+/* ── Site footer ────────────────────────────────────────────────────────────
+   The same navy block the React AboutFooter draws. The article pages used to
+   end in a single line of copyright, which is the surface a visitor scans for
+   a phone number. */
+.site-footer {
+  margin-block-start: 80px; /* §5 section spacing */
+  border-block-start: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--salyco-navy);
+  color: var(--salyco-white);
+}
+
+.site-footer__inner {
+  padding-block: 64px 32px;
+}
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+}
+
+@media (min-width: 1024px) {
+  .site-footer__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+}
+
+.site-footer__logo { display: inline-flex; }
+
+.site-footer__logo img {
+  height: 96px;
+  width: auto;
+  margin-block-end: 24px;
+}
+
+.site-footer__heading {
+  font-size: 20px;
+  line-height: 32px;
+  font-weight: 700;
+  color: var(--salyco-white);
+}
+
+.site-footer__rule {
+  width: 64px;
+  height: 0;
+  margin-block: 12px 0;
+  border: 0;
+  border-block-start: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.site-footer__rule--short { width: 48px; }
+
+.site-footer__text {
+  margin-block-start: 16px;
+  font-size: 14px;
+  line-height: 26px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.site-footer__links,
+.site-footer__contact {
+  display: grid;
+  gap: 12px;
+  margin-block-start: 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__contact { gap: 16px; }
+
+.site-footer__links a {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 26px;
+  text-decoration: none;
+  transition: color 150ms;
+}
+
+.site-footer__links a:hover { color: var(--salyco-white); }
+
+.site-footer__contact li,
+.site-footer__contact a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 26px;
+  text-decoration: none;
+  transition: color 150ms;
+}
+
+.site-footer__contact a:hover { color: var(--salyco-white); }
+
+.site-footer__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--salyco-white);
+}
+
+.site-footer__badge svg { width: 20px; height: 20px; }
+
+/* The seal artwork assumes a light ground and reads as a smudge on navy. */
+.site-footer__seal {
+  display: flex;
+  justify-content: center;
+  margin-block-start: 56px;
+}
+
+.site-footer__seal a {
+  display: inline-flex;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--salyco-white);
+}
+
+.site-footer__seal img {
+  width: 96px;
+  height: 96px;
+}
+
+.site-footer__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-block-start: 32px;
+  padding-block-start: 32px;
+  border-block-start: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  line-height: 22px;
+}
+
+@media (min-width: 640px) {
+  .site-footer__bottom {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: start;
+  }
+}
+
+/* Latin, and set in the sans stack: mixing an English sentence into Vazirmatn
+   gives it Persian spacing. */
+.site-footer__latin { font-family: var(--salyco-font-sans); }
+
+/* ── Skip link ──────────────────────────────────────────────────────────────
+   Keyboard-only affordance. Parked above the viewport rather than at a large
+   negative inline offset: in an RTL document `inset-inline-start: -9999px`
+   resolves to the right edge, which measured at x=11264. It created no
+   scrollbar only because RTL overflow to the right is clipped, which is one
+   `direction` change away from being a bug. */
+.article-skip {
+  position: absolute;
+  inset-inline-start: 16px;
+  top: 8px;
+  z-index: 100;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: var(--salyco-navy);
+  color: var(--salyco-white);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-300%);
+}
+
+.article-skip:focus { transform: none; }

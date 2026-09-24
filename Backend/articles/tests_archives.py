@@ -173,7 +173,12 @@ class ArchiveTests(TestCase):
         self.index.add_child(instance=draft)
         body = self.client.get("/articles/").content.decode()
         self.assertNotIn("منتشرنشده", body)
-        self.assertNotIn("hidden", body)
+        # The URL, not the bare slug. "hidden" is a substring of any class or
+        # attribute that happens to contain it — `visually-hidden` in the site
+        # header was enough to fail this while the draft was correctly absent —
+        # and the assertion is about the draft being linked, not about the
+        # characters appearing anywhere on the page.
+        self.assertNotIn("/articles/hidden/", body)
 
     def test_an_article_with_no_category_appears_in_the_index_only(self):
         orphan = ArticlePage(

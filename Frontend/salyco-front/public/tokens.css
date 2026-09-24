@@ -10,7 +10,60 @@
  *
  * Nothing here defines a value: every declaration is a literal. A var() that
  * pointed at another var() would move the question of where the palette lives
- * one file further along instead of answering it. */
+ * one file further along instead of answering it.
+ *
+ * The @font-face blocks live here for the same reason the palette does, and
+ * they are the type half of that argument rather than a bolt-on. They used to
+ * sit in src/index.css, which is bundled into the SPA's stylesheet — so the
+ * Django-rendered article pages, which link this file and nothing else, asked
+ * for "Vazirmatn" against zero declared faces and silently rendered in the
+ * OS fallback. Measured: document.fonts was empty on /articles/ while the
+ * React home page had five faces loaded. One file both halves load, one type
+ * stack, no second copy to drift.
+ *
+ * src/index.css no longer declares these. Do not add them back: a duplicate
+ * @font-face wins over the earlier one, so the copy that survives would be the
+ * one the article pages never fetch. */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --salyco-navy: #052e5f;
   --salyco-white: #ffffff;

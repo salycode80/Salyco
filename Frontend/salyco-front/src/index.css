@@ -1,47 +1,18 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/InterVariable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
+/* The @font-face blocks for Vazirmatn and Inter are NOT here any more — they
+   moved to public/tokens.css, which index.html links ahead of this bundle.
 
-/* Self-hosted Vazirmatn font. Loading weights 400, 500, 600, and 700 because
-   the UI uses font-medium and font-semibold throughout. Without the real cuts,
-   the browser synthesizes the weight, making Persian text noticeably blurrier. */
-@font-face {
-  font-family: "Vazirmatn";
-  src: url("/fonts/Vazirmatn-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+   They had to move rather than be copied. The Django-rendered article pages
+   link /tokens.css and no Tailwind bundle, so while the faces were declared in
+   this file those pages requested "Vazirmatn" against zero declared faces and
+   rendered in the OS fallback without any error. Declaring them in the one
+   stylesheet both halves load is what makes the type stack shared rather than
+   duplicated.
 
-@font-face {
-  font-family: "Vazirmatn";
-  src: url("/fonts/Vazirmatn-Medium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Vazirmatn";
-  src: url("/fonts/Vazirmatn-SemiBold.woff2") format("woff2");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Vazirmatn";
-  src: url("/fonts/Vazirmatn-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+   Do not re-declare them here: the last @font-face with matching descriptors
+   wins, so the surviving copy would be the one the article pages never fetch.
+   See public/tokens.css for the blocks themselves. */
 
 /* Tailwind's names, mapped onto the shared palette in public/tokens.css — which
    is what the Django-rendered article pages read, since they cannot compile

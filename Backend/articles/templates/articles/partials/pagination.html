@@ -1,6 +1,11 @@
+{% load article_tags %}
 {% comment %}
   Server-rendered links, no JavaScript. rel="prev"/"next" are what tell a
   crawler the pages form one sequence rather than duplicates of each other.
+
+  The page counts go through fa_digits because every other number on the site is
+  Persian: "صفحه 2 از 3" beside "۲ دقیقه مطالعه" was the one place the site
+  dropped back to Latin numerals.
 {% endcomment %}
 {% if articles.has_other_pages %}
   <nav class="article-pagination" aria-label="صفحه‌بندی">
@@ -10,7 +15,7 @@
     {% endif %}
 
     <span class="article-pagination__status">
-      صفحه {{ articles.number }} از {{ articles.paginator.num_pages }}
+      صفحه {{ articles.number|fa_digits }} از {{ articles.paginator.num_pages|fa_digits }}
     </span>
 
     {% if articles.has_next %}

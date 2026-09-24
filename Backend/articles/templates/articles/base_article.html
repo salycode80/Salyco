@@ -30,9 +30,25 @@
     The shared design tokens, extracted so Django and the React app read one
     palette instead of two that drift. Served from the SPA root by nginx,
     exactly as /fonts/ already is.
+
+    tokens.css also declares the @font-face blocks. That is not a detail: this
+    template loads no Tailwind bundle, so before the faces moved there the
+    pages below asked for "Vazirmatn" against zero declared faces and rendered
+    in the OS fallback with nothing to show for it in the console.
   {% endcomment %}
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="{% static 'articles/article.css' %}">
+
+  {% comment %}
+    Same four cuts the SPA preloads, for the same reason: without them the
+    first Persian line paints in the fallback and reflows when the real face
+    lands, which on a page that is almost entirely Persian is the whole page
+    jumping.
+  {% endcomment %}
+  <link rel="preload" href="/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Vazirmatn-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Vazirmatn-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin>
 
   {% for block in json_ld %}{% json_ld_script block %}{% endfor %}
   {% block extra_head %}{% endblock %}
@@ -40,28 +56,12 @@
 <body class="article-page">
   <a class="article-skip" href="#main">پرش به محتوای اصلی</a>
 
-  <header class="article-header">
-    <div class="article-shell article-header__inner">
-      <a class="article-header__brand" href="/">
-        <img src="/salyco-logo-navy.svg" alt="سالیکو" width="120" height="40">
-      </a>
-      <nav class="article-header__nav" aria-label="ناوبری اصلی">
-        <a href="/">خانه</a>
-        <a href="/products">محصولات</a>
-        <a href="/articles/" aria-current="page">مقالات</a>
-        <a href="/contact">تماس با ما</a>
-      </nav>
-    </div>
-  </header>
+  {% include "articles/partials/site_header.html" %}
 
   <main id="main">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="article-footer">
-    <div class="article-shell">
-      <p>© سالیکو — راهنمای انتخاب تشک و خواب بهتر.</p>
-    </div>
-  </footer>
+  {% include "articles/partials/site_footer.html" %}
 </body>
 </html>

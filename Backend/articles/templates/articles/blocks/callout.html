@@ -1,4 +1,48 @@
+{% comment %}
+  The icon is chosen by variant, and it is the same glyph the status colour
+  stands for: a reader who cannot tell #21633E from #A52A32 gets the mark
+  instead, which is what Design.md §12 means by "status colour always with
+  text". Lucide's outlines, inlined rather than loaded, because these pages
+  ship no JavaScript and an icon font would be a second network round trip for
+  four glyphs.
+
+  A callout with no title keeps its tint and its stripe but shows no icon:
+  there is no row to put it in, and inventing one would push the body text off
+  the reading column.
+{% endcomment %}
 <aside class="article-callout article-callout--{{ value.variant }}">
-  {% if value.title %}<p class="article-callout__title">{{ value.title }}</p>{% endif %}
+  {% if value.title %}
+    <p class="article-callout__title">
+      {% if value.variant == "tip" %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
+      {% elif value.variant == "warning" %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path>
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+        </svg>
+      {% elif value.variant == "important" %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 8v4"></path>
+          <path d="M12 16h.01"></path>
+        </svg>
+      {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+      {% endif %}
+      {{ value.title }}
+    </p>
+  {% endif %}
   <p class="article-callout__body">{{ value.content }}</p>
 </aside>

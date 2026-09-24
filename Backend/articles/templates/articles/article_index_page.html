@@ -1,24 +1,33 @@
 {% extends "articles/base_article.html" %}
 
 {% block content %}
-  <div class="article-shell">
-    <header class="index__header">
-      <h1 class="index__title">{{ page.hero_title|default:page.title }}</h1>
-      {% if page.hero_description %}
-        <p class="index__description">{{ page.hero_description }}</p>
+  {% comment %}
+    The heading sits in a tinted band rather than directly on the grid, so the
+    index has a page identity the way every other landing page on the site does.
+    Warm white is §3's banding surface; the grid below it stays on white.
+  {% endcomment %}
+  <div class="index__hero">
+    <div class="article-shell">
+      <header class="index__header">
+        <h1 class="index__title">{{ page.hero_title|default:page.title }}</h1>
+        {% if page.hero_description %}
+          <p class="index__description">{{ page.hero_description }}</p>
+        {% endif %}
+      </header>
+
+      {% if page.featured_categories.all %}
+        <nav class="index__categories" aria-label="دسته‌بندی‌ها">
+          {% for category in page.featured_categories.all %}
+            <a class="index__category" href="{{ page.get_url }}category/{{ category.slug }}/">
+              {{ category.name }}
+            </a>
+          {% endfor %}
+        </nav>
       {% endif %}
-    </header>
+    </div>
+  </div>
 
-    {% if page.featured_categories.all %}
-      <nav class="index__categories" aria-label="دسته‌بندی‌ها">
-        {% for category in page.featured_categories.all %}
-          <a class="index__category" href="{{ page.get_url }}category/{{ category.slug }}/">
-            {{ category.name }}
-          </a>
-        {% endfor %}
-      </nav>
-    {% endif %}
-
+  <div class="article-shell">
     {% if articles %}
       <div class="article-grid">
         {% for article in articles %}

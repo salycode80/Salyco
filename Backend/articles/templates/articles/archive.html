@@ -7,14 +7,20 @@
 {% endcomment %}
 
 {% block content %}
-  <div class="article-shell">
-    <header class="archive__header">
-      <h1 class="archive__title">{{ archive.title }}</h1>
-      {% if archive.description %}
-        <p class="archive__description">{{ archive.description }}</p>
-      {% endif %}
-    </header>
+  {# The same tinted band the index uses, so a category page reads as the index
+     filtered rather than as a different kind of page. #}
+  <div class="index__hero">
+    <div class="article-shell">
+      <header class="archive__header">
+        <h1 class="archive__title">{{ archive.title }}</h1>
+        {% if archive.description %}
+          <p class="archive__description">{{ archive.description }}</p>
+        {% endif %}
+      </header>
+    </div>
+  </div>
 
+  <div class="article-shell">
     {% if articles %}
       <div class="article-grid">
         {% for article in articles %}
