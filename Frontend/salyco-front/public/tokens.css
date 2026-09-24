@@ -87,3 +87,29 @@
   --salyco-font-persian: "Vazirmatn", sans-serif;
   --salyco-font-sans: "Inter", "Vazirmatn", sans-serif;
 }
+
+/* Space reserved by the chrome a page has to clear — Design.md §8.
+
+   Pages offset their top padding by --navbar-height so content never sits behind
+   the bar, and App.jsx pads the page bottom by --tabbar-height so the tab bar
+   never covers the footer's last row. Each is zero wherever its bar is not
+   rendered: below lg the desktop navbar is gone (the mobile top bar replaces
+   it), and from lg up the two mobile bars are.
+
+   These belong here rather than in src/index.css for the reason the @font-face
+   blocks do. The Django-rendered article pages link this file and no Tailwind
+   bundle, so while the values lived in the bundle those pages had no
+   --navbar-height at all and hardcoded a header height instead — which is how
+   they drifted from the site's. The pair travels together: they are one
+   measurement of the chrome, taken at two breakpoints. */
+:root {
+  --navbar-height: calc(68px + env(safe-area-inset-top, 0px));
+  --tabbar-height: calc(84px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --navbar-height: calc(116px + env(safe-area-inset-top, 0px));
+    --tabbar-height: 0px;
+  }
+}

@@ -105,16 +105,17 @@ img {
   margin-inline: auto;
 }
 
-/* An in-page jump has to clear the header only where the header follows the
-   reader. Below 1024 it scrolls away with the page, so the offset is zero —
-   a rule that kept the desktop value here would open a 140px gap above every
-   heading the FAQ and the table of contents link to. */
-:root {
-  --article-header-offset: 140px;
-}
+/* An in-page jump has to clear the header, and the header is now sticky at
+   every width, so the offset is simply the header's height. That height is not
+   a number of my choosing: --navbar-height is the same token the React pages
+   reserve their top padding with (tokens.css), and it already flips at 1024
+   from 68px to 116px. Deriving from it means the FAQ, the table of contents and
+   any hash target land in the same place as they do on the rest of the site,
+   and keep landing there if the chrome is ever resized.
 
-@media (max-width: 1023px) {
-  :root { --article-header-offset: 0px; }
+   The extra 1rem is clear air, and matches the SPA's own scroll-padding-top. */
+:root {
+  --article-header-offset: calc(var(--navbar-height) + 1rem);
 }
 
 html {
@@ -126,26 +127,34 @@ html {
 }
 
 /* ── Site header (Design.md §8) ─────────────────────────────────────────────
-   The same two-row header the React Navbar draws. White surface, hairline
-   between the rows and under the whole bar, 72px top row, 44px link row.
+   One component at two sizes. Above 1024 this is the React Navbar: white
+   surface, hairline between the rows and under the whole bar, 72px top row,
+   44px centred link row. Below 1024 it is MobileTopBar: a single 68px row, the
+   brand on the right, the account control and a menu toggle on the left.
 
-   Sticky only from 1024 up. On a phone the link row wraps and the search takes
-   its own full-width row, which measures 206px — fine as the top of a page,
-   but not as a bar that stays on screen and eats a quarter of an 844px
-   viewport for the whole read. */
+   Both headers are in the HTML and a media query picks one. That is why the
+   search form and the link list are shared partials rather than copies — hiding
+   an element does not remove it from the document.
+
+   Sticky at every width now. It was sticky only from 1024 up, because the
+   stacked desktop header measured 242px on a 360px phone and a bar that tall
+   should not follow the reader; the compact bar is 68px, so it can. */
 .site-header {
-  position: static;
+  position: sticky;
+  top: 0;
+  z-index: 50;
   background: var(--salyco-white);
   border-block-end: 1px solid var(--salyco-mist);
   box-shadow: 0 1px 4px rgba(5, 46, 95, 0.06); /* §7 elevation L1 */
 }
 
-@media (min-width: 1024px) {
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  }
+/* The desktop header is the base case; the mobile one is the exception, so it
+   is the one that carries the hidden default. */
+.site-header--mobile { display: none; }
+
+@media (max-width: 1023px) {
+  .site-header--desktop { display: none; }
+  .site-header--mobile { display: block; }
 }
 
 .site-header__top {
@@ -170,17 +179,19 @@ html {
   width: auto;
 }
 
-.site-header__search {
+/* Shared by the desktop row and the mobile menu panel, so its width is the
+   container's business: full width in the panel, a fixed track in the row. */
+.site-search {
   position: relative;
-  width: 256px;
+  width: 100%;
   flex-shrink: 0;
 }
 
 @media (min-width: 1024px) {
-  .site-header__search { width: 420px; }
+  .site-header__top-inner .site-search { width: 420px; }
 }
 
-.site-header__search input {
+.site-search input {
   width: 100%;
   min-height: 48px; /* §9 form controls */
   padding-inline: 44px 16px;
@@ -193,11 +204,11 @@ html {
   line-height: 24px;
 }
 
-.site-header__search input::placeholder {
+.site-search input::placeholder {
   color: var(--salyco-text-secondary);
 }
 
-.site-header__search button {
+.site-search button {
   position: absolute;
   inset-inline-start: 6px;
   top: 50%;
@@ -213,8 +224,8 @@ html {
   cursor: pointer;
 }
 
-.site-header__search button:hover { color: var(--salyco-navy); }
-.site-header__search svg { width: 20px; height: 20px; }
+.site-search button:hover { color: var(--salyco-navy); }
+.site-search svg { width: 20px; height: 20px; }
 
 .site-header__actions {
   display: flex;
@@ -307,34 +318,179 @@ html {
 .site-header__nav-inner a:hover::after { background: rgba(5, 46, 95, 0.3); }
 .site-header__nav-inner a[aria-current="page"]::after { background: var(--salyco-navy); }
 
-/* Phones: the React header hands off to MobileTabBar here. These pages have no
-   tab bar to hand off to, so instead of hiding the navigation the search moves
-   to its own full-width row (§8 gives it the room on mobile) and the link row
-   wraps. Every destination stays reachable, which matters more than the row
-   count. */
-@media (max-width: 1023px) {
-  .site-header__top-inner {
-    flex-wrap: wrap;
-    gap: 12px;
-    min-height: 0;
-    padding-block: 12px;
-  }
+/* ── Site header — the compact bar on phones ────────────────────────────────
+   MobileTopBar's 68px row. Until this existed the desktop header stacked here
+   instead and measured 242px at 360 wide — a quarter of an 844px viewport
+   before the reader reached the title, with the six links wrapped onto three
+   rows. §8 asks for a compact mobile menu and a search given room, and it asks
+   that the logo and the controls not be shrunk past their floor to get there;
+   this is that, and nothing shrank.
 
-  .site-header__brand img { height: 48px; }
+   Sizes step at 360px (§13's narrowest QA width waypoint) and again at 380px,
+   where the lockup has room for its wordmark and the disc can grow.
 
-  .site-header__search {
-    order: 3;
-    width: 100%;
-  }
-
-  .site-header__nav-inner {
-    justify-content: flex-start;
-    gap: 0;
-  }
-
-  .site-header__nav-inner a { padding-inline: 12px; }
-  .site-header__nav-inner a::after { inset-inline: 12px; }
+   Everything here is either a class only the mobile header uses, or an override
+   inside the ≤1023px query for a class both headers share. */
+.site-header__mbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 68px;
+  padding-inline: 16px;
 }
+
+.site-header__wordmark {
+  display: none; /* no room for it at §13's narrowest width */
+  font-family: var(--salyco-font-persian);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--salyco-navy);
+  white-space: nowrap;
+}
+
+@media (min-width: 360px) {
+  .site-header__wordmark { display: inline; }
+}
+
+.site-header__account-label {
+  font-size: 15px; /* §13: the one size on this row that never steps down */
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The disc is the control's only resting surface — the bar is otherwise flat —
+   so the tint lives on it and the hover deepens it, in place of the desktop
+   pill's own background. */
+.site-header__disc {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(5, 46, 95, 0.06);
+  transition: background-color 200ms;
+}
+
+.site-header__account:hover .site-header__disc {
+  background: rgba(5, 46, 95, 0.12);
+}
+
+@media (min-width: 380px) {
+  .site-header__wordmark { font-size: 19px; }
+  .site-header__disc { width: 34px; height: 34px; }
+}
+
+@media (max-width: 1023px) {
+  /* §6 wants a quarter of the mark's height clear around it — 12px at 46px.
+     The brand keeps its shrink-0 rather than taking min-width: 0: a squeezed
+     lockup does not clip, it spills its words over the controls. */
+  .site-header__brand { gap: 12px; }
+  .site-header__brand img { height: 46px; }
+
+  /* space-between places the controls, so the auto margin the desktop row
+     needs — where there is a search to clear — is not wanted here. */
+  .site-header__actions {
+    gap: 4px;
+    margin-inline-start: 0;
+  }
+
+  .site-header__divider { height: 28px; }
+  .site-header__account { gap: 6px; padding-inline: 4px; }
+  .site-header__account:hover { background: none; }
+  .site-header__account svg { width: 23px; height: 23px; }
+}
+
+/* ── The mobile menu ────────────────────────────────────────────────────────
+   A <details>, because these pages ship no JavaScript. Static positioning on
+   the element itself is deliberate: it is what leaves the sticky header as the
+   containing block, so the panel opens below the bar rather than inside it. */
+.site-menu { position: static; }
+
+.site-menu__toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 48px; /* §9: clears the 44px minimum target */
+  border-radius: 999px;
+  color: var(--salyco-navy);
+  cursor: pointer;
+  list-style: none;
+}
+
+/* <summary>'s disclosure triangle, in both engines. */
+.site-menu__toggle::-webkit-details-marker { display: none; }
+.site-menu__toggle::marker { content: ""; }
+
+.site-menu__toggle:hover { background: var(--salyco-warm-white); }
+.site-menu__icon { width: 24px; height: 24px; }
+
+/* The toggle becomes a close control while the panel is open, so the way out
+   sits exactly where the way in was. */
+.site-menu__icon--close { display: none; }
+.site-menu[open] .site-menu__icon--open { display: none; }
+.site-menu[open] .site-menu__icon--close { display: block; }
+
+.site-menu__panel {
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  background: var(--salyco-white);
+  border-block-end: 1px solid var(--salyco-mist);
+  box-shadow: 0 12px 28px -8px rgba(5, 46, 95, 0.22); /* §5 elevation L2 */
+}
+
+/* Stated both ways deliberately. A closed <details> hides its content through
+   the UA stylesheet, but an author `display` outranks that — so `display: grid`
+   on its own would leave the menu hanging open on every page load. */
+.site-menu:not([open]) > .site-menu__panel { display: none; }
+
+.site-menu__nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.site-menu__nav a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding-inline: 12px;
+  border-radius: 8px;
+  color: var(--salyco-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-menu__nav a:hover,
+.site-menu__nav a[aria-current="page"] {
+  background: var(--salyco-warm-white);
+  color: var(--salyco-navy);
+}
+
+/* The compact row has no cart control and these pages have no tab bar to carry
+   one, so it lives here — otherwise on a phone the cart would be reachable only
+   from the footer. */
+.site-menu__cart {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding-inline: 12px;
+  border: 1px solid var(--salyco-mist);
+  border-radius: 8px;
+  color: var(--salyco-navy);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-menu__cart:hover { background: var(--salyco-warm-white); }
+.site-menu__cart svg { width: 20px; height: 20px; }
 
 /* ── Reading typography ─────────────────────────────────────────────────────
    Design.md's scale, mobile value first and the desktop value at 768. Every

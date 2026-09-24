@@ -1,52 +1,43 @@
 {% comment %}
-  The site header, server-rendered.
+  The site header, server-rendered — two headers, actually, one per breakpoint.
 
-  This is the same two-row header the React Navbar draws, built here because
-  the article pages are Django templates and cannot mount React. It is a
-  deliberate duplication of a component, not a fork of the design: every value
-  below comes from Design.md §8 — white surface, subtle bottom hairline, 72px
-  top row with the logo leading and the account and cart controls trailing,
-  then a 44px centred link row.
+  Both are in the HTML on every page; a media query in article.css shows one and
+  hides the other. That is why the partials this includes (site_search,
+  site_nav) are shared rather than copied, and why the search form takes a
+  `uid`: hiding an element with CSS leaves it in the document, so a fixed id
+  would collide.
+
+  This mirrors the React chrome rather than the desktop header alone. Above
+  1024px it is Navbar.jsx — white surface, subtle bottom hairline, a top row
+  with the logo leading and the account and cart controls trailing, then a 44px
+  centred link row (§8). Below 1024px it is MobileTopBar.jsx: a single 68px row
+  with the brand on the right and the account control and a menu toggle on the
+  left. Measured before: stacking the desktop header on a 360px phone made it
+  242px tall — a quarter of the screen before the reader reached the title, with
+  the six links wrapped onto three rows. §8 asks for a compact mobile menu and a
+  search with room to breathe; this is that, and nothing shrinks to get there.
 
   What it deliberately does NOT duplicate is state. The React header shows the
   signed-in phone number and a live cart count; a server-rendered page knows
-  neither, and printing a guessed "0" would be worse than printing nothing. So
-  the controls here are quiet links to the same destinations, and the count
-  badge is simply absent.
+  neither, and printing a guessed "0" would be a lie rather than an absence. So
+  the controls are quiet links to the same destinations and the count badge is
+  simply missing.
 
-  Keep the link set and the order in step with the `categories` array in
-  Frontend/salyco-front/src/components/Navbar.jsx. Those five labels are §8's
-  main links, and a visitor crossing between the two halves of the site should
-  not see the navigation change shape.
+  The mobile menu is a <details>, not a script: these pages ship no JavaScript.
+  It is hidden with an explicit rule rather than relying on the UA stylesheet to
+  collapse it, because any author `display` on the panel would otherwise win and
+  leave the menu permanently open. Cart lives in the panel because the compact
+  row has no room for it and there is no tab bar on these pages — without it the
+  cart would be unreachable on a phone except through the footer.
 {% endcomment %}
-<header class="site-header">
+<header class="site-header site-header--desktop">
   <div class="site-header__top">
     <div class="article-shell site-header__top-inner">
       <a class="site-header__brand" href="/">
         <img src="/salyco-logo-navy.svg" alt="سالیکو" width="120" height="40">
       </a>
 
-      {% comment %}
-        A real GET form rather than the React SearchBar's autocomplete: without
-        JavaScript there is nothing to autocomplete with, and /search already
-        renders a full result page for a ?q= term.
-      {% endcomment %}
-      <form class="site-header__search" action="/search" method="get" role="search">
-        <label class="visually-hidden" for="site-search">جست‌وجو</label>
-        <input
-          id="site-search"
-          type="search"
-          name="q"
-          placeholder="جست و جو در محصولات و مقالات ..."
-          autocomplete="off">
-        <button type="submit" aria-label="جست‌وجو">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.3-4.3"></path>
-          </svg>
-        </button>
-      </form>
+      {% include "articles/partials/site_search.html" with uid="desktop" %}
 
       <div class="site-header__actions">
         <a class="site-header__icon" href="/cart" aria-label="سبد خرید">
@@ -74,17 +65,82 @@
 
   <nav class="site-header__nav" aria-label="ناوبری اصلی">
     <div class="article-shell site-header__nav-inner">
-      <a href="/products">محصولات</a>
-      {% comment %}
-        aria-current marks the section the visitor is in. Every page rendered by
-        this template lives under /articles/, so it is unconditional here rather
-        than a per-page variable.
-      {% endcomment %}
-      <a href="/articles/" aria-current="page">راهنمای انتخاب</a>
-      <a href="/warranty/my">خدمات پس از فروش</a>
-      <a href="/dealers">نمایندگی</a>
-      <a href="/contact">تماس با ما</a>
-      <a href="/about">درباره ما</a>
+      {% include "articles/partials/site_nav.html" %}
     </div>
   </nav>
+</header>
+
+<header class="site-header site-header--mobile">
+  <div class="site-header__mbar">
+    {% comment %}
+      The mark is decorative and the visible words carry the name, as in
+      MobileTopBar — but unlike MobileTopBar this link also has an aria-label.
+      Below 360px the wordmark is dropped to make room, and MobileTopBar is left
+      with an aria-hidden image and no text at all: a link with no accessible
+      name. The label keeps one at every width, and it matches the visible text
+      wherever that text is shown (§2.5.3 Label in Name).
+    {% endcomment %}
+    <a class="site-header__brand" href="/" aria-label="تشک سالیکو">
+      <img src="/salyco-logo-navy.svg" alt="" aria-hidden="true" width="46" height="46">
+      <span class="site-header__wordmark">تشک سالیکو</span>
+    </a>
+
+    <div class="site-header__actions">
+      <a class="site-header__account" href="/auth">
+        <span class="site-header__account-label">حساب کاربری</span>
+        <span class="site-header__disc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </span>
+      </a>
+
+      <span class="site-header__divider" aria-hidden="true"></span>
+
+      <details class="site-menu">
+        {% comment %}
+          No aria-expanded and no aria-haspopup: <summary> is a disclosure
+          widget and already exposes both its state and its role. The visible
+          label is a visually-hidden "منو", so the control has a real accessible
+          name rather than depending on aria-label support on <summary>.
+        {% endcomment %}
+        <summary class="site-menu__toggle">
+          <span class="visually-hidden">منو</span>
+          <svg class="site-menu__icon site-menu__icon--open" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6h16"></path>
+            <path d="M4 12h16"></path>
+            <path d="M4 18h16"></path>
+          </svg>
+          <svg class="site-menu__icon site-menu__icon--close" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </summary>
+
+        <div class="site-menu__panel">
+          {% include "articles/partials/site_search.html" with uid="mobile" %}
+
+          <nav class="site-menu__nav" aria-label="ناوبری اصلی">
+            {% include "articles/partials/site_nav.html" %}
+          </nav>
+
+          <a class="site-menu__cart" href="/cart">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="8" cy="21" r="1"></circle>
+              <circle cx="19" cy="21" r="1"></circle>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+            </svg>
+            <span>سبد خرید</span>
+          </a>
+        </div>
+      </details>
+    </div>
+  </div>
 </header>

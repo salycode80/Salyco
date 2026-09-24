@@ -48,33 +48,14 @@
   --color-status-info-bg: var(--salyco-status-info-bg);
 }
 
-/* Space reserved by the chrome the layout has to clear. Pages offset their top
-   padding by --navbar-height so content never sits behind the bar, and App.jsx
-   pads the page bottom by --tabbar-height so the tab bar never covers the
-   footer's last row. Each is zero wherever its bar is not rendered: below lg the
-   desktop navbar is gone (the mobile top bar replaces it), and from lg up the
-   two mobile bars are. Every one of the ~30 `pt-[var(--navbar-height)]` call
-   sites follows this automatically.
+/* --navbar-height and --tabbar-height are NOT here any more — they moved to
+   public/tokens.css, alongside the @font-face blocks and for the same reason.
 
-   The top inset is folded into --navbar-height rather than left on <body>:
-   <body> is not offset from a fixed element, so carrying it in both places would
-   reserve the notch twice. 68px is MobileTopBar's h-[68px].
-
-   --tabbar-height carries three things, because MobileTabBar floats: its own
-   72px, the 12px it sits above the bottom edge by (inset-x-3/bottom-3), and the
-   home indicator it has to clear. Pages pad by the sum, so the footer's last row
-   stays visible above the floating bar rather than behind it. */
-:root {
-  --navbar-height: calc(68px + env(safe-area-inset-top, 0px));
-  --tabbar-height: calc(84px + env(safe-area-inset-bottom, 0px));
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --navbar-height: calc(116px + env(safe-area-inset-top, 0px));
-    --tabbar-height: 0px;
-  }
-}
+   The Django-rendered article pages link /tokens.css and no Tailwind bundle, so
+   while the chrome geometry was declared in this file those pages could not see
+   it and hardcoded a header height instead — which then drifted from the site's.
+   The variable names are unchanged, so every `pt-[var(--navbar-height)]` call
+   site resolves exactly as before; `lg` still flips both values. */
 
 /* Anchor links and in-page jumps land below the fixed navbar instead of behind
    it. Applies to the FAQ accordion, footer #contact link and any hash target. */

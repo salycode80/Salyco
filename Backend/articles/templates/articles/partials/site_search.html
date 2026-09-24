@@ -1,0 +1,30 @@
+{% comment %}
+  The site search form, shared by the desktop header row and the mobile menu.
+
+  A real GET form rather than the React SearchBar's autocomplete: without
+  JavaScript there is nothing to autocomplete with, and /search already renders
+  a full result page for a ?q= term.
+
+  `uid` is required and is not cosmetic. The desktop row and the mobile panel
+  are both in the HTML on every page — a media query hides one, it does not
+  remove it — so a fixed id here would put two elements with the same id in the
+  document, and the <label for> would point at whichever came first. The
+  desktop copy would then be labelled by a label sitting inside the collapsed
+  mobile menu. Callers pass "desktop" or "mobile".
+{% endcomment %}
+<form class="site-search" action="/search" method="get" role="search">
+  <label class="visually-hidden" for="site-search-{{ uid }}">جست‌وجو</label>
+  <input
+    id="site-search-{{ uid }}"
+    type="search"
+    name="q"
+    placeholder="جست و جو در محصولات و مقالات ..."
+    autocomplete="off">
+  <button type="submit" aria-label="جست‌وجو">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.3-4.3"></path>
+    </svg>
+  </button>
+</form>

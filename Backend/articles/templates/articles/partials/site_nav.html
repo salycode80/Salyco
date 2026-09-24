@@ -1,0 +1,18 @@
+{% comment %}
+  §8's main links, in the order the React Navbar renders them.
+
+  Included twice — once in the desktop link row, once in the mobile menu panel —
+  so the two cannot drift apart. Design.md §8 names five (محصولات، راهنمای
+  انتخاب، خدمات پس از فروش، دربارهٔ سالیکو و تماس); نمایندگی is the sixth, from
+  the `categories` array in Navbar.jsx. A visitor crossing between the two
+  halves of the site should not see the navigation change shape.
+
+  aria-current is unconditional here rather than a per-page variable: every page
+  this header renders lives under /articles/.
+{% endcomment %}
+<a href="/products">محصولات</a>
+<a href="/articles/" aria-current="page">راهنمای انتخاب</a>
+<a href="/warranty/my">خدمات پس از فروش</a>
+<a href="/dealers">نمایندگی</a>
+<a href="/contact">تماس با ما</a>
+<a href="/about">درباره ما</a>
