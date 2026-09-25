@@ -17,11 +17,30 @@
   the six links wrapped onto three rows. §8 asks for a compact mobile menu and a
   search with room to breathe; this is that, and nothing shrinks to get there.
 
-  What it deliberately does NOT duplicate is state. The React header shows the
-  signed-in phone number and a live cart count; a server-rendered page knows
-  neither, and printing a guessed "0" would be a lie rather than an absence. So
-  the controls are quiet links to the same destinations and the count badge is
-  simply missing.
+  What it deliberately does NOT duplicate is state, and here that is a hard
+  constraint rather than a preference. The React header shows the signed-in
+  phone number and a live cart count. Neither is knowable on this side: the SPA
+  authenticates with a JWT kept in localStorage, which only its own JavaScript
+  attaches as an Authorization header, so a plain navigation to /articles/...
+  arrives carrying no credentials and request.user is always AnonymousUser.
+
+  request.user would be worse than useless here, which is why nothing in these
+  templates reads it. AuthenticationMiddleware populates it from a Django
+  session — on this site that means an /admin/ editorial login, not a shop
+  account. Wiring the header to it would name the editor and show nothing to
+  every customer: accidentally plausible, and wrong.
+
+  That is also why the account link reads «حساب کاربری» and not «ورود به حساب
+  کاربری». The longer wording is a claim about the reader — it says they are not
+  signed in — and for a signed-in reader that claim is false, because this page
+  cannot see that they are. The short form names a destination instead, and a
+  destination is true either way. It matches MobileTopBar.jsx as well, so the
+  desktop and mobile bars agree. Showing the real number would mean the SPA
+  mirroring display-only state into a cookie this half could read — a mechanism
+  worth building only if the drift is worth it.
+
+  The cart count is absent for the same reason, and absent rather than guessed:
+  a hardcoded "0" would be a lie, an empty space is only an absence.
 
   The mobile menu is a <details>, not a script: these pages ship no JavaScript.
   It is hidden with an explicit rule rather than relying on the UA stylesheet to
@@ -57,7 +76,7 @@
             <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <span>ورود به حساب کاربری</span>
+          <span>حساب کاربری</span>
         </a>
       </div>
     </div>
