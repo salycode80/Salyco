@@ -111,6 +111,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    # Required by wagtail.search. Its IndexEntry model declares SearchVectorField
+    # and GinIndex, and Django's postgres.E005 check rejects both unless this app
+    # is installed.
+    #
+    # The trap is that this check only runs against PostgreSQL. On SQLite — local
+    # dev, and the test suite — it never fires, so a missing entry here is
+    # invisible until the code meets a real Postgres, where `migrate` aborts on
+    # system checks, entrypoint.sh's `set -e` exits 1, and the container
+    # crash-loops behind a 502. That is exactly how this shipped.
+    #
+    # It defines no models, so it adds no migrations and cannot alter the schema.
+    'django.contrib.postgres',
     "corsheaders",
     "rest_framework",
     "core",

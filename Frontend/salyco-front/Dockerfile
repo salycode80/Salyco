@@ -29,10 +29,14 @@ WORKDIR /work
 COPY --from=build /app/dist ./dist
 COPY scripts/gen_image_derivatives.py ./
 
-# Quality is adaptive per image (PSNR floor, default 38 dB), so this needs no
-# per-asset tuning. If a source is already small or compresses badly, the
-# derivative is dropped and nginx falls through to the original.
-RUN python gen_image_derivatives.py dist
+# Derivative generation is deliberately NOT run. nginx negotiates with
+# `try_files $uri$img_sfx $uri`, so a missing .avif/.webp falls through to the
+# original PNG/JPEG: the site renders correctly either way, it just serves
+# originals instead of AVIF/WebP, which costs bytes on mobile.
+#
+# To restore, re-add the step here (quality is adaptive per image, PSNR floor
+# default 38 dB, so it needs no per-asset tuning):
+#   RUN python gen_image_derivatives.py dist
 
 # ── Stage 3: serve with nginx ────────────────────────────────────────────────
 FROM nginx:1.27-alpine
