@@ -1,0 +1,23 @@
+Creating test database for alias 'default'...
+.................................................................................................................................................................................Warranty approval SMS failed for APP-001
+Traceback (most recent call last):
+  File "E:\salyco-fullstack\Backend\mattress\admin_views.py", line 457, in update
+    send_warranty_activated_sms(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        phone_number=instance.buyer_phone_number
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+        product_name=instance.mattress.name,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Python314\Lib\unittest\mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1234, in _execute_mock_call
+    raise effect
+RuntimeError: gateway down
+................................................

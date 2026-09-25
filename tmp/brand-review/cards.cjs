@@ -1,0 +1,9 @@
+const fs=require('fs'); const root='Frontend/salyco-front/';
+const edit=(f,fn)=>fs.writeFileSync(root+f,fn(fs.readFileSync(root+f,'utf8').replaceAll('\r\n','\n')));
+for(const name of ['ProductCard','MattressCard']) edit('src/components/product/'+name+'.jsx',s=>s.replace(', Plus, Check,',', ArrowLeft,').replace(/import \{ useCart \}[^\n]+\n/,'').replace('  const { addItem } = useCart();\n','').replace('  const [added, setAdded] = useState(false);\n','').replace(/  \/\/ Quick-add[\s\S]*?\n  return \(/,'  return (').replace(/\{\/\* Quick add-to-cart[\s\S]*?<\/button>/,`{/* The whole card opens details so dimensions are selected before purchase. */}
+          <span className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-lg bg-white text-brand-navy border border-brand-mist" aria-hidden="true">
+            <ArrowLeft size={20} />
+          </span>`).replace(/<span className="absolute left-2 top-2[\s\S]*?<\/span>/,'').replace('  const CategoryIcon = meta.icon;\n','').replace('ShieldCheck, Moon, Star','ShieldCheck, Star').replace('bg-white/95 px-2 py-1','bg-white/95 px-2 py-1').replace('px-3 py-3 @[280px]:px-6 @[280px]:py-6','p-4 md:p-6').replace('text-sm font-semibold leading-snug text-brand-navy @[280px]:mb-2 @[280px]:text-[1.35rem]','text-xl font-semibold leading-8 text-brand-navy @[280px]:mb-2').replace('      </article>','        <span className="mx-4 mb-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-brand-navy px-6 text-base font-semibold text-brand-navy md:mx-6 md:mb-6">مشاهدهٔ مدل <ArrowLeft size={18} aria-hidden="true" /></span>\n      </article>'));
+edit('src/components/BannerCarousel.jsx',s=>s.replace('hover:bg-[#f5f7ff]','hover:bg-brand-warm-white'));
+edit('src/components/auth/AuthFlow.jsx',s=>s.replace('bg-[#10B981]','bg-status-success'));
+edit('src/pages/Articles.jsx',s=>s.replace('stroke="#687173"','stroke="var(--color-text-secondary)"'));

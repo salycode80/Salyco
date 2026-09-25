@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wagtail CMS Handover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+  :root {
+    --ink: #111820;
+    --ink-soft: #414f5e;
+    --ink-faint: #6d7b8a;
+    --paper: #f8f7f5;
+    --surface: #ffffff;
+    --surface-alt: #f2f4f6;
+    --line: #dde2e7;
+    --line-soft: #eaeef2;
+    --navy: #052e5f;
+    --navy-ink: #052e5f;
+    --navy-soft: #e9eff7;
+    --ok: #15683f;
+    --ok-soft: #e4f2ea;
+    --warn: #7d5300;
+    --warn-soft: #faf0dc;
+    --defer: #4a5563;
+    --defer-soft: #eceff2;
+    --shadow: 0 1px 2px rgba(17, 24, 32, .05), 0 8px 24px -16px rgba(17, 24, 32, .22);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e8ecf1;
+      --ink-soft: #aab5c2;
+      --ink-faint: #7f8b99;
+      --paper: #0d1218;
+      --surface: #141b23;
+      --surface-alt: #1a222b;
+      --line: #28323d;
+      --line-soft: #1f2831;
+      --navy: #86b3e6;
+      --navy-ink: #9cc2ec;
+      --navy-soft: #16222f;
+      --ok: #63c08d;
+      --ok-soft: #12251a;
+      --warn: #dfb166;
+      --warn-soft: #2a2213;
+      --defer: #9aa6b4;
+      --defer-soft: #1c242d;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -18px rgba(0, 0, 0, .7);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e8ecf1;
+    --ink-soft: #aab5c2;
+    --ink-faint: #7f8b99;
+    --paper: #0d1218;
+    --surface: #141b23;
+    --surface-alt: #1a222b;
+    --line: #28323d;
+    --line-soft: #1f2831;
+    --navy: #86b3e6;
+    --navy-ink: #9cc2ec;
+    --navy-soft: #16222f;
+    --ok: #63c08d;
+    --ok-soft: #12251a;
+    --warn: #dfb166;
+    --warn-soft: #2a2213;
+    --defer: #9aa6b4;
+    --defer-soft: #1c242d;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -18px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .doc {
+    max-width: 1060px;
+    margin-inline: auto;
+    padding-inline: 20px;
+    padding-block: 0 96px;
+  }
+
+  /* ── masthead ─────────────────────────────────────────────────────── */
+  .masthead {
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+  .masthead__inner {
+    max-width: 1060px;
+    margin-inline: auto;
+    padding: 56px 20px 32px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.12;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0 0 16px;
+    color: var(--navy-ink);
+  }
+  .standfirst {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 28px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: .02em;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .chip--ok { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+  .chip--warn { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+
+  /* ── sections ─────────────────────────────────────────────────────── */
+  .item {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: 0 1.75rem;
+    padding-block: 30px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .item:first-of-type { border-top: 1px solid var(--line); }
+  .item__num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy-ink);
+    padding-top: 6px;
+    letter-spacing: .04em;
+  }
+  .item__body { min-width: 0; }
+  h2 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: -.01em;
+    margin: 0 0 12px;
+    color: var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  h3 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 26px 0 10px;
+  }
+  p { margin: 0 0 13px; max-width: 68ch; color: var(--ink-soft); }
+  p strong { color: var(--ink); font-weight: 600; }
+  ul, ol { margin: 0 0 13px; padding-inline-start: 22px; max-width: 68ch; color: var(--ink-soft); }
+  li { margin-bottom: 5px; }
+  li::marker { color: var(--ink-faint); }
+  a { color: var(--navy-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .875em;
+    background: var(--surface-alt);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink);
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+  }
+
+  .callout {
+    display: flex;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-inline-start: 3px solid var(--navy);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin: 0 0 14px;
+    max-width: 68ch;
+  }
+  .callout--warn { border-inline-start-color: var(--warn); }
+  .callout p { margin: 0; }
+  .callout p + p { margin-top: 8px; }
+
+  .tag {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    font-weight: 500;
+  }
+  .tag--defer { background: var(--defer-soft); color: var(--defer); }
+  .tag--warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* ── tables ───────────────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; margin: 0 0 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: start; padding: 9px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    background: var(--surface-alt);
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td code { background: transparent; border: 0; padding: 0; font-size: 13px; }
+
+  /* ── command blocks ───────────────────────────────────────────────── */
+  .cmd {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin: 0 0 14px;
+    max-width: 76ch;
+  }
+  .cmd pre {
+    margin: 0;
+    padding: 14px 52px 14px 16px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--ink);
+    direction: ltr;
+    text-align: left;
+  }
+  .cmd pre .c { color: var(--ink-faint); }
+  .copy {
+    position: absolute;
+    top: 8px;
+    inset-inline-end: 8px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    background: var(--surface-alt);
+    color: var(--ink-soft);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+  }
+  .copy:hover { background: var(--navy-soft); color: var(--navy-ink); }
+  .copy:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+  .copy[data-done="1"] { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 40px;
+    padding-top: 22px;
+    color: var(--ink-faint);
+    font-size: 14px;
+  }
+  footer p { max-width: 68ch; }
+
+  @media (max-width: 640px) {
+    .item { grid-template-columns: 1fr; gap: 6px 0; padding-block: 26px; }
+    .item__num { padding-top: 0; }
+    .masthead__inner { padding: 40px 20px 26px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead__inner">
+    <p class="eyebrow">salyco.ir &middot; technical handover</p>
+    <h1>Wagtail Article CMS</h1>
+    <p class="standfirst">
+      Articles are Django-rendered pages with their content in the first response, edited in a
+      Wagtail admin at <code>/cms/</code>. Everything else on the site is untouched: the
+      catalogue, cart, warranty and account surfaces stay on the existing DRF API and the React SPA.
+    </p>
+    <div class="chips">
+      <span class="chip chip--ok">16 / 16 tasks implemented</span>
+      <span class="chip chip--ok">394 tests passing</span>
+      <span class="chip chip--warn">2 steps are deploy-time</span>
+      <span class="chip">Wagtail 7.4.3</span>
+      <span class="chip">Django 6.0.6 &middot; Python 3.14</span>
+    </div>
+  </div>
+</div>
+
+<div class="doc">
+
+  <section class="item">
+    <div class="item__num">01</div>
+    <div class="item__body">
+      <h2>Architecture implemented <span class="tag">shipped</span></h2>
+      <p>
+        Wagtail is installed <strong>inside the existing Django project</strong> and owns one
+        content type: articles. It is a CMS for the blog, not a rebuild of the website.
+      </p>
+      <ul>
+        <li><code>/cms/</code> — the editorial admin. <code>/admin/</code> — the original Django admin, unchanged.</li>
+        <li><code>/articles/…</code> — Django renders the pages. No JavaScript is needed to read an article.</li>
+        <li>The React SPA keeps every other surface and reaches the API exactly as before.</li>
+        <li><code>wagtail.urls</code> is mounted <em>last</em>, after the explicit routes, as a fallback — with a bare-path guard so <code>/</code> 404s instead of resolving Wagtail's own root.</li>
+      </ul>
+      <p>
+        The <code>Product</code> model was not duplicated, no existing route was moved, and the
+        legacy article table was not deleted.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">02</div>
+    <div class="item__body">
+      <h2>Wagtail version, and why this one</h2>
+      <p><strong>7.4.3, pinned exactly</strong> in <code>requirements.txt</code>.</p>
+      <p>
+        An unpinned <code>wagtail&gt;=7.4</code> resolves to 8.0, which requires
+        <code>djangorestframework&gt;=3.18</code> — and that would force an upgrade of the DRF
+        underneath every existing endpoint in the project. 7.4.x is the LTS line, supported to
+        2027-11-02, and needs only <code>DRF&gt;=3.15.1</code>, which the installed 3.17.1
+        satisfies. It runs on the Django and Python already in place.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">03</div>
+    <div class="item__body">
+      <h2>Files created</h2>
+      <h3>Page models, logic and data</h3>
+      <div class="scroll">
+        <table>
+          <tbody>
+            <tr><td><code>articles/models.py</code></td><td><code>ArticleIndexPage</code>, <code>ArticlePage</code> (rewritten for Wagtail)</td></tr>
+            <tr><td><code>articles/snippets.py</code></td><td>Categories, authors, global SEO settings</td></tr>
+            <tr><td><code>articles/blocks.py</code></td><td>StreamField blocks — heading, paragraph, quote, callout, image, FAQ, CTA</td></tr>
+            <tr><td><code>articles/seo.py</code></td><td>Metadata, canonical, JSON-LD</td></tr>
+            <tr><td><code>articles/services.py</code></td><td>Reading time, plain-text extraction</td></tr>
+            <tr><td><code>articles/legacy.py</code></td><td>Legacy text → StreamField conversion</td></tr>
+            <tr><td><code>articles/wagtail_hooks.py</code></td><td>Admin menu entry, hidden unused menus, admin CSS</td></tr>
+            <tr><td><code>articles/templatetags/article_tags.py</code></td><td>Template helpers</td></tr>
+            <tr><td><code>core/seo_views.py</code></td><td>sitemap.xml and robots.txt</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Templates</h3>
+      <p>
+        <code>articles/base_article.html</code>, <code>article_page.html</code>,
+        <code>article_index_page.html</code>, <code>archive.html</code>, one template per block
+        under <code>articles/blocks/</code>, and <code>partials/</code> for the card, breadcrumb
+        and pagination.
+      </p>
+      <h3>Styling</h3>
+      <p>
+        <code>articles/static/articles/article.css</code> (article typography, built on the
+        existing tokens) and <code>articles/admin.css</code> (editorial admin branding).
+      </p>
+      <h3>Management commands</h3>
+      <p><code>setup_salyco_cms</code> and <code>migrate_legacy_articles</code>.</p>
+      <h3>Tests</h3>
+      <p>
+        13 files: <code>tests_pages</code>, <code>tests_blocks</code>, <code>tests_seo</code>,
+        <code>tests_rendering</code>, <code>tests_archives</code>, <code>tests_api</code>,
+        <code>tests_admin</code>, <code>tests_snippets</code>, <code>tests_services</code>,
+        <code>tests_setup_command</code>, <code>tests_legacy_migration</code>,
+        <code>core/tests_seo_views</code>, <code>core/tests_cms</code>.
+      </p>
+      <p>
+        Alongside these, the branch also carries frontend work that was already in flight when the
+        CMS started — the palette refresh, the fonts, and the components that go with them. It was
+        included in these commits deliberately rather than left stranded.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">04</div>
+    <div class="item__body">
+      <h2>Files changed</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>File</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td><code>core/settings.py</code></td><td>Wagtail apps and middleware, <code>SITE_ID</code>, <code>SITE_URL</code>, Wagtail settings</td></tr>
+            <tr><td><code>core/urls.py</code></td><td><code>/cms/</code>, <code>/documents/</code>, sitemap, robots, and the Wagtail fallback</td></tr>
+            <tr><td><code>articles/models.py</code></td><td><code>Article</code> kept as-is; the page models added beside it</td></tr>
+            <tr><td><code>articles/views.py</code>, <code>serializers.py</code></td><td>The article API now reads from the pages</td></tr>
+            <tr><td><code>articles/apps.py</code></td><td>App config</td></tr>
+            <tr><td><code>requirements.txt</code></td><td><code>wagtail==7.4.3</code></td></tr>
+            <tr><td><code>Frontend/…/nginx.conf</code></td><td>Locations for the CMS and the article pages</td></tr>
+            <tr><td><code>Frontend/…/vite.config.js</code></td><td>Dev proxy mirrors those locations</td></tr>
+            <tr><td><code>Frontend/…/index.html</code></td><td>Fonts and tokens linked</td></tr>
+            <tr><td><code>docker-compose.yml</code></td><td>Compose wiring for the above</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">05</div>
+    <div class="item__body">
+      <h2>Database migrations</h2>
+      <p>Two, both in the <code>articles</code> app. No other app was migrated.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Migration</th><th>Adds</th></tr></thead>
+          <tbody>
+            <tr><td><code>articles/0002_…</code></td><td><code>ArticleCategory</code>, <code>ArticleAuthor</code>, <code>GlobalSEOSettings</code></td></tr>
+            <tr><td><code>articles/0003_…</code></td><td><code>ArticleIndexPage</code>, <code>ArticlePage</code>, <code>ArticlePageTag</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Wagtail brings its own migrations for <code>wagtailcore</code> and friends; they run with
+        the same <code>migrate</code>. The legacy <code>Article</code> table is not altered.
+        <code>makemigrations --check</code> reports no drift.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">06</div>
+    <div class="item__body">
+      <h2>Existing article migration strategy</h2>
+      <p>
+        <strong>Additive, never destructive.</strong> The legacy <code>articles.Article</code>
+        table, its rows and its Django admin all stay in place, so the old content remains readable
+        and re-exportable no matter what happens next.
+      </p>
+      <p><code>migrate_legacy_articles</code> converts each row into a live <code>ArticlePage</code>:</p>
+      <ul>
+        <li>the stored text is parsed into paragraphs and headings;</li>
+        <li>publication state and the original date are carried across;</li>
+        <li>a permanent 301 is written from the old slug to the new URL;</li>
+        <li>an article whose conversion comes out shorter than the original is <em>aborted</em>, so a parsing bug cannot silently truncate someone's writing.</li>
+      </ul>
+      <p>
+        It is idempotent — a second run updates rather than duplicating — and
+        <code>--dry-run</code> reports everything it would do while writing nothing.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">07</div>
+    <div class="item__body">
+      <h2>CMS URL</h2>
+      <p><code>/cms/</code> — sign-in at <code>/cms/login/</code>. Editors land on «مقالات» in the sidebar, which opens the article index.</p>
+      <p>
+        Locally that is <code>http://localhost:8000/cms/</code>. On the server it is
+        <code>https://salyco.ir/cms/</code>.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">08</div>
+    <div class="item__body">
+      <h2>Public article URLs</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>URL</th><th>Page</th></tr></thead>
+          <tbody>
+            <tr><td><code>/articles/</code></td><td>The index, 12 articles per page</td></tr>
+            <tr><td><code>/articles/&lt;slug&gt;/</code></td><td>An article</td></tr>
+            <tr><td><code>/articles/category/&lt;slug&gt;/</code></td><td>Everything in a category</td></tr>
+            <tr><td><code>/articles/tag/&lt;tag&gt;/</code></td><td>Everything with a tag</td></tr>
+            <tr><td><code>/articles/?page=N</code></td><td>Paginated index</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The four legacy article slugs 301 to their new homes, one hop, no chains.</p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">09</div>
+    <div class="item__body">
+      <h2>API changes</h2>
+      <p>
+        <code>/api/articles/</code> was reimplemented over the Wagtail pages, keeping the response
+        shape the SPA already consumed — <strong>no frontend change was needed</strong> to keep the
+        existing article widgets working. Any consumer of that endpoint sees the same fields.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">10</div>
+    <div class="item__body">
+      <h2>Nginx changes</h2>
+      <p>New locations in <code>Frontend/salyco-front/nginx.conf</code>:</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Location</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><code>= /articles</code></td><td>301s to <code>/articles/</code> rather than proxying an empty remainder</td></tr>
+            <tr><td><code>^~ /articles/</code></td><td>The server-rendered article pages</td></tr>
+            <tr><td><code>^~ /cms/</code></td><td>The editorial admin</td></tr>
+            <tr><td><code>^~ /documents/</code></td><td>Wagtail's document handler — without it these fall through to the SPA and return <code>index.html</code> with the wrong content type</td></tr>
+            <tr><td><code>= /sitemap.xml</code>, <code>= /robots.txt</code></td><td>Exact matches, so a future <code>/sitemap-images.xml</code> is not swallowed</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <code>^~</code> keeps the image-negotiation regex from intercepting them.
+        <code>/static/</code> and <code>/media/</code> already existed and are unchanged.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">11</div>
+    <div class="item__body">
+      <h2>Environment and config changes</h2>
+      <ul>
+        <li><code>INSTALLED_APPS</code> — Wagtail and the apps it needs, plus <code>django.contrib.sites</code>. <code>wagtail.contrib.forms</code> is deliberately absent; the project has no Wagtail form pages.</li>
+        <li><code>MIDDLEWARE</code> — Wagtail's redirect middleware, which is what makes an old slug 301 to a new one.</li>
+        <li><code>SITE_ID = 1</code>.</li>
+        <li><code>SITE_URL</code> — read from the environment, defaulting to <code>https://salyco.ir</code>. <strong>Every canonical, OG tag, JSON-LD URL and sitemap entry derives from it</strong>, never from the request, because three proxies stand between Django and the client and one wrong <code>X-Forwarded-*</code> header would otherwise leak <code>http://backend:8000/…</code> into the metadata.</li>
+        <li><code>WAGTAIL_SITE_NAME</code>, <code>WAGTAILADMIN_BASE_URL</code>, <code>WAGTAIL_ENABLE_UPDATE_CHECK = False</code>.</li>
+        <li><code>requirements.txt</code> — <code>wagtail==7.4.3</code>.</li>
+        <li><code>vite.config.js</code> — the dev proxy now mirrors the nginx locations.</li>
+      </ul>
+      <p><strong>No new environment variables are required</strong> — <code>SITE_URL</code> has a working default.</p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">12</div>
+    <div class="item__body">
+      <h2>Roles and permissions</h2>
+      <p>
+        <strong>None were invented.</strong> Access to <code>/cms/</code> is Wagtail's own model:
+      </p>
+      <ul>
+        <li><code>migrate</code> runs Wagtail's <code>0001_create_admin_access_permissions</code>, which creates the <strong>Moderators</strong> and <strong>Editors</strong> groups and the admin-access permission.</li>
+        <li>A user needs <code>wagtailadmin.access_admin</code> to reach <code>/cms/</code>; superusers have it implicitly.</li>
+        <li><code>setup_salyco_cms</code> creates no users and no groups — it only creates the site, index, collections and SEO settings.</li>
+      </ul>
+      <p>
+        To give an editor access: <strong>Settings → Groups</strong> in the CMS, or Django admin at
+        <code>/admin/</code>. To create the first account, run <code>createsuperuser</code> (item 15).
+      </p>
+      <div class="callout callout--warn">
+        <p>
+          <strong>Local database note:</strong> <code>Backend/db.sqlite3</code> holds a single
+          superuser, <code>09933921096</code>. Its password is hashed and cannot be read back —
+          reset it with <code>changepassword</code> if it is not known. There is also a leftover
+          staff account, <code>probe-admin</code>, with an unusable password; it can be deleted.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">13</div>
+    <div class="item__body">
+      <h2>SEO features</h2>
+      <ul>
+        <li><strong>Canonical URL</strong> on every page, built from <code>SITE_URL</code>.</li>
+        <li><strong>Meta description</strong> and a per-article robots directive.</li>
+        <li><strong>OpenGraph + Twitter cards</strong>, including image dimensions.</li>
+        <li><strong>Three JSON-LD blocks</strong> on an article — <code>Article</code>, <code>BreadcrumbList</code> and <code>FAQPage</code> (the last only when the article has an FAQ).</li>
+        <li><strong>sitemap.xml</strong> covering the articles, and <strong>robots.txt</strong> pointing at it.</li>
+        <li><strong>301s</strong> from every legacy slug, created by the import.</li>
+        <li><code>lang="fa" dir="rtl"</code> and a real <code>&lt;title&gt;</code> on every page.</li>
+      </ul>
+      <p>
+        Verified: seven surfaces contain no occurrence of <code>localhost</code>,
+        <code>127.0.0.1</code>, <code>backend:8000</code> or a dev port.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">14</div>
+    <div class="item__body">
+      <h2>Tests added</h2>
+      <p>
+        <strong>138 test methods</strong> across 13 files, covering the page models and their URL
+        rules, the StreamField blocks and their templates, SEO output, rendering, the archives and
+        pagination, the API, the admin, the snippets, reading time, both management commands, the
+        sitemap and robots views, and the CMS wiring itself.
+      </p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Suite</th><th>Tests</th></tr></thead>
+          <tbody>
+            <tr><td>Legacy migration</td><td>21</td></tr>
+            <tr><td>Archives</td><td>15</td></tr>
+            <tr><td>SEO</td><td>15</td></tr>
+            <tr><td>Rendering</td><td>14</td></tr>
+            <tr><td>Sitemap and robots</td><td>12</td></tr>
+            <tr><td>Services</td><td>9</td></tr>
+            <tr><td>Admin</td><td>8</td></tr>
+            <tr><td>API</td><td>8</td></tr>
+            <tr><td>Blocks</td><td>8</td></tr>
+            <tr><td>Pages</td><td>8</td></tr>
+            <tr><td>Setup command</td><td>7</td></tr>
+            <tr><td>CMS wiring</td><td>7</td></tr>
+            <tr><td>Snippets</td><td>6</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The whole suite is <strong>394 tests, all passing</strong>, with a clean <code>check</code> and no migration drift.</p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">15</div>
+    <div class="item__body">
+      <h2>Commands to run</h2>
+      <h3>Local setup</h3>
+      <div class="cmd">
+        <button class="copy" type="button">copy</button>
+        <pre>cd Backend
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py setup_salyco_cms
+python manage.py createsuperuser
+python manage.py runserver</pre>
+      </div>
+      <p>
+        <code>setup_salyco_cms</code> is idempotent — it creates the site, the article index, the
+        media collections and the SEO settings, and re-running it is safe.
+      </p>
+      <h3>Importing the existing articles</h3>
+      <div class="cmd">
+        <button class="copy" type="button">copy</button>
+        <pre>python manage.py migrate_legacy_articles --dry-run
+python manage.py migrate_legacy_articles</pre>
+      </div>
+      <p>Always the dry run first — it prints what it would create and writes nothing.</p>
+      <h3>Deploy</h3>
+      <div class="cmd">
+        <button class="copy" type="button">copy</button>
+        <pre>docker compose up -d --build
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py setup_salyco_cms
+docker compose exec backend python manage.py migrate_legacy_articles --dry-run
+docker compose exec backend python manage.py migrate_legacy_articles
+docker compose exec backend python manage.py collectstatic --noinput</pre>
+      </div>
+      <h3>Frontend</h3>
+      <div class="cmd">
+        <button class="copy" type="button">copy</button>
+        <pre>cd Frontend/salyco-front
+npm run build</pre>
+      </div>
+      <p>
+        Every command above exists and was exercised; none is aspirational.
+        <code>collectstatic</code> matters because production serves <code>/static/</code> from
+        <code>/app/staticfiles/</code>.
+      </p>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">16</div>
+    <div class="item__body">
+      <h2>Remaining manual deployment steps <span class="tag tag--defer">deploy-time</span></h2>
+      <p>These cannot be done from a development machine and are the only work still outstanding:</p>
+      <ol>
+        <li>Run the deploy block above, then check the four responses:
+          <div class="cmd">
+            <button class="copy" type="button">copy</button>
+            <pre>curl -sI https://salyco.ir/articles/ | head -3
+curl -s  https://salyco.ir/robots.txt | head -3
+curl -s  https://salyco.ir/sitemap.xml | head -5
+curl -sI https://salyco.ir/articles/&lt;legacy-slug&gt;/ | grep -i location</pre>
+          </div>
+          <p>
+            Expect <code>200 text/html</code> from Django — not the SPA shell — <code>text/plain</code>
+            for robots, XML whose URLs all read <code>https://salyco.ir/</code> with no local host,
+            and a <code>301</code>.
+          </p>
+        </li>
+        <li><strong>Paste an article URL into Telegram</strong> and confirm the card shows the
+          title, description and image. This one is genuinely untestable anywhere but production.</li>
+        <li><strong>Confirm nginx serves the pages, not the SPA.</strong> If <code>/articles/</code>
+          returns the React shell, the location block did not take effect.</li>
+        <li><strong>Rehearse the rollback once</strong>: comment out the four locations, rebuild the
+          frontend, and confirm the site still runs. Articles then 404 rather than serving stale
+          React pages — that is the expected degraded state. Restore and rebuild. The legacy table
+          and its Django admin are still there throughout, so nothing is lost either way.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="item__num">&mdash;</div>
+    <div class="item__body">
+      <h2>Four things worth knowing</h2>
+
+      <h3>Changing a slug already redirects</h3>
+      <p>
+        Wagtail writes a permanent 301 automatically when a live page's slug changes — verified, one
+        hop, no follow-up needed. (The implementation plan predicted a 404 here and was wrong; it
+        has been corrected.) Note it does <em>not</em> update other pages that link to the old URL.
+      </p>
+
+      <h3>A paginated index canonicalises to page one</h3>
+      <p>
+        <code>/articles/?page=2</code> emits the canonical of <code>/articles/</code>, because the
+        canonical is built from the page path and carries no query string. Nothing breaks — every
+        article is in the sitemap and page 2 is linked from page 1 — but Google's guidance prefers
+        a paginated series to canonicalise to itself. This is a <strong>product decision, not a
+        bug</strong>, so it was recorded rather than patched.
+      </p>
+
+      <h3><code>localhost:8000/articles/</code> looks unthemed, and that is not a defect</h3>
+      <p>
+        Django serves the markup and the article stylesheet, but <code>/tokens.css</code> and the
+        logo live in the frontend's <code>public/</code> and are served by nginx from the SPA build
+        root — never by Django. Running Django alone, the page keeps its layout and loses its whole
+        palette. <strong>Port 8000 is not a supported surface for article pages</strong>; view them
+        through <code>:5173</code> (the Vite dev server, which now proxies the CMS routes) or
+        through a proxy that reproduces the nginx split.
+      </p>
+
+      <h3>What was verified by watching, and what was not</h3>
+      <p>
+        Six widths from 360 to 1440px were driven in a real browser: no horizontal scroll anywhere,
+        a 640px measure above 672px, the FAQ opening without JavaScript, and Latin text isolated
+        correctly inside Persian prose. The CMS was driven end to end through its own forms —
+        create, every block type, publish, edit. The API, the redirects, the sitemap and the
+        metadata were all checked against a running server.
+      </p>
+      <p>
+        One step was reasoned about from source rather than driven, and a real bug slipped through
+        exactly there: <code>vite.config.js</code> did not proxy <code>/articles</code>, so the
+        article pages were unreachable from the dev server. That is fixed and re-verified, and the
+        plan now records it as the lesson it is.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      Sixteen tasks, implemented and committed on <code>feat/wagtail-article-cms</code>.
+      The implementation plan and the design spec live in <code>docs/superpowers/</code> and carry
+      the full reasoning, including every correction found along the way.
+    </p>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll(".copy").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var pre = button.parentElement.querySelector("pre");
+      var text = pre.innerText;
+      var done = function (ok) {
+        button.textContent = ok ? "copied" : "select";
+        button.dataset.done = ok ? "1" : "0";
+        if (!ok) {
+          var range = document.createRange();
+          range.selectNodeContents(pre);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        setTimeout(function () {
+          button.textContent = "copy";
+          delete button.dataset.done;
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          function () { done(true); },
+          function () { done(false); }
+        );
+      } else {
+        done(false);
+      }
+    });
+  });
+</script>
+</body>
+</html>

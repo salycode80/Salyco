@@ -1,0 +1,570 @@
+
+=== 1440px /articles/ ===
+{
+ "url": "/articles/",
+ "vw": 1440,
+ "scrollW": 1425,
+ "bodyScrollW": 1425,
+ "overflow": [],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded"
+ ],
+ "fontFaces": [
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Inter/loaded"
+ ],
+ "h1": {
+  "rect": [
+   145,
+   182,
+   1136,
+   54
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "36px",
+  "fontWeight": "700",
+  "lineHeight": "54px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   1425,
+   118
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "minHeight": "0px",
+  "position": "sticky",
+  "borderBottomColor": "rgb(228, 229, 226)"
+ },
+ "shell": {
+  "rect": [
+   113,
+   0,
+   1200,
+   72
+  ],
+  "maxWidth": "1200px",
+  "width": "1200px",
+  "paddingInlineStart": "32px",
+  "boxSizing": "border-box"
+ },
+ "crumb": null,
+ "postTitle": null,
+ "grid": {
+  "rect": [
+   145,
+   391,
+   1136,
+   159
+  ],
+  "gridTemplateColumns": "362.656px 362.672px 362.672px",
+  "width": "1136px",
+  "gap": "24px"
+ },
+ "card": {
+  "rect": [
+   918,
+   391,
+   363,
+   159
+  ],
+  "width": "362.656px",
+  "borderRadius": "12px",
+  "padding": "0px",
+  "backgroundColor": "rgb(255, 255, 255)",
+  "borderColor": "rgb(228, 229, 226)"
+ },
+ "nav": {
+  "rect": [
+   931,
+   77,
+   88,
+   36
+  ],
+  "fontSize": "14px",
+  "fontWeight": "600",
+  "color": "rgb(28, 43, 58)",
+  "paddingInlineStart": "16px"
+ },
+ "main": {
+  "rect": [
+   0,
+   118,
+   1425,
+   432
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   1425,
+   1292
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 1,
+ "footerBtns": 12
+}
+
+=== 1440px /articles/rahnama-kamel/ ===
+{
+ "url": "/articles/rahnama-kamel/",
+ "vw": 1440,
+ "scrollW": 1425,
+ "bodyScrollW": 1425,
+ "overflow": [],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded"
+ ],
+ "fontFaces": [
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Inter/loaded"
+ ],
+ "h1": {
+  "rect": [
+   393,
+   180,
+   640,
+   54
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "36px",
+  "fontWeight": "700",
+  "lineHeight": "54px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   1425,
+   118
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "minHeight": "0px",
+  "position": "sticky",
+  "borderBottomColor": "rgb(228, 229, 226)"
+ },
+ "shell": {
+  "rect": [
+   113,
+   0,
+   1200,
+   72
+  ],
+  "maxWidth": "1200px",
+  "width": "1200px",
+  "paddingInlineStart": "32px",
+  "boxSizing": "border-box"
+ },
+ "crumb": {
+  "rect": [
+   393,
+   142,
+   640,
+   26
+  ],
+  "width": "640px"
+ },
+ "postTitle": {
+  "rect": [
+   393,
+   180,
+   640,
+   54
+  ],
+  "fontSize": "36px",
+  "lineHeight": "54px",
+  "fontWeight": "700"
+ },
+ "grid": null,
+ "card": null,
+ "nav": {
+  "rect": [
+   931,
+   77,
+   88,
+   36
+  ],
+  "fontSize": "14px",
+  "fontWeight": "600",
+  "color": "rgb(28, 43, 58)",
+  "paddingInlineStart": "16px"
+ },
+ "main": {
+  "rect": [
+   0,
+   142,
+   1425,
+   1369
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   1425,
+   2253
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 0,
+ "footerBtns": 12
+}
+
+=== 1440px / ===
+{
+ "url": "/",
+ "vw": 1440,
+ "scrollW": 1425,
+ "bodyScrollW": 1425,
+ "overflow": [],
+ "fontBody": "Vazirmatn, ui-sans-serif, system-ui, sans-serif",
+ "vazirLoaded": [
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded"
+ ],
+ "fontFaces": [
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Inter/loaded"
+ ],
+ "h1": {
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "28px",
+  "fontWeight": "700",
+  "lineHeight": "44.8px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   1425,
+   117
+  ],
+  "backgroundColor": "rgba(0, 0, 0, 0)",
+  "minHeight": "0px",
+  "position": "fixed",
+  "borderBottomColor": "rgb(28, 43, 58)"
+ },
+ "shell": null,
+ "crumb": null,
+ "postTitle": null,
+ "grid": null,
+ "card": null,
+ "nav": {
+  "rect": [
+   824,
+   80,
+   141,
+   32
+  ],
+  "fontSize": "14px",
+  "fontWeight": "600",
+  "color": "rgb(28, 43, 58)",
+  "paddingInlineStart": "16px"
+ },
+ "main": null,
+ "body": {
+  "rect": [
+   0,
+   0,
+   1425,
+   3632
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 0,
+ "footerBtns": 12
+}
+
+=== 390px /articles/ ===
+{
+ "url": "/articles/",
+ "vw": 390,
+ "scrollW": 390,
+ "bodyScrollW": 390,
+ "overflow": [],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded"
+ ],
+ "fontFaces": [
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Inter/loaded"
+ ],
+ "h1": {
+  "rect": [
+   16,
+   254,
+   358,
+   44
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "28px",
+  "fontWeight": "700",
+  "lineHeight": "44px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   390,
+   206
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "minHeight": "0px",
+  "position": "sticky",
+  "borderBottomColor": "rgb(228, 229, 226)"
+ },
+ "shell": {
+  "rect": [
+   0,
+   0,
+   390,
+   132
+  ],
+  "maxWidth": "1200px",
+  "width": "390px",
+  "paddingInlineStart": "16px",
+  "boxSizing": "border-box"
+ },
+ "crumb": null,
+ "postTitle": null,
+ "grid": {
+  "rect": [
+   16,
+   433,
+   358,
+   143
+  ],
+  "gridTemplateColumns": "358px",
+  "width": "358px",
+  "gap": "24px"
+ },
+ "card": {
+  "rect": [
+   16,
+   433,
+   358,
+   143
+  ],
+  "width": "358px",
+  "borderRadius": "12px",
+  "padding": "0px",
+  "backgroundColor": "rgb(255, 255, 255)",
+  "borderColor": "rgb(228, 229, 226)"
+ },
+ "nav": {
+  "rect": [
+   294,
+   133,
+   80,
+   36
+  ],
+  "fontSize": "14px",
+  "fontWeight": "600",
+  "color": "rgb(28, 43, 58)",
+  "paddingInlineStart": "12px"
+ },
+ "main": {
+  "rect": [
+   0,
+   206,
+   390,
+   370
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   390,
+   2018
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 1,
+ "footerBtns": 12
+}
+
+=== 390px /articles/rahnama-kamel/ ===
+{
+ "url": "/articles/rahnama-kamel/",
+ "vw": 390,
+ "scrollW": 390,
+ "bodyScrollW": 390,
+ "overflow": [],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded"
+ ],
+ "fontFaces": [
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Inter/loaded"
+ ],
+ "h1": {
+  "rect": [
+   16,
+   268,
+   358,
+   44
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "28px",
+  "fontWeight": "700",
+  "lineHeight": "44px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   390,
+   206
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "minHeight": "0px",
+  "position": "sticky",
+  "borderBottomColor": "rgb(228, 229, 226)"
+ },
+ "shell": {
+  "rect": [
+   0,
+   0,
+   390,
+   132
+  ],
+  "maxWidth": "1200px",
+  "width": "390px",
+  "paddingInlineStart": "16px",
+  "boxSizing": "border-box"
+ },
+ "crumb": {
+  "rect": [
+   16,
+   230,
+   358,
+   26
+  ],
+  "width": "358px"
+ },
+ "postTitle": {
+  "rect": [
+   16,
+   268,
+   358,
+   44
+  ],
+  "fontSize": "28px",
+  "lineHeight": "44px",
+  "fontWeight": "700"
+ },
+ "grid": null,
+ "card": null,
+ "nav": {
+  "rect": [
+   294,
+   133,
+   80,
+   36
+  ],
+  "fontSize": "14px",
+  "fontWeight": "600",
+  "color": "rgb(28, 43, 58)",
+  "paddingInlineStart": "12px"
+ },
+ "main": {
+  "rect": [
+   0,
+   230,
+   390,
+   1443
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   390,
+   3115
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 0,
+ "footerBtns": 12
+}

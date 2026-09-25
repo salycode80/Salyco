@@ -1,0 +1,508 @@
+
+=== 1440px /articles/ ===
+{
+ "url": "/articles/",
+ "vw": 1440,
+ "scrollW": 1440,
+ "bodyScrollW": 1440,
+ "overflow": [
+  {
+   "tag": "a",
+   "cls": "article-skip",
+   "left": 11264,
+   "right": 11439,
+   "w": 175
+  }
+ ],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [],
+ "fontFaces": [],
+ "h1": {
+  "rect": [
+   120,
+   108,
+   1200,
+   48
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "32px",
+  "fontWeight": "700",
+  "lineHeight": "48px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   1440,
+   68
+  ],
+  "backgroundColor": "rgb(5, 46, 95)",
+  "minHeight": "0px",
+  "position": "static",
+  "borderBottomColor": "rgb(255, 255, 255)"
+ },
+ "grid": {
+  "rect": [
+   120,
+   234,
+   1200,
+   136
+  ],
+  "gridTemplateColumns": "384px 384px 384px",
+  "width": "1200px",
+  "gap": "24px"
+ },
+ "card": {
+  "rect": [
+   936,
+   234,
+   384,
+   138
+  ],
+  "width": "382px",
+  "borderRadius": "12px",
+  "padding": "0px",
+  "backgroundColor": "rgb(255, 255, 255)",
+  "borderColor": "rgb(228, 229, 226)"
+ },
+ "shell": {
+  "rect": [
+   104,
+   0,
+   1232,
+   68
+  ],
+  "maxWidth": "1200px",
+  "width": "1200px",
+  "paddingInlineStart": "16px"
+ },
+ "nav": {
+  "rect": [
+   339,
+   19,
+   23,
+   30
+  ],
+  "fontSize": "14px",
+  "fontWeight": "400",
+  "color": "rgb(255, 255, 255)",
+  "paddingInlineStart": "0px"
+ },
+ "main": {
+  "rect": [
+   0,
+   108,
+   1440,
+   262
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   1440,
+   525
+  ],
+  "backgroundColor": "rgb(247, 245, 240)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 1,
+ "footerBtns": 0
+}
+
+=== 1440px /articles/rahnama-kamel/ ===
+{
+ "url": "/articles/rahnama-kamel/",
+ "vw": 1440,
+ "scrollW": 1425,
+ "bodyScrollW": 1425,
+ "overflow": [
+  {
+   "tag": "a",
+   "cls": "article-skip",
+   "left": 11249,
+   "right": 11424,
+   "w": 175
+  }
+ ],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [],
+ "fontFaces": [],
+ "h1": {
+  "rect": [
+   393,
+   138,
+   640,
+   48
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "32px",
+  "fontWeight": "700",
+  "lineHeight": "48px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   1425,
+   68
+  ],
+  "backgroundColor": "rgb(5, 46, 95)",
+  "minHeight": "0px",
+  "position": "static",
+  "borderBottomColor": "rgb(255, 255, 255)"
+ },
+ "grid": null,
+ "card": null,
+ "shell": {
+  "rect": [
+   97,
+   0,
+   1232,
+   68
+  ],
+  "maxWidth": "1200px",
+  "width": "1200px",
+  "paddingInlineStart": "16px"
+ },
+ "nav": {
+  "rect": [
+   331,
+   19,
+   23,
+   30
+  ],
+  "fontSize": "14px",
+  "fontWeight": "400",
+  "color": "rgb(255, 255, 255)",
+  "paddingInlineStart": "0px"
+ },
+ "main": {
+  "rect": [
+   0,
+   84,
+   1425,
+   1269
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   1425,
+   1508
+  ],
+  "backgroundColor": "rgb(247, 245, 240)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 0,
+ "footerBtns": 0
+}
+
+=== 1440px / ===
+{
+ "url": "/",
+ "vw": 1440,
+ "scrollW": 1425,
+ "bodyScrollW": 1425,
+ "overflow": [],
+ "fontBody": "Vazirmatn, ui-sans-serif, system-ui, sans-serif",
+ "vazirLoaded": [
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded",
+  "Vazirmatn loaded"
+ ],
+ "fontFaces": [
+  "Inter/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded",
+  "Vazirmatn/loaded"
+ ],
+ "h1": {
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "28px",
+  "fontWeight": "700",
+  "lineHeight": "44.8px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   1425,
+   117
+  ],
+  "backgroundColor": "rgba(0, 0, 0, 0)",
+  "minHeight": "0px",
+  "position": "fixed",
+  "borderBottomColor": "rgb(28, 43, 58)"
+ },
+ "grid": null,
+ "card": null,
+ "shell": null,
+ "nav": {
+  "rect": [
+   824,
+   80,
+   141,
+   32
+  ],
+  "fontSize": "14px",
+  "fontWeight": "600",
+  "color": "rgb(28, 43, 58)",
+  "paddingInlineStart": "16px"
+ },
+ "main": null,
+ "body": {
+  "rect": [
+   0,
+   0,
+   1425,
+   3632
+  ],
+  "backgroundColor": "rgb(255, 255, 255)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 0,
+ "footerBtns": 12
+}
+
+=== 390px /articles/ ===
+{
+ "url": "/articles/",
+ "vw": 390,
+ "scrollW": 390,
+ "bodyScrollW": 390,
+ "overflow": [
+  {
+   "tag": "a",
+   "cls": "article-skip",
+   "left": 10214,
+   "right": 10389,
+   "w": 175
+  }
+ ],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [],
+ "fontFaces": [],
+ "h1": {
+  "rect": [
+   16,
+   108,
+   358,
+   48
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "32px",
+  "fontWeight": "700",
+  "lineHeight": "48px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   390,
+   68
+  ],
+  "backgroundColor": "rgb(5, 46, 95)",
+  "minHeight": "0px",
+  "position": "static",
+  "borderBottomColor": "rgb(255, 255, 255)"
+ },
+ "grid": {
+  "rect": [
+   16,
+   234,
+   358,
+   136
+  ],
+  "gridTemplateColumns": "358px",
+  "width": "358px",
+  "gap": "24px"
+ },
+ "card": {
+  "rect": [
+   16,
+   234,
+   358,
+   138
+  ],
+  "width": "356px",
+  "borderRadius": "12px",
+  "padding": "0px",
+  "backgroundColor": "rgb(255, 255, 255)",
+  "borderColor": "rgb(228, 229, 226)"
+ },
+ "shell": {
+  "rect": [
+   0,
+   0,
+   390,
+   68
+  ],
+  "maxWidth": "1200px",
+  "width": "358px",
+  "paddingInlineStart": "16px"
+ },
+ "nav": {
+  "rect": [
+   235,
+   19,
+   23,
+   30
+  ],
+  "fontSize": "14px",
+  "fontWeight": "400",
+  "color": "rgb(255, 255, 255)",
+  "paddingInlineStart": "0px"
+ },
+ "main": {
+  "rect": [
+   0,
+   108,
+   390,
+   262
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   390,
+   525
+  ],
+  "backgroundColor": "rgb(247, 245, 240)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 1,
+ "footerBtns": 0
+}
+
+=== 390px /articles/rahnama-kamel/ ===
+{
+ "url": "/articles/rahnama-kamel/",
+ "vw": 390,
+ "scrollW": 390,
+ "bodyScrollW": 390,
+ "overflow": [
+  {
+   "tag": "a",
+   "cls": "article-skip",
+   "left": 10214,
+   "right": 10389,
+   "w": 175
+  }
+ ],
+ "fontBody": "Vazirmatn, sans-serif",
+ "vazirLoaded": [],
+ "fontFaces": [],
+ "h1": {
+  "rect": [
+   16,
+   138,
+   358,
+   48
+  ],
+  "fontFamily": "Vazirmatn, sans-serif",
+  "fontSize": "32px",
+  "fontWeight": "700",
+  "lineHeight": "48px",
+  "color": "rgb(5, 46, 95)",
+  "letterSpacing": "normal"
+ },
+ "header": {
+  "rect": [
+   0,
+   0,
+   390,
+   68
+  ],
+  "backgroundColor": "rgb(5, 46, 95)",
+  "minHeight": "0px",
+  "position": "static",
+  "borderBottomColor": "rgb(255, 255, 255)"
+ },
+ "grid": null,
+ "card": null,
+ "shell": {
+  "rect": [
+   0,
+   0,
+   390,
+   68
+  ],
+  "maxWidth": "1200px",
+  "width": "358px",
+  "paddingInlineStart": "16px"
+ },
+ "nav": {
+  "rect": [
+   235,
+   19,
+   23,
+   30
+  ],
+  "fontSize": "14px",
+  "fontWeight": "400",
+  "color": "rgb(255, 255, 255)",
+  "paddingInlineStart": "0px"
+ },
+ "main": {
+  "rect": [
+   0,
+   84,
+   390,
+   1361
+  ],
+  "paddingTop": "0px",
+  "backgroundColor": "rgba(0, 0, 0, 0)"
+ },
+ "body": {
+  "rect": [
+   0,
+   0,
+   390,
+   1600
+  ],
+  "backgroundColor": "rgb(247, 245, 240)",
+  "color": "rgb(28, 43, 58)",
+  "fontSize": "16px",
+  "lineHeight": "30px",
+  "margin": "0px"
+ },
+ "cardCount": 0,
+ "footerBtns": 0
+}

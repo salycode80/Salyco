@@ -1,6 +1,6 @@
 """Order-side notification helpers.
 
-Kept out of views so checkout (OrderCreateView) and the admin panel
+Kept out of views so the payment settlement step and the admin panel
 (AdminOrderDetailView) share one definition of "tell the customer about this
 order", including the once-per-order guarantee.
 """
@@ -47,11 +47,10 @@ def send_order_confirmation(order: Order) -> bool:
     Called from two places, and the latch — not the caller — is what keeps it to
     one message and one SMS credit per order:
 
-      * OrderCreateView, the moment the customer completes checkout. This is the
-        normal path and covers both ONLINE and PHONE orders, since the customer
-        has finished ordering either way.
+      * The payment settlement step, the moment an online payment is verified.
+        This is the normal path.
       * AdminOrderDetailView, when staff move an order to CONFIRMED. A retry
-        rather than a second notification: it only does anything if checkout's
+        rather than a second notification: it only does anything if settlement's
         attempt never landed, e.g. the gateway was down at the time.
 
     A CANCELLED order is the one status that must not notify — an order that was
